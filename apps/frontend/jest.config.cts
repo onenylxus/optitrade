@@ -5,13 +5,14 @@ const createJestConfig = nextJest({
 });
 
 const config = {
-  displayName: '@optitrade/optitrade',
+  displayName: '@optitrade/frontend',
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-  coverageDirectory: '../../coverage/apps/optitrade',
+  coverageDirectory: '../../coverage/apps/frontend',
+  // Renamed app: frontend
   testEnvironment: 'jsdom',
 };
 
