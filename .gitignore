@@ -38,12 +38,20 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Nx
 .nx/cache
 .nx/workspace-data
+project-graph.json
 
 # Next.js
 .next
 out
 
+# Testing
 test-output
-project-graph.json
+
+# Reports
+reports
+
+# Storybook
+storybook-static
