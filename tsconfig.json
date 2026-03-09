@@ -4,10 +4,10 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/optitrade-e2e"
+      "path": "./apps/e2e"
     },
     {
-      "path": "./apps/optitrade"
+      "path": "./apps/frontend"
     }
   ]
 }

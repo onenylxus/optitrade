@@ -1,10 +1,10 @@
 {
-  "name": "@optitrade/optitrade-e2e",
+  "name": "@optitrade/e2e",
   "version": "0.0.1",
   "private": true,
   "nx": {
     "implicitDependencies": [
-      "@optitrade/optitrade"
+      "@optitrade/frontend"
     ]
   }
 }
