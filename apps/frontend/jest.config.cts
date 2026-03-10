@@ -12,7 +12,6 @@ const config = {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/frontend',
-  // Renamed app: frontend
   testEnvironment: 'jsdom',
 };
 
