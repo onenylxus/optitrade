@@ -55,3 +55,34 @@ reports
 
 # Storybook
 storybook-static
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+.venv
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+
+# Python packaging / build
+build/
+dist/
+eggs/
+*.egg-info/
+pip-wheel-metadata/
+
+# Local env files
+.env
+.env.*
+
+# SWC build artifacts
+.swc/
+
+
+# UV
+uv.lock
