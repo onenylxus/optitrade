@@ -1,0 +1,59 @@
+{
+  "name": "@optitrade/frontend",
+  "root": "apps/frontend",
+  "sourceRoot": "apps/frontend",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "command": "next dev",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "continuous": true
+    },
+    "build": {
+      "command": "next build",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "cache": true
+    },
+    "start": {
+      "command": "next start",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "dependsOn":  ["@optitrade/frontend:build"],
+      "continuous": true
+    },
+    "lint": {
+      "command": "eslint",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "cache": true
+    },
+    "format": {
+      "command": "prettier --write .",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "cache": true
+    },
+    "storybook": {
+      "command": "storybook dev -p 6006",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "continuous": true
+    },
+    "build-storybook": {
+      "command": "storybook build",
+      "options": {
+        "cwd": "apps/frontend"
+      },
+      "cache": true
+    }
+  },
+  "tags": []
+}
