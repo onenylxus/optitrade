@@ -7,6 +7,7 @@ out-tsc
 
 # dependencies
 node_modules
+package-lock.json
 
 # IDEs and editors
 /.idea
@@ -82,7 +83,6 @@ pip-wheel-metadata/
 
 # SWC build artifacts
 .swc/
-
 
 # UV
 uv.lock

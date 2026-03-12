@@ -1,15 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "jsx": "preserve",
-    "noEmit": true,
-    "emitDeclarationOnly": false,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
+    "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -17,21 +20,16 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
-    },
-    "types": ["jest", "node"],
-    "outDir": "dist",
-    "rootDir": "src",
-    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
+      "@/*": ["./*"]
+    }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx",
-    "../../apps/frontend/.next/types/**/*.ts",
-    "../../dist/apps/frontend/.next/types/**/*.ts",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
   ],
   "exclude": [
     "out-tsc",
@@ -39,18 +37,13 @@
     "node_modules",
     "jest.config.ts",
     "jest.config.cts",
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts",
     ".next",
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs",
     "**/*.stories.ts",
     "**/*.stories.js"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.storybook.json"
-    }
   ]
 }

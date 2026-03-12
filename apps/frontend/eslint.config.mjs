@@ -1,12 +1,25 @@
-import nextEslintPluginNext from '@next/eslint-plugin-next';
-import nx from '@nx/eslint-plugin';
-import baseConfig from '../../eslint.config.mjs';
+import storybook from 'eslint-plugin-storybook'
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
 
-export default [
-  { plugins: { '@next/next': nextEslintPluginNext } },
-  ...baseConfig,
-  ...nx.configs['flat/react-typescript'],
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    '.next/**',
+    'out/**',
+    'build/**',
+    'next-env.d.ts',
+  ]),
   {
-    ignores: ['.next/**/*', '**/out-tsc'],
+    settings: {
+      react: { version: '19' }, // Avoids auto-detection crash
+    },
   },
-];
+  ...storybook.configs['flat/recommended'],
+])
+
+export default eslintConfig
