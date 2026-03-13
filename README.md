@@ -21,7 +21,7 @@ AI-assisted trading platform monorepo managed with Nx. The workspace contains mu
 1. Clone the repo and install workspace dependencies:
 
 ```
-git clone <repo-url>
+git clone https://github.com/onenylxus/optitrade.git
 cd optitrade
 npm install
 ```

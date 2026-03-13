@@ -2,72 +2,50 @@
 
 ## Overview
 
-Python backend package containing example code and unit tests. The source is under `apps/backend/apps/backend` and tests are in `apps/backend/tests`.
+Python gRPC backend application managed by Nx and `@nxlv/python`.
 
 ## Prerequisites
 
 - Python 3.9+
-- Git
+- Node.js 18+ and npm (for Nx)
 
-## Recommended: run via Nx (preferred)
+## Nx targets
 
-This workspace defines Nx targets for the backend (see `apps/backend/project.json`). Use Nx to run install/test/lint/format so outputs and caching integrate with the workspace.
+All commands below run from the repository root.
 
-```
-# install project environment (uses @nxlv/python:install)
+### Dependency management
+
+```bash
 npx nx run @optitrade/backend:install
+npx nx run @optitrade/backend:lock
+npx nx run @optitrade/backend:sync
+npx nx run @optitrade/backend:add
+npx nx run @optitrade/backend:update
+npx nx run @optitrade/backend:remove
+```
 
-# run tests (uses pytest via an Nx run-commands target)
-npx nx run @optitrade/backend:test
+### Development and quality
 
-# lint
+```bash
+npx nx run @optitrade/backend:proto
 npx nx run @optitrade/backend:lint
-
-# format
 npx nx run @optitrade/backend:format
+npx nx run @optitrade/backend:test
+npx nx run @optitrade/backend:build
 ```
 
-## Manual local setup (without Nx)
+## What each target does
 
-Windows (PowerShell):
+- `proto`: Generates Python gRPC code from `protos/helloworld.proto`.
+- `lint`: Runs Ruff checks on `src` and `tests`.
+- `format`: Runs Ruff format on `src` and `tests`.
+- `test`: Runs `uv run pytest tests/` and depends on `proto`.
+- `build`: Builds a distributable package into `apps/backend/dist`.
 
-```
-cd apps/backend
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -U pip
-python -m pip install pytest pytest-cov pytest-html ruff autopep8
-```
+## Paths
 
-macOS / Linux:
-
-```
-cd apps/backend
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip
-python -m pip install pytest pytest-cov pytest-html ruff autopep8
-```
-
-## Run tests (manual)
-
-```
-cd apps/backend
-pytest
-```
-
-Pytest is configured in `pyproject.toml` to write coverage to `coverage/apps/backend` and HTML/JUnit reports to `reports/apps/backend/unittests/`.
-
-## Lint & format (manual)
-
-```
-ruff apps/backend tests
-autopep8 --in-place --recursive apps/backend
-ruff format apps/backend
-```
-
-## Notes
-
-- Example code: `apps/backend/apps/backend/hello.py`
+- Source: `apps/backend/src`
 - Tests: `apps/backend/tests`
-- Prefer Nx targets for consistent CI and caching: `npx nx run <project>:<target>`
+- Protos: `apps/backend/protos`
+- Coverage output: `coverage/apps/backend`
+- Test reports: `reports/apps/backend/unittests`
