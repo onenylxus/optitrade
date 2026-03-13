@@ -1,0 +1,22 @@
+{
+  "name": "@optitrade/e2e",
+  "root": "apps/e2e",
+  "sourceRoot": "apps/e2e",
+  "projectType": "application",
+  "targets": {
+    "test": {
+      "command": "npx playwright test",
+      "options": {
+        "cwd": "apps/e2e"
+      },
+      "cache": true
+    },
+    "show-report": {
+      "command": "npx playwright show-report",
+      "options": {
+        "cwd": "apps/e2e"
+      },
+      "cache": true
+    }
+  }
+}
