@@ -34,6 +34,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
+/reports
 
 # System Files
 .DS_Store
@@ -44,45 +45,6 @@ Thumbs.db
 .nx/workspace-data
 project-graph.json
 
-# Next.js
-.next
-out
-
-# Testing
-test-output
-
-# Reports
-reports
-
-# Storybook
-storybook-static
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.python-version
-.venv/
-.venv
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-
-# Python packaging / build
-build/
-dist/
-eggs/
-*.egg-info/
-pip-wheel-metadata/
-
 # Local env files
 .env
 .env.*
-
-# SWC build artifacts
-.swc/
-
-# UV
-uv.lock

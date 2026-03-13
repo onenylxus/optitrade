@@ -9,7 +9,6 @@
       "options": {
         "cwd": "apps/e2e"
       },
-      "dependsOn": ["@optitrade/frontend:start"],
       "cache": true
     },
     "show-report": {
