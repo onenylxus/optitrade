@@ -58,7 +58,7 @@
       "executor": "@nxlv/python:run-commands",
       "outputs": [],
       "options": {
-        "command": ".venv\\Scripts\\python.exe -m grpc_tools.protoc -Iprotos --python_out=protos --grpc_python_out=protos protos/helloworld.proto",
+        "command": "uv run python -m grpc_tools.protoc -Iprotos --python_out=protos --grpc_python_out=protos protos/helloworld.proto",
         "cwd": "{projectRoot}"
       },
       "cache": true
@@ -69,6 +69,7 @@
         "{workspaceRoot}/reports/{projectRoot}/unittests",
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
+      "dependsOn": ["proto"],
       "options": {
         "command": "uv run pytest tests/",
         "cwd": "{projectRoot}"
