@@ -4,6 +4,9 @@ import { BaseWidget } from '../components/dashboard/base-widget';
 const meta: Meta<typeof BaseWidget> = {
   title: 'Dashboard/BaseWidget',
   component: BaseWidget,
+  parameters: {
+    layout: 'centered',
+  },
   tags: ['autodocs'],
 };
 
