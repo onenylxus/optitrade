@@ -1,13 +1,8 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
 import * as React from 'react';
+import { Separator } from '../ui/separator';
 
 interface BaseWidgetProps extends React.ComponentProps<typeof Card> {
   title: string;
@@ -25,18 +20,20 @@ export function BaseWidget({
   ...props
 }: BaseWidgetProps) {
   return (
-    <Card className={cn('w-full h-full', className)} {...props}>
-      <CardHeader>
+    <Card className={cn('w-full h-full gap-1 px-4', className)} {...props}>
+      <CardHeader className="px-0">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          {isAiWidget && <Sparkles className="text-primary" size={18} />}
+          {isAiWidget && <Sparkles className="text-primary self-start" size={18} />}
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1">{children}</CardContent>
+      <Separator />
+
+      <CardContent className="flex-1 px-0">{children}</CardContent>
     </Card>
   );
 }
