@@ -2,11 +2,9 @@ import playwright from 'eslint-plugin-playwright';
 import baseConfig from '../../eslint.config.mjs';
 
 export default [
-  playwright.configs['flat/recommended'],
+  // Base config
   ...baseConfig,
-  {
-    files: ['**/*.ts', '**/*.js'],
-    // Override or add rules here
-    rules: {},
-  },
+
+  // Playwright
+  playwright.configs['flat/recommended'],
 ];
