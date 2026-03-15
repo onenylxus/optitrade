@@ -10,11 +10,6 @@ const meta = {
       <NumberWidget {...args} />
     </div>
   ),
-  args: {
-    title: 'Portfolio Value',
-    description: 'Current USD balance',
-    value: 12500.45,
-  },
   parameters: {
     layout: 'centered',
   },
@@ -24,7 +19,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof NumberWidget>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  args: {
+    title: 'Portfolio Value',
+    description: 'Current USD balance',
+    value: 12500.45,
+  },
+};
 
 export const PositiveChange: Story = {
   args: {

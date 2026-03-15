@@ -10,6 +10,16 @@ const meta = {
       <TableWidget {...args} />
     </div>
   ),
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+};
+
+export default meta;
+type Story = StoryObj<typeof TableWidget>;
+
+export const Default: Story = {
   args: {
     title: 'Holdings',
     description: 'Current portfolio positions',
@@ -21,16 +31,7 @@ const meta = {
       ['AMZN', '8', '$194.30', '$1,554.40'],
     ],
   },
-  parameters: {
-    layout: 'centered',
-  },
-  tags: ['autodocs'],
 };
-
-export default meta;
-type Story = StoryObj<typeof TableWidget>;
-
-export const Default: Story = {};
 
 export const Empty: Story = {
   args: {
