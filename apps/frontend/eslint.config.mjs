@@ -1,7 +1,7 @@
-import storybook from 'eslint-plugin-storybook'
-import { defineConfig, globalIgnores } from 'eslint/config'
-import nextVitals from 'eslint-config-next/core-web-vitals'
-import nextTs from 'eslint-config-next/typescript'
+import storybook from 'eslint-plugin-storybook';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Generated static Storybook bundles are build artifacts.
+    'storybook-static/**',
   ]),
   {
     settings: {
@@ -20,6 +22,6 @@ const eslintConfig = defineConfig([
     },
   },
   ...storybook.configs['flat/recommended'],
-])
+]);
 
-export default eslintConfig
+export default eslintConfig;

@@ -8,6 +8,9 @@
     },
     {
       "path": "./apps/frontend"
+    },
+    {
+      "path": "./apps/webpage"
     }
   ]
 }

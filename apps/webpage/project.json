@@ -1,0 +1,38 @@
+{
+  "name": "@optitrade/webpage",
+  "root": "apps/webpage",
+  "sourceRoot": "apps/webpage",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "command": "vite",
+      "options": {
+        "cwd": "apps/webpage"
+      },
+      "continuous": true
+    },
+    "build": {
+      "command": "tsc -b && vite build",
+      "options": {
+        "cwd": "apps/webpage"
+      },
+      "cache": true
+    },
+    "preview": {
+      "command": "vite preview",
+      "options": {
+        "cwd": "apps/webpage"
+      },
+      "dependsOn": ["@optitrade/webpage:build"],
+      "continuous": true
+    },
+    "lint": {
+      "command": "eslint .",
+      "options": {
+        "cwd": "apps/webpage"
+      },
+      "cache": true
+    }
+  },
+  "tags": []
+}
