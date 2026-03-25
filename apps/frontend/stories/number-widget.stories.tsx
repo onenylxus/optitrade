@@ -29,6 +29,8 @@ export const Default: Story = {
 
 export const PositiveChange: Story = {
   args: {
+    title: 'Portfolio Value',
+    description: 'Current USD balance',
     value: 18750.25,
     prev: 17600.1,
   },
@@ -36,6 +38,8 @@ export const PositiveChange: Story = {
 
 export const NegativeChange: Story = {
   args: {
+    title: 'Portfolio Value',
+    description: 'Current USD balance',
     value: 9420.7,
     prev: 10010.45,
   },
@@ -43,6 +47,8 @@ export const NegativeChange: Story = {
 
 export const PercentChange: Story = {
   args: {
+    title: 'Portfolio Value',
+    description: 'Current USD balance',
     value: 18750.25,
     prev: 17600.1,
     type: 'percent',
