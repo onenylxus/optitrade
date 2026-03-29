@@ -24,19 +24,6 @@ npx nx run @optitrade/e2e:test
 npx nx run @optitrade/e2e:show-report
 ```
 
-## Direct Playwright commands
-
-```
-cd apps/e2e
-npx playwright test
-```
-
-Open the HTML report (after tests run):
-
-```
-npx playwright show-report
-```
-
 ## Notes
 
 - Playwright config: `apps/e2e/playwright.config.ts`
