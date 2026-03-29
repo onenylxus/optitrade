@@ -5,6 +5,8 @@ export type WidgetType = 'number' | 'chart' | 'table' | 'text' | 'candlestick';
 export const GRID_COLUMNS = 4;
 export const GRID_ROWS = 14;
 export const GRID_TOTAL_CELLS = GRID_COLUMNS * GRID_ROWS;
+export const DRAWER_WIDGET_MIME = 'application/x-optitrade-widget';
+export const SOURCE_CELL_MIME = 'application/x-optitrade-source-cell';
 
 export const widgetLibrary: { id: WidgetType; label: string }[] = [
   { id: 'number', label: 'Number Widget' },

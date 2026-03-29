@@ -1,14 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Sparkles } from 'lucide-react';
-import * as React from 'react';
+import { Sparkles, Trash2 } from 'lucide-react';
+import type { ComponentProps, ReactNode } from 'react';
+import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 
-interface BaseWidgetProps extends React.ComponentProps<typeof Card> {
+interface BaseWidgetProps extends ComponentProps<typeof Card> {
   title: string;
   description?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   isAiWidget?: boolean;
+  showRemoveButton?: boolean;
+  onRemove?: () => void;
 }
 
 export function BaseWidget({
@@ -16,6 +19,8 @@ export function BaseWidget({
   description,
   children,
   isAiWidget = false,
+  showRemoveButton = false,
+  onRemove,
   className,
   ...props
 }: BaseWidgetProps) {
@@ -27,7 +32,21 @@ export function BaseWidget({
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          {isAiWidget && <Sparkles className="text-primary self-start" size={18} />}
+
+          <div className="flex items-center gap-2 self-start">
+            {isAiWidget && <Sparkles className="text-primary" size={18} />}
+            {showRemoveButton && onRemove ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Remove widget"
+                onClick={onRemove}
+              >
+                <Trash2 className="size-4.5" />
+              </Button>
+            ) : null}
+          </div>
         </div>
       </CardHeader>
 

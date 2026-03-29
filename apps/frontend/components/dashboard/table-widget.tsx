@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import {
   Table,
   TableBody,
@@ -9,9 +9,9 @@ import {
 } from '@/components/ui/table';
 import { BaseWidget } from './base-widget';
 
-interface TableWidgetProps extends React.ComponentProps<typeof BaseWidget> {
+interface TableWidgetProps extends ComponentProps<typeof BaseWidget> {
   headers: string[];
-  rows: React.ReactNode[][];
+  rows: ReactNode[][];
 }
 
 export function TableWidget({ headers, rows, ...props }: TableWidgetProps) {

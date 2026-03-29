@@ -13,7 +13,7 @@ export function ChatPanel() {
           <CardTitle>Chat</CardTitle>
         </CardHeader>
 
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4">
           <ScrollArea className="bg-muted/20 h-full min-h-0 rounded-lg border p-3">
             <div className="space-y-3 pr-2">
               {chatMessages.map((message) => {
@@ -46,7 +46,7 @@ export function ChatPanel() {
               className="max-h-20 min-h-12 resize-none overflow-y-auto border-0 bg-transparent px-4 pt-4 pb-2 shadow-none focus-visible:border-0 focus-visible:ring-0"
             />
 
-            <div className="flex items-center justify-between px-3 pb-2">
+            <div className="flex items-center justify-between px-3">
               <Button
                 size="icon"
                 variant="ghost"

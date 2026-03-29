@@ -2,10 +2,10 @@
 
 import type { CandlestickData, Time } from 'lightweight-charts';
 import { CandlestickSeries, ColorType, createChart } from 'lightweight-charts';
-import * as React from 'react';
+import { useEffect, useRef, type ComponentProps } from 'react';
 import { BaseWidget } from './base-widget';
 
-export interface CandlestickWidgetProps extends React.ComponentProps<typeof BaseWidget> {
+export interface CandlestickWidgetProps extends ComponentProps<typeof BaseWidget> {
   data: CandlestickData<Time>[];
   borderVisible?: boolean;
   priceLineVisible?: boolean;
@@ -19,9 +19,9 @@ export function CandlestickWidget({
   timeVisible = true,
   ...props
 }: CandlestickWidgetProps) {
-  const chartContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const container = chartContainerRef.current;
     if (!container) {
       return;

@@ -1,13 +1,13 @@
 import type { Preview } from '@storybook/nextjs-vite';
-import React from 'react';
+import { createElement, useEffect, type ReactNode } from 'react';
 import { fontGeist } from '../lib/fonts';
 import { cn } from '../lib/utils';
 import '../app/globals.css';
 
 const storybookFontGeist = cn(fontGeist, 'font-sans');
 
-function StorybookFontProvider({ children }: { children: React.ReactNode }) {
-  React.useEffect(() => {
+function StorybookFontProvider({ children }: { children: ReactNode }) {
+  useEffect(() => {
     const fontClasses = storybookFontGeist.split(' ').filter(Boolean);
 
     document.documentElement.classList.add(...fontClasses);
@@ -19,12 +19,12 @@ function StorybookFontProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  return React.createElement('div', { className: storybookFontGeist }, children);
+  return createElement('div', { className: storybookFontGeist }, children);
 }
 
 const preview: Preview = {
   decorators: [
-    (Story) => React.createElement(StorybookFontProvider, {}, React.createElement(Story, {})),
+    (Story) => createElement(StorybookFontProvider, undefined, createElement(Story, {})),
   ],
   parameters: {
     controls: {

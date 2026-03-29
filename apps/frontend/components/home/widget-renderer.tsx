@@ -6,10 +6,31 @@ import { TextWidget } from '@/components/dashboard/text-widget';
 import { candleData, lineConfig, lineData } from '@/app/(home)/fixtures';
 import type { WidgetType } from '@/app/(home)/fixtures';
 
-export function WidgetRenderer({ widgetType }: { widgetType: WidgetType }) {
+interface WidgetRendererProps {
+  widgetType: WidgetType;
+  showRemoveButton?: boolean;
+  onRemove?: () => void;
+}
+
+export function WidgetRenderer({
+  widgetType,
+  showRemoveButton = false,
+  onRemove,
+}: WidgetRendererProps) {
+  const widgetControls = {
+    showRemoveButton,
+    onRemove,
+  };
+
   if (widgetType === 'number') {
     return (
-      <NumberWidget title="Portfolio Value" value={182450.52} prev={179935.2} type="absolute" />
+      <NumberWidget
+        title="Portfolio Value"
+        value={182450.52}
+        prev={179935.2}
+        type="absolute"
+        {...widgetControls}
+      />
     );
   }
 
@@ -22,6 +43,7 @@ export function WidgetRenderer({ widgetType }: { widgetType: WidgetType }) {
         config={lineConfig}
         data={lineData}
         valueKey="pnl"
+        {...widgetControls}
       />
     );
   }
@@ -36,12 +58,20 @@ export function WidgetRenderer({ widgetType }: { widgetType: WidgetType }) {
           ['AMD', '200', '+$860'],
           ['AAPL', '80', '-$210'],
         ]}
+        {...widgetControls}
       />
     );
   }
 
   if (widgetType === 'candlestick') {
-    return <CandlestickWidget title="QQQ 5D" description="Candlestick trend" data={candleData} />;
+    return (
+      <CandlestickWidget
+        title="QQQ 5D"
+        description="Candlestick trend"
+        data={candleData}
+        {...widgetControls}
+      />
+    );
   }
 
   return (
@@ -50,6 +80,7 @@ export function WidgetRenderer({ widgetType }: { widgetType: WidgetType }) {
       description="Session summary"
       isAiWidget
       text="Momentum remains positive across large-cap tech while breadth is narrowing. Keep position sizes controlled into the next macro event window."
+      {...widgetControls}
     />
   );
 }

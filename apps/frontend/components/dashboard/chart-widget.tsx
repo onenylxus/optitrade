@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import type { ComponentProps } from 'react';
 import {
   Area,
   AreaChart,
@@ -28,7 +28,7 @@ type ChartWidgetType = 'bar' | 'line' | 'area' | 'pie';
 
 type ChartDatum = Record<string, string | number>;
 
-interface ChartWidgetProps extends React.ComponentProps<typeof BaseWidget> {
+interface ChartWidgetProps extends ComponentProps<typeof BaseWidget> {
   chartType: ChartWidgetType;
   config: ChartConfig;
   data: ChartDatum[];

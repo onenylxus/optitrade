@@ -1,9 +1,17 @@
-import { Search, UserRound } from 'lucide-react';
+'use client';
+
+import { PenLine, Search, UserRound } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Typography } from '@/components/ui/typography';
 
-export function HomeHeader() {
+interface HomeHeaderProps {
+  isEditMode: boolean;
+  onEditModeChange: (nextValue: boolean) => void;
+}
+
+export function HomeHeader({ isEditMode, onEditModeChange }: HomeHeaderProps) {
   return (
     <header className="border-border/60 bg-card/70 flex h-16 items-center gap-4 border-b px-4 backdrop-blur sm:px-6">
       <div className="min-w-0 flex-1 md:flex-none">
@@ -20,7 +28,17 @@ export function HomeHeader() {
         />
       </div>
 
-      <div className="flex flex-1 justify-end md:flex-none">
+      <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
+        <Button
+          type="button"
+          variant={isEditMode ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onEditModeChange(!isEditMode)}
+        >
+          <PenLine className="size-4" />
+          {isEditMode ? 'Editing' : 'Edit Layout'}
+        </Button>
+
         <Avatar size="default" aria-label="Anonymous avatar">
           <AvatarFallback>
             <UserRound className="size-4" />
