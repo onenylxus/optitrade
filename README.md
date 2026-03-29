@@ -18,60 +18,38 @@ AI-assisted trading platform monorepo managed with Nx. The workspace contains mu
 
 ## Quickstart (recommended)
 
-1. Clone the repo and install workspace dependencies:
+Clone the repo and install workspace dependencies:
 
 ```
-git clone <repo-url>
+# Clone repository
+git clone https://github.com/onenylxus/optitrade.git
 cd optitrade
+
+# Install Node.js dependencies
 npm install
-```
 
-2. Use Nx to run project-specific targets where available (recommended):
-
-- Install backend (uses the Python installer target):
-
-```
+# Install backend libraries
 npx nx run @optitrade/backend:install
 ```
 
-- Run backend tests via Nx:
-
-```
-npx nx run @optitrade/backend:test
-```
-
-If your environment doesn't use the Nx Python targets, see the per-project README for manual steps (venv, pip, pytest).
-
-## Frontend quick run
-
-```
-cd apps/frontend
-npm install
-npx next dev
-```
-
-Note: If the frontend is configured as an Nx project, you can run its targets with:
-
-```
-npx nx show projects
-npx nx run <project>:<target>
-```
-
-## E2E tests (Playwright)
-
-```
-cd apps/e2e
-npm install
-npx playwright test
-```
-
-You can also open the HTML report after a run with `npx playwright show-report`.
+Please see the per-project README for detailed manual steps (venv, pip, pytest).
 
 ## Nx basics
 
-- List projects: `npx nx show projects`
-- Run a project target: `npx nx run <project>:<target>`
+### Terminal (CLI)
+
+- List all projects: `npx nx show projects`
+- List all commands (called *targets* in Nx) for a project: `npx nx show project <project-name>`
+- Run a project target: `npx nx run <project-name>:<target-name>`
+
+### Interactive Graph (Web)
+
 - Visualize the dependency graph: `npx nx graph`
+- List all targets for a project: `npx nx show project <project-name> --web`
+
+### IDE Extension
+
+Visual Studio Code and JetBrains have their own [**Nx console extension**](https://nx.dev/docs/guides/nx-console/console-project-details).
 
 ## Where to look next
 
@@ -83,4 +61,5 @@ You can also open the HTML report after a run with `npx playwright show-report`.
 
 Test outputs and coverage are written to `coverage/` and `reports/` (see `apps/backend/pyproject.toml` for pytest settings).
 
-If something fails on your machine, paste the failing command output into an issue.
+If something fails on your machine, paste the failing command output and create an issue on GitHub.
+
