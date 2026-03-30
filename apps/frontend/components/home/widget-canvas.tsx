@@ -12,6 +12,7 @@ import type { WidgetType } from '@/app/(home)/fixtures';
 import { WidgetRenderer } from '@/components/home/widget-renderer';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface WidgetCanvasProps {
   isEditMode: boolean;
@@ -28,18 +29,18 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
   const visibleCellIndexes = useMemo(() => {
     const occupiedCellIndexes = Object.keys(placements)
       .map((key) => Number(key))
-      .filter((index) => Number.isInteger(index))
-      .sort((a, b) => a - b);
-
-    if (!isEditMode) {
-      return occupiedCellIndexes;
-    }
+      .filter((index) => Number.isInteger(index));
 
     const maxOccupiedCell = occupiedCellIndexes.length > 0 ? Math.max(...occupiedCellIndexes) : -1;
-    const extraRowStart = (Math.floor(maxOccupiedCell / GRID_COLUMNS) + 1) * GRID_COLUMNS;
-    const extraRowIndexes = Array.from({ length: GRID_COLUMNS }, (_, i) => extraRowStart + i);
 
-    return Array.from(new Set([...occupiedCellIndexes, ...extraRowIndexes])).sort((a, b) => a - b);
+    if (!isEditMode) {
+      return maxOccupiedCell >= 0 ? Array.from({ length: maxOccupiedCell + 1 }, (_, i) => i) : [];
+    }
+
+    const extraRowStart = (Math.floor(maxOccupiedCell / GRID_COLUMNS) + 1) * GRID_COLUMNS;
+    const endIndex = extraRowStart + GRID_COLUMNS - 1;
+
+    return Array.from({ length: endIndex + 1 }, (_, i) => i);
   }, [isEditMode, placements]);
 
   const onDragStartFromCell = (
@@ -112,23 +113,27 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
           ) : null}
 
           {isEditMode ? (
-            <div className="text-muted-foreground mb-3 text-xs">
+            <div className="text-muted-foreground ml-5 text-xs">
               Edit mode is active. Drag widgets from the left panel into the grid.
             </div>
           ) : null}
 
-          <ScrollArea className="h-full rounded-xl border border-dashed border-border/70">
+          <ScrollArea className="h-full rounded-xl">
             <div
               className="grid gap-3 p-3"
               style={{ gridTemplateColumns: `repeat(${GRID_COLUMNS}, minmax(240px, 1fr))` }}
             >
               {visibleCellIndexes.map((cellIndex) => {
                 const widgetType = placements[cellIndex];
+                const isEmptyInViewMode = !widgetType && !isEditMode;
 
                 return (
                   <div
                     key={cellIndex}
-                    className="bg-muted/25 hover:bg-muted/40 flex h-55 min-w-0 items-stretch justify-stretch rounded-lg border border-border/60 p-2 transition-colors"
+                    className={cn(
+                      'flex h-55 min-w-0 items-stretch justify-stretch rounded-lg p-2 transition-colors',
+                      isEmptyInViewMode ? 'invisible' : 'bg-muted/25 hover:bg-muted/40',
+                    )}
                     onDragOver={(event) => {
                       if (!isEditMode) {
                         return;

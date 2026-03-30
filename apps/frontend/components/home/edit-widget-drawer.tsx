@@ -28,7 +28,7 @@ export function EditWidgetDrawer({ open }: EditWidgetDrawerProps) {
     >
       <Card
         className={cn(
-          'pointer-events-auto flex h-full min-h-0 flex-col overflow-hidden rounded-xl border-r shadow-sm transition-transform duration-300 ease-out',
+          'pointer-events-auto flex h-full min-h-0 flex-col overflow-hidden rounded-xl shadow-sm transition-transform duration-300 ease-out',
           open ? 'translate-x-0' : '-translate-x-2',
         )}
       >

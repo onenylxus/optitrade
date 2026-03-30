@@ -9,12 +9,12 @@ export function ChatPanel() {
   return (
     <aside className="min-h-0 p-3 sm:p-4">
       <Card className="flex h-full min-h-0 flex-col">
-        <CardHeader className="pb-3">
+        <CardHeader>
           <CardTitle>Chat</CardTitle>
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4">
-          <ScrollArea className="bg-muted/20 h-full min-h-0 rounded-lg border p-3">
+          <ScrollArea className="bg-muted/20 h-full min-h-0 rounded-lg">
             <div className="space-y-3 pr-2">
               {chatMessages.map((message) => {
                 const isUser = message.role === 'user';
