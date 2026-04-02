@@ -25,7 +25,7 @@ export const Large: Story = {
 // 2x3 Aspect Ratio (Vertical Tablet/Mobile Summary)
 export const Medium: Story = {
     render: () => (
-        <div className="w-[400px] h-[600px]">
+        <div className="w-[400px] h-[400px]">
             <PortfolioWidget size="medium" />
         </div>
     ),
