@@ -5,7 +5,7 @@
   "projectType": "application",
   "targets": {
     "dev": {
-      "command": "next dev",
+      "command": "next dev -H 127.0.0.1",
       "options": {
         "cwd": "apps/frontend"
       },
@@ -41,7 +41,7 @@
       "cache": true
     },
     "storybook": {
-      "command": "storybook dev -p 6006",
+      "command": "storybook dev -p 6006 --host 127.0.0.1",
       "options": {
         "cwd": "apps/frontend"
       },

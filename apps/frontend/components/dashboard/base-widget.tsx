@@ -12,6 +12,15 @@ interface BaseWidgetProps extends ComponentProps<typeof Card> {
   isAiWidget?: boolean;
   showRemoveButton?: boolean;
   onRemove?: () => void;
+  /** Renders directly under the title (e.g. AI-generated insight). */
+  titleSupplement?: React.ReactNode;
+  /**
+   * When `isAiWidget` is true and this is set, the sparkles control becomes a button
+   * that invokes this handler (e.g. toggle insight). Otherwise the icon is decorative only.
+   */
+  onAiButtonClick?: () => void;
+  /** `aria-expanded` for the AI control when it is a button. */
+  aiButtonExpanded?: boolean;
 }
 
 export function BaseWidget({
@@ -21,20 +30,43 @@ export function BaseWidget({
   isAiWidget = false,
   showRemoveButton = false,
   onRemove,
+  titleSupplement,
+  onAiButtonClick,
+  aiButtonExpanded,
   className,
   ...props
 }: BaseWidgetProps) {
+  const aiControl =
+    isAiWidget &&
+    (onAiButtonClick ? (
+      <button
+        type="button"
+        onClick={onAiButtonClick}
+        aria-expanded={aiButtonExpanded ?? false}
+        aria-label="Toggle AI-generated insight"
+        className={cn(
+          'text-primary shrink-0 self-start rounded-md p-1 outline-none',
+          'hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        )}
+      >
+        <Sparkles size={18} aria-hidden />
+      </button>
+    ) : (
+      <Sparkles className="text-primary shrink-0 self-start" size={18} aria-hidden />
+    ));
+
   return (
     <Card className={cn('w-full h-full gap-1 px-4', className)} {...props}>
       <CardHeader className="px-0">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
+            {titleSupplement}
+            {description ? <CardDescription>{description}</CardDescription> : null}
           </div>
 
           <div className="flex items-center gap-2 self-start">
-            {isAiWidget && <Sparkles className="text-primary" size={18} />}
+            {aiControl}
             {showRemoveButton && onRemove ? (
               <Button
                 type="button"
