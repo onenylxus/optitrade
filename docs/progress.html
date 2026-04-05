@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OptiTrade Copilot — Project Progress</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #06080f;
+      --surface:   #0b0e1a;
+      --card:      #0f1220;
+      --card-hover:#141828;
+      --border:    #1c2038;
+      --border-hi: #2a3050;
+      --gold:      #e8a020;
+      --gold-dim:  #a06810;
+      --gold-glow: rgba(232,160,32,0.15);
+      --blue:      #3d7cf4;
+      --blue-dim:  rgba(61,124,244,0.12);
+      --green:     #22c97a;
+      --green-dim: rgba(34,201,122,0.12);
+      --amber:     #f59e0b;
+      --red:       #f43d5e;
+      --text:      #dde1ef;
+      --text-muted:#5a6282;
+      --text-dim:  #8892b0;
+      --font-display: 'Cormorant Garamond', serif;
+      --font-mono:    'Space Mono', monospace;
+      --font-body:    'Outfit', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ─── GRID BACKGROUND ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(61,124,244,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,124,244,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 60px;
+      background: rgba(6,8,15,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .nav-logo span { color: var(--text-muted); }
+    .nav-links {
+      display: flex; gap: 2rem; list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 0.25rem 0.7rem;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      border-radius: 2px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding: 8rem 2.5rem 6rem;
+      overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute;
+      width: 900px; height: 900px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(232,160,32,0.06) 0%, transparent 70%);
+      top: -200px; right: -200px;
+      pointer-events: none;
+    }
+    .hero-glow-2 {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(61,124,244,0.07) 0%, transparent 70%);
+      bottom: 0; left: -150px;
+      pointer-events: none;
+    }
+    .hero-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .hero-tag::before {
+      content: '';
+      display: block; width: 32px; height: 1px;
+      background: var(--gold);
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 8vw, 7rem);
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.5rem;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .hero-subtitle {
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text-dim);
+      margin-bottom: 2.5rem;
+      max-width: 700px;
+    }
+    .hero-meta {
+      display: flex; gap: 2.5rem; flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .hero-meta-item {
+      display: flex; flex-direction: column; gap: 0.2rem;
+    }
+    .hero-meta-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .hero-meta-value {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    .hero-cta {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+    }
+    .btn-primary {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.75rem 1.75rem;
+      background: var(--gold);
+      color: #000;
+      border: none; cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { background: #ffc040; transform: translateY(-1px); }
+    .btn-ghost {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.75rem 1.75rem;
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border-hi);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+    /* ─── SECTION WRAPPER ─── */
+    section {
+      position: relative;
+      padding: 6rem 2.5rem;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .section-label::before {
+      content: '';
+      display: block; width: 24px; height: 1px;
+      background: var(--gold);
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 600;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-desc {
+      color: var(--text-dim);
+      font-size: 1rem;
+      max-width: 620px;
+      margin-bottom: 3.5rem;
+      line-height: 1.75;
+    }
+    .divider {
+      width: 100%; height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* ─── CAPABILITIES ─── */
+    .capabilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .cap-card {
+      background: var(--card);
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.25s;
+    }
+    .cap-card:hover { background: var(--card-hover); }
+    .cap-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: transparent;
+      transition: background 0.25s;
+    }
+    .cap-card:hover::before { background: var(--gold); }
+    .cap-number {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--gold-dim);
+      margin-bottom: 1.5rem;
+    }
+    .cap-icon {
+      width: 44px; height: 44px;
+      border: 1px solid var(--border-hi);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.3rem;
+    }
+    .cap-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .cap-desc {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .cap-tags {
+      display: flex; flex-wrap: wrap; gap: 0.4rem;
+    }
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid var(--border-hi);
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .tag.gold { border-color: var(--gold-dim); color: var(--gold); }
+    .tag.blue { border-color: rgba(61,124,244,0.3); color: var(--blue); }
+    .tag.green { border-color: rgba(34,201,122,0.3); color: var(--green); }
+
+    /* ─── TEAM ─── */
+    .team-grid {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+    }
+    .team-card {
+      flex: 1; min-width: 180px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.75rem 1.5rem;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.75rem;
+      text-align: center;
+      transition: border-color 0.25s, background 0.25s;
+    }
+    .team-card:hover {
+      border-color: var(--gold-dim);
+      background: var(--card-hover);
+    }
+    .avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--gold-glow);
+      border: 1px solid var(--gold-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gold);
+    }
+    .team-name {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .team-id {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* ─── TECH STACK ─── */
+    .stack-layers {
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .stack-layer {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .stack-label-col {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .stack-layer-name {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.3rem;
+    }
+    .stack-layer-role {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .stack-pills {
+      padding: 1.25rem 1.5rem;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+      background: var(--card);
+    }
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      padding: 0.3rem 0.8rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-hi);
+      color: var(--text-dim);
+      border-radius: 2px;
+    }
+    .pill.hi { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
+    .pill.blue { border-color: rgba(61,124,244,0.3); color: var(--blue); background: var(--blue-dim); }
+    .pill.green { border-color: rgba(34,201,122,0.3); color: var(--green); background: var(--green-dim); }
+
+    /* ─── PROGRESS TIMELINE ─── */
+    .timeline {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border: 1px solid var(--border);
+    }
+    .timeline::after {
+      content: '';
+      position: absolute;
+      top: 52px; left: 0; right: 0;
+      height: 2px;
+      background: var(--border);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .phase-col {
+      position: relative; z-index: 1;
+      padding: 0;
+      border-right: 1px solid var(--border);
+    }
+    .phase-col:last-child { border-right: none; }
+    .phase-header {
+      padding: 1.5rem 1.5rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .phase-status-dot {
+      position: absolute;
+      top: -1px; left: 50%; transform: translateX(-50%);
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+    .dot-done    { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .dot-active  { background: var(--gold);  box-shadow: 0 0 10px var(--gold); }
+    .dot-pending { background: var(--border-hi); }
+    .phase-number {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .phase-name {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 0.4rem;
+    }
+    .phase-period {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+    }
+    .phase-badge {
+      display: inline-block;
+      margin-top: 0.6rem;
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+    }
+    .badge-done    { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,201,122,0.3); }
+    .badge-active  { background: var(--gold-glow); color: var(--gold); border: 1px solid var(--gold-dim); }
+    .badge-pending { background: rgba(255,255,255,0.03); color: var(--text-muted); border: 1px solid var(--border-hi); }
+    .phase-milestones {
+      padding: 1.25rem 1.5rem;
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .milestone {
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .milestone-icon {
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+      width: 14px; height: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+    }
+    .milestone.done .milestone-icon  { color: var(--green); }
+    .milestone.done { color: var(--text-dim); }
+    .milestone.active { color: var(--text); }
+    .milestone.active .milestone-icon { color: var(--gold); }
+    .milestone.pending .milestone-icon { color: var(--border-hi); }
+    .milestone.pending { color: var(--text-muted); }
+
+    .phase-progress-bar {
+      height: 3px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .phase-progress-fill {
+      position: absolute; top: 0; left: 0; height: 100%;
+      transition: width 1s ease;
+    }
+    .fill-done   { background: var(--green); }
+    .fill-active { background: linear-gradient(90deg, var(--gold), #ffc060); }
+    .fill-pending { background: var(--border); }
+
+    /* ─── CURRENT SPRINT ─── */
+    .sprint-box {
+      border: 1px solid var(--gold-dim);
+      background: linear-gradient(135deg, rgba(232,160,32,0.04), transparent);
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .sprint-box::before {
+      content: 'CURRENT SPRINT';
+      position: absolute; top: 1rem; right: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--gold-dim);
+    }
+    .sprint-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .sprint-title em { font-style: italic; color: var(--gold); }
+    .sprint-deadline {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+    }
+    .sprint-tasks {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.75rem;
+    }
+    .sprint-task {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .task-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .task-dot.done   { background: var(--green); }
+    .task-dot.wip    { background: var(--gold); }
+    .task-dot.todo   { background: var(--border-hi); }
+
+    /* ─── DELIVERABLES ─── */
+    .deliverables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .deliverable-card {
+      padding: 1.75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      position: relative;
+      transition: border-color 0.25s, background 0.25s;
+    }
+    .deliverable-card:hover {
+      border-color: var(--border-hi);
+      background: var(--card-hover);
+    }
+    .deliverable-phase {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .deliverable-name {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .deliverable-status {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .deliverable-status.done   { color: var(--green); }
+    .deliverable-status.active { color: var(--gold); }
+    .deliverable-status.future { color: var(--text-muted); }
+
+    /* ─── STATS ROW ─── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      border: 1px solid var(--border);
+      background: var(--border);
+      gap: 1px;
+      margin-bottom: 3rem;
+    }
+    .stat-box {
+      background: var(--card);
+      padding: 1.75rem;
+    }
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+    .stat-value.gold  { color: var(--gold); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.blue  { color: var(--blue); }
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+      max-width: 100%;
+    }
+    .footer-left {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+    .footer-right {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    .footer-right span { color: var(--gold); }
+
+    /* ─── ANIMATIONS ─── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      animation: fadeUp 0.7s ease forwards;
+    }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up:nth-child(1) { animation-delay: 0.05s; }
+    .fade-up:nth-child(2) { animation-delay: 0.15s; }
+    .fade-up:nth-child(3) { animation-delay: 0.25s; }
+    .fade-up:nth-child(4) { animation-delay: 0.35s; }
+    .fade-up:nth-child(5) { animation-delay: 0.45s; }
+
+    /* ─── PULSE ─── */
+    @keyframes pulse-gold {
+      0%, 100% { box-shadow: 0 0 6px var(--gold); }
+      50%       { box-shadow: 0 0 16px var(--gold), 0 0 30px rgba(232,160,32,0.3); }
+    }
+    .dot-active { animation: pulse-gold 2s ease-in-out infinite; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .timeline {
+        grid-template-columns: 1fr 1fr;
+      }
+      .phase-col:nth-child(2) { border-right: none; }
+      .phase-col:nth-child(3) { border-top: 1px solid var(--border); }
+      .phase-col:nth-child(4) { border-top: 1px solid var(--border); }
+    }
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .nav-links { display: none; }
+      section { padding: 4rem 1.25rem; }
+      .hero { padding: 7rem 1.25rem 4rem; }
+      .timeline { grid-template-columns: 1fr; }
+      .phase-col { border-right: none; border-top: 1px solid var(--border); }
+      .phase-col:first-child { border-top: none; }
+      .stack-layer { grid-template-columns: 1fr; }
+      .stack-label-col { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">OptiTrade <span>/ COMP7705</span></div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#progress">Progress</a></li>
+    <li><a href="#sprint">Sprint</a></li>
+  </ul>
+  <div class="nav-badge">2025 – 2026</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow-2"></div>
+  <div class="hero-tag">COMP7705 Capstone Project</div>
+  <h1 class="hero-title fade-up">OptiTrade<br /><em>Copilot</em></h1>
+  <p class="hero-subtitle fade-up">An AI-Driven Trading Portal with<br />Interactive Dynamic Canvas</p>
+  <div class="hero-meta fade-up">
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Course</span>
+      <span class="hero-meta-value">COMP7705</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Year</span>
+      <span class="hero-meta-value">2025 – 2026</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Team Size</span>
+      <span class="hero-meta-value">5 Members</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Current Phase</span>
+      <span class="hero-meta-value" style="color:var(--gold)">Phase 1 — In Progress</span>
+    </div>
+  </div>
+  <div class="hero-cta fade-up">
+    <a href="#progress" class="btn-primary">View Progress</a>
+    <a href="#overview" class="btn-ghost">Read Proposal Summary</a>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- STATS -->
+<section style="padding-top:4rem; padding-bottom:2rem;">
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-value gold">1 / 4</div>
+      <div class="stat-label">Phases Complete</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value green">9</div>
+      <div class="stat-label">Phase 0 Milestones Done</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value gold">10</div>
+      <div class="stat-label">Phase 1 Milestones Active</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value blue">3</div>
+      <div class="stat-label">Core Capabilities</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value" style="color:var(--text-dim)">Apr 14</div>
+      <div class="stat-label">Next Deadline</div>
+    </div>
+  </div>
+</section>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="section-label">01 — Overview</div>
+  <h2 class="section-title">Three <em>Core</em> Capabilities</h2>
+  <p class="section-desc">
+    OptiTrade Copilot addresses the fragmented information environment faced by professional traders —
+    combining personalized visualization, verifiable AI reasoning, and position-aware alerts in a single integrated platform.
+  </p>
+  <div class="capabilities-grid">
+    <div class="cap-card fade-up">
+      <div class="cap-number">CAPABILITY 01</div>
+      <div class="cap-icon">⊞</div>
+      <h3 class="cap-title">Dynamic Widget Canvas</h3>
+      <p class="cap-desc">A drag-and-drop workspace for charts, portfolio analytics, and AI-enhanced news. Users configure personalized views of strategy-relevant signals with saved layout profiles.</p>
+      <div class="cap-tags">
+        <span class="tag gold">Charts</span>
+        <span class="tag gold">Portfolio</span>
+        <span class="tag">News Feed</span>
+        <span class="tag">react-grid-layout</span>
+      </div>
+    </div>
+    <div class="cap-card fade-up">
+      <div class="cap-number">CAPABILITY 02</div>
+      <div class="cap-icon">◈</div>
+      <h3 class="cap-title">Context-Aware AI Chat</h3>
+      <p class="cap-desc">Conversational AI whose responses are grounded in timestamped context cards exported from on-screen widgets — every answer is traceable to real data, eliminating hallucination risk.</p>
+      <div class="cap-tags">
+        <span class="tag blue">RAG</span>
+        <span class="tag blue">LLM</span>
+        <span class="tag">Context Cards</span>
+        <span class="tag">Provenance</span>
+      </div>
+    </div>
+    <div class="cap-card fade-up">
+      <div class="cap-number">CAPABILITY 03</div>
+      <div class="cap-icon">◎</div>
+      <h3 class="cap-title">Real-Time Alerts &amp; Monitoring</h3>
+      <p class="cap-desc">Near-real-time notifications driven by user-defined rules tied to technical indicators, portfolio thresholds, and news risk signals — delivering position-aware, high-precision alerts.</p>
+      <div class="cap-tags">
+        <span class="tag green">Celery / Redis</span>
+        <span class="tag green">SendGrid</span>
+        <span class="tag">RSI / MACD</span>
+        <span class="tag">WebSocket</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="section-label">02 — Team</div>
+  <h2 class="section-title">Meet the <em>Team</em></h2>
+  <p class="section-desc">Five COMP7705 students building OptiTrade Copilot together.</p>
+  <div class="team-grid">
+    <div class="team-card fade-up">
+      <div class="avatar">WW</div>
+      <div class="team-name">Wong Wai Wing</div>
+      <div class="team-id">UID 3036383513</div>
+    </div>
+    <div class="team-card fade-up">
+      <div class="avatar">NY</div>
+      <div class="team-name">Ng Wing Yin</div>
+      <div class="team-id">UID 3036383927</div>
+    </div>
+    <div class="team-card fade-up">
+      <div class="avatar">HN</div>
+      <div class="team-name">Hui Nga Chi</div>
+      <div class="team-id">UID 3036198774</div>
+    </div>
+    <div class="team-card fade-up">
+      <div class="avatar">NS</div>
+      <div class="team-name">Ng Sui Yat</div>
+      <div class="team-id">UID 3036383549</div>
+    </div>
+    <div class="team-card fade-up">
+      <div class="avatar">CC</div>
+      <div class="team-name">Cheung Ching Nam</div>
+      <div class="team-id">UID 3036382959</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <div class="section-label">03 — Architecture</div>
+  <h2 class="section-title">Technical <em>Stack</em></h2>
+  <p class="section-desc">Three loosely-coupled layers communicating through well-defined APIs, with a context management sub-system spanning all layers for provenance and hallucination reduction.</p>
+  <div class="stack-layers">
+    <div class="stack-layer">
+      <div class="stack-label-col">
+        <div class="stack-layer-name">Frontend</div>
+        <div class="stack-layer-role">Analysis Dashboard</div>
+      </div>
+      <div class="stack-pills">
+        <span class="pill hi">Next.js</span>
+        <span class="pill hi">React</span>
+        <span class="pill">react-grid-layout</span>
+        <span class="pill">Recharts</span>
+        <span class="pill">Tailwind CSS</span>
+        <span class="pill">Shadcn UI</span>
+        <span class="pill">Redux / Context API</span>
+        <span class="pill">TypeScript</span>
+      </div>
+    </div>
+    <div class="stack-layer">
+      <div class="stack-label-col">
+        <div class="stack-layer-name">Backend</div>
+        <div class="stack-layer-role">API &amp; Data Service</div>
+      </div>
+      <div class="stack-pills">
+        <span class="pill blue">Python FastAPI</span>
+        <span class="pill blue">Next.js API Routes</span>
+        <span class="pill">PostgreSQL / MongoDB</span>
+        <span class="pill">Redis</span>
+        <span class="pill">Celery</span>
+        <span class="pill">WebSocket / SSE</span>
+        <span class="pill">gRPC</span>
+      </div>
+    </div>
+    <div class="stack-layer">
+      <div class="stack-label-col">
+        <div class="stack-layer-name">AI Platform</div>
+        <div class="stack-layer-role">LLM &amp; Inference</div>
+      </div>
+      <div class="stack-pills">
+        <span class="pill green">Azure OpenAI</span>
+        <span class="pill green">LangChain</span>
+        <span class="pill">RAG Engine</span>
+        <span class="pill">FinBERT</span>
+        <span class="pill">Context-Card Store</span>
+        <span class="pill">Dify Chatbot</span>
+      </div>
+    </div>
+    <div class="stack-layer">
+      <div class="stack-label-col">
+        <div class="stack-layer-name">Dev Ops</div>
+        <div class="stack-layer-role">Tooling &amp; CI/CD</div>
+      </div>
+      <div class="stack-pills">
+        <span class="pill">Nx Monorepo</span>
+        <span class="pill">uv / hatch</span>
+        <span class="pill">Ruff</span>
+        <span class="pill">Storybook</span>
+        <span class="pill">Vitest</span>
+        <span class="pill">Pytest</span>
+        <span class="pill">ESLint / Prettier</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROGRESS TIMELINE -->
+<section id="progress">
+  <div class="section-label">04 — Schedule</div>
+  <h2 class="section-title">Project <em>Progress</em></h2>
+  <p class="section-desc">Four phases from proposal through final submission. Updated regularly to reflect current development status.</p>
+
+  <div class="timeline">
+
+    <!-- Phase 0 -->
+    <div class="phase-col">
+      <div class="phase-progress-bar">
+        <div class="phase-progress-fill fill-done" style="width:100%"></div>
+      </div>
+      <div class="phase-header">
+        <div class="phase-status-dot dot-done"></div>
+        <div class="phase-number">Phase 0</div>
+        <div class="phase-name">Proposal &amp; Setup</div>
+        <div class="phase-period">Mar 2026 · by 20 Mar</div>
+        <span class="phase-badge badge-done">✓ Complete</span>
+      </div>
+      <div class="phase-milestones">
+        <div class="milestone done"><span class="milestone-icon">✓</span>Finalize &amp; submit Detailed Proposal</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Confirm mentor &amp; sub-deadlines</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Set up Nx monorepo (Next.js + Python)</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Configure Convex, Clerk auth, Zod</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Establish shared component library</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Define API contract stubs</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Set up CI/CD + linting/testing</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Design &amp; provision database schema</div>
+        <div class="milestone done"><span class="milestone-icon">✓</span>Stand up project webpage</div>
+      </div>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="phase-col">
+      <div class="phase-progress-bar">
+        <div class="phase-progress-fill fill-active" style="width:40%"></div>
+      </div>
+      <div class="phase-header">
+        <div class="phase-status-dot dot-active"></div>
+        <div class="phase-number">Phase 1</div>
+        <div class="phase-name">Core Infrastructure &amp; MVP Widgets</div>
+        <div class="phase-period">Mar – Apr 2026 · by 14 Apr</div>
+        <span class="phase-badge badge-active">⬡ In Progress</span>
+      </div>
+      <div class="phase-milestones">
+        <div class="milestone active"><span class="milestone-icon">◎</span>Broker Mock endpoints</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Quote fetching &amp; derived calculations</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Top Mover algorithm</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Market Data service &amp; candle cache</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Dashboard layout &amp; widget framework</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Edit mode: drag/drop, resize, reorder</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Portfolio Full widget</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>P/L Tile &amp; Top Mover Tile</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Price Chart integration</div>
+        <div class="milestone active"><span class="milestone-icon">◎</span>Candlestick/Line chart + selectors</div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-col">
+      <div class="phase-progress-bar">
+        <div class="phase-progress-fill fill-pending" style="width:0%"></div>
+      </div>
+      <div class="phase-header">
+        <div class="phase-status-dot dot-pending"></div>
+        <div class="phase-number">Phase 2</div>
+        <div class="phase-name">AI Features &amp; News Widget</div>
+        <div class="phase-period">Apr – May 2026 · by 5 May</div>
+        <span class="phase-badge badge-pending">○ Upcoming</span>
+      </div>
+      <div class="phase-milestones">
+        <div class="milestone pending"><span class="milestone-icon">○</span>AI Insights for Portfolio Full</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>AI Momentum Snapshot for Chart</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>News feed aggregation + filtering</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Per-article AI Insight</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>AI Chat Panel UI + streaming</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Context management system</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Chat Context Export for all widgets</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Grounded response + safety constraints</div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-col">
+      <div class="phase-progress-bar">
+        <div class="phase-progress-fill fill-pending" style="width:0%"></div>
+      </div>
+      <div class="phase-header">
+        <div class="phase-status-dot dot-pending"></div>
+        <div class="phase-number">Phase 3</div>
+        <div class="phase-name">Alerts, Testing &amp; Submission</div>
+        <div class="phase-period">May – Jun 2026</div>
+        <span class="phase-badge badge-pending">○ Upcoming</span>
+      </div>
+      <div class="phase-milestones">
+        <div class="milestone pending"><span class="milestone-icon">○</span>Alert rule authoring UI</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Celery/Redis scheduler</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Email notification (SendGrid)</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>In-dashboard real-time alerts</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>End-to-end testing</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Performance &amp; load testing</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Final documentation</div>
+        <div class="milestone pending"><span class="milestone-icon">○</span>Presentation preparation</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CURRENT SPRINT -->
+<section id="sprint">
+  <div class="section-label">05 — Current Sprint</div>
+  <h2 class="section-title" style="margin-bottom:2rem">Phase 1 — <em>Core Infrastructure</em></h2>
+
+  <div class="sprint-box">
+    <div class="sprint-title">Phase 1: Core Infrastructure <em>&amp; MVP Widgets</em></div>
+    <div class="sprint-deadline">Deadline: 14 April 2026 &nbsp;·&nbsp; Estimated: 155 hrs total</div>
+    <div class="sprint-tasks">
+      <div class="sprint-task"><div class="task-dot wip"></div>Broker Mock endpoints</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Quote fetching &amp; derived calculations</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Top Mover algorithm</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Market Data service &amp; candle cache</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Dashboard layout &amp; widget framework</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Edit mode: drag/drop, resize, reorder</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Portfolio Full widget</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>P/L Tile &amp; Top Mover Tile</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Price Chart (TradingView) integration</div>
+      <div class="sprint-task"><div class="task-dot wip"></div>Candlestick/Line chart + selectors</div>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem">
+    <div class="section-label" style="margin-bottom:1rem">Deliverables by Phase</div>
+    <div class="deliverables-grid">
+      <div class="deliverable-card">
+        <div class="deliverable-phase">Phase 0 · Mar 2026</div>
+        <div class="deliverable-name">Detailed Project Proposal</div>
+        <div class="deliverable-status done">✓ Submitted</div>
+      </div>
+      <div class="deliverable-card">
+        <div class="deliverable-phase">Phase 0 · Mar 2026</div>
+        <div class="deliverable-name">Project Webpage (initial)</div>
+        <div class="deliverable-status done">✓ Live</div>
+      </div>
+      <div class="deliverable-card">
+        <div class="deliverable-phase">Phase 1 · Apr 14, 2026</div>
+        <div class="deliverable-name">Progress Update 1</div>
+        <div class="deliverable-status active">⬡ In Preparation</div>
+      </div>
+      <div class="deliverable-card">
+        <div class="deliverable-phase">Phase 2 · May 5, 2026</div>
+        <div class="deliverable-name">Progress Update 2</div>
+        <div class="deliverable-status future">○ Upcoming</div>
+      </div>
+      <div class="deliverable-card">
+        <div class="deliverable-phase">Phase 3 · Jun 2026</div>
+        <div class="deliverable-name">Final Report &amp; Project Demo</div>
+        <div class="deliverable-status future">○ Upcoming</div>
+      </div>
+      <div class="deliverable-card">
+        <div class="deliverable-phase">Phase 3 · Jun 2026</div>
+        <div class="deliverable-name">Project Webpage (final)</div>
+        <div class="deliverable-status future">○ Upcoming</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    COMP7705 CAPSTONE PROJECT &nbsp;·&nbsp; THE UNIVERSITY OF HONG KONG &nbsp;·&nbsp; 2025–2026
+  </div>
+  <div class="footer-right">
+    LAST UPDATED <span id="last-updated"></span>
+  </div>
+</footer>
+
+<script>
+  // Last updated
+  const d = new Date();
+  const opts = { year:'numeric', month:'short', day:'numeric' };
+  document.getElementById('last-updated').textContent = d.toLocaleDateString('en-GB', opts).toUpperCase();
+
+  // Animate progress bars on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.width = entry.target.dataset.width;
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.phase-progress-fill').forEach(el => {
+    const w = el.style.width;
+    el.dataset.width = w;
+    el.style.width = '0%';
+    observer.observe(el);
+  });
+
+  // Fade-up on scroll for non-hero elements
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        fadeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.cap-card, .team-card, .deliverable-card, .sprint-task, .stack-layer').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    fadeObserver.observe(el);
+  });
+</script>
+</body>
+</html>
