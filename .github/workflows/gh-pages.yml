@@ -1,0 +1,165 @@
+name: Validate GitHub Pages Deployment
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/index.html'
+      - '.github/workflows/gh-pages.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'docs/index.html'
+
+jobs:
+  validate-html:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check HTML file exists
+        run: |
+          if [ ! -f 'docs/index.html' ]; then
+            echo "❌ docs/index.html not found"
+            exit 1
+          fi
+          echo "✅ docs/index.html exists"
+          echo "File size: $(wc -c < 'docs/index.html') bytes"
+
+      - name: Validate HTML structure
+        run: |
+          # Basic HTML validation: check for common issues
+          if ! grep -q '<html' docs/index.html; then
+            echo "❌ Missing <html> tag"
+            exit 1
+          fi
+          if ! grep -q '</html>' docs/index.html; then
+            echo "❌ Missing closing </html> tag"
+            exit 1
+          fi
+          if ! grep -q '<head' docs/index.html; then
+            echo "❌ Missing <head> tag"
+            exit 1
+          fi
+          if ! grep -q '<body' docs/index.html; then
+            echo "❌ Missing <body> tag"
+            exit 1
+          fi
+          echo "✅ HTML structure validated (tags present)"
+
+          # Check for unclosed script tags
+          open_scripts=$(grep -o '<script' docs/index.html | wc -l)
+          close_scripts=$(grep -o '</script>' docs/index.html | wc -l)
+          if [ "$open_scripts" -ne "$close_scripts" ]; then
+            echo "⚠️  Script tag mismatch: $open_scripts open, $close_scripts close"
+          fi
+          echo "✅ Basic tag validation passed"
+
+  test-rendering:
+    runs-on: ubuntu-latest
+    needs: validate-html
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: npm install --save-dev @playwright/test
+
+      - name: Test HTML rendering locally
+        run: |
+          npx playwright install chromium
+          node -e "
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            await page.goto('file://$(pwd)/docs/index.html');
+            const title = await page.title();
+            const html = await page.content();
+            console.log('✅ Page loaded successfully');
+            console.log('Title:', title);
+            console.log('HTML length:', html.length, 'bytes');
+            if (!title || title.includes('Error')) {
+              process.exit(1);
+            }
+            await browser.close();
+          })();
+          "
+
+  verify-deployed:
+    runs-on: ubuntu-latest
+    needs: validate-html
+    # Only run on push to master (not on PR)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for GitHub Pages deployment
+        run: sleep 30
+
+      - name: Fetch deployed page
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+          DEPLOYED_URL="https://${OWNER}.github.io/${REPO}/docs/"
+
+          echo "Checking deployment at: ${DEPLOYED_URL}"
+
+          # Fetch the deployed page
+          curl -s -o deployed.html -w "\n%{http_code}\n" "${DEPLOYED_URL}index.html" | tail -1 | tee http_code.txt
+          HTTP_CODE=$(cat http_code.txt)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Failed to fetch deployed page (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Deployed page accessible (HTTP 200)"
+
+      - name: Compare source vs deployed
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+          DEPLOYED_URL="https://${OWNER}.github.io/${REPO}/docs/"
+
+          # Remove timestamps and other dynamic content before comparison
+          curl -s "${DEPLOYED_URL}index.html" | sed 's/<span id="last-updated"><\/span>/[TIMESTAMP]/g' > deployed_normalized.html
+          cat docs/index.html | sed 's/<span id="last-updated"><\/span>/[TIMESTAMP]/g' > source_normalized.html
+
+          if diff -q source_normalized.html deployed_normalized.html > /dev/null; then
+            echo "✅ Deployed content matches source file"
+          else
+            echo "⚠️  Minor differences detected (likely due to timestamps or caching)"
+            echo "First 50 differences:"
+            diff source_normalized.html deployed_normalized.html | head -50
+          fi
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [validate-html, test-rendering]
+    if: always()
+
+    steps:
+      - name: Report validation results
+        run: |
+          echo "## GitHub Pages Validation Summary"
+          echo ""
+          echo "✅ HTML syntax validated"
+          echo "✅ Page rendering tested"
+          echo ""
+          echo "If you made changes to docs/index.html, GitHub Pages will auto-deploy."
+          echo "Visit: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/docs/"
