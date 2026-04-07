@@ -2,25 +2,49 @@ import type { CandlestickData, Time } from 'lightweight-charts';
 
 export type WidgetType = 'number' | 'chart' | 'table' | 'text' | 'candlestick';
 
-export const GRID_COLUMNS = 4;
-export const DRAWER_WIDGET_MIME = 'application/x-optitrade-widget';
-export const SOURCE_CELL_MIME = 'application/x-optitrade-source-cell';
+export interface WidgetSpan {
+  cols: number;
+  rows: number;
+}
 
-export const widgetLibrary: { id: WidgetType; label: string }[] = [
-  { id: 'number', label: 'Number Widget' },
-  { id: 'chart', label: 'Chart Widget' },
-  { id: 'table', label: 'Table Widget' },
-  { id: 'text', label: 'Text Widget' },
-  { id: 'candlestick', label: 'Candlestick Widget' },
+export interface WidgetPlacement {
+  id: string;
+  widgetType: WidgetType;
+  col: number;
+  row: number;
+  colSpan: number;
+  rowSpan: number;
+}
+
+export const GRID_CELL_WIDTH_REM = 4;
+export const GRID_CELL_HEIGHT_REM = 3.5;
+export const GRID_GAP_REM = 0.5;
+export const DRAWER_WIDGET_MIME = 'application/x-optitrade-widget';
+export const SOURCE_WIDGET_MIME = 'application/x-optitrade-source-widget';
+
+export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
+  number: { cols: 4, rows: 2 },
+  chart: { cols: 5, rows: 4 },
+  table: { cols: 5, rows: 4 },
+  text: { cols: 5, rows: 4 },
+  candlestick: { cols: 8, rows: 6 },
+};
+
+export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
+  { id: 'number', label: 'Number Widget', sizeLabel: '4x2' },
+  { id: 'chart', label: 'Chart Widget', sizeLabel: '5x4' },
+  { id: 'table', label: 'Table Widget', sizeLabel: '5x4' },
+  { id: 'text', label: 'Text Widget', sizeLabel: '5x4' },
+  { id: 'candlestick', label: 'Candlestick Widget', sizeLabel: '8x6' },
 ];
 
-export const initialPlacements: Partial<Record<number, WidgetType>> = {
-  0: 'number',
-  1: 'chart',
-  2: 'table',
-  4: 'candlestick',
-  5: 'text',
-};
+export const initialPlacements: WidgetPlacement[] = [
+  { id: 'widget-number-1', widgetType: 'number', col: 0, row: 0, colSpan: 4, rowSpan: 2 },
+  { id: 'widget-chart-1', widgetType: 'chart', col: 4, row: 0, colSpan: 5, rowSpan: 4 },
+  { id: 'widget-text-1', widgetType: 'text', col: 9, row: 0, colSpan: 5, rowSpan: 4 },
+  { id: 'widget-table-1', widgetType: 'table', col: 0, row: 4, colSpan: 5, rowSpan: 4 },
+  { id: 'widget-candlestick-1', widgetType: 'candlestick', col: 5, row: 4, colSpan: 8, rowSpan: 6 },
+];
 
 export const lineData = [
   { label: 'Mon', pnl: 3400 },

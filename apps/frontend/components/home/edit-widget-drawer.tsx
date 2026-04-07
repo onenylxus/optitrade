@@ -37,7 +37,7 @@ export function EditWidgetDrawer({ open }: EditWidgetDrawerProps) {
             <LayoutGrid className="size-4" />
             Widget Library
           </CardTitle>
-          <CardDescription>Drag a widget into any empty canvas slot.</CardDescription>
+          <CardDescription>Drag a widget onto a grid origin.</CardDescription>
         </CardHeader>
 
         <CardContent className="h-full space-y-2 overflow-y-auto p-3">
@@ -51,7 +51,7 @@ export function EditWidgetDrawer({ open }: EditWidgetDrawerProps) {
               <div className="text-foreground text-sm font-medium">{widget.label}</div>
               <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
                 <MoveRight className="size-3" />
-                Drag to canvas
+                Drag to canvas ({widget.sizeLabel})
               </div>
             </div>
           ))}
