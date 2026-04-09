@@ -167,7 +167,10 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
       const remInPixels = getRemInPixels();
       const cellWidthPx = GRID_CELL_WIDTH_REM * remInPixels;
       const gapPx = GRID_GAP_REM * remInPixels;
-      const availableWidthPx = element.clientWidth;
+      const computedStyle = window.getComputedStyle(element);
+      const horizontalPaddingPx =
+        Number.parseFloat(computedStyle.paddingLeft) + Number.parseFloat(computedStyle.paddingRight);
+      const availableWidthPx = Math.max(0, element.clientWidth - horizontalPaddingPx);
       const computedColumns = Math.max(1, Math.floor((availableWidthPx + gapPx) / (cellWidthPx + gapPx)));
 
       setGridColumns((prev) => (prev === computedColumns ? prev : computedColumns));
@@ -296,7 +299,7 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
   };
 
   return (
-    <section className="min-h-0 p-3 sm:p-4">
+    <section className="h-full min-h-0 p-3 sm:p-4">
       <Card className="flex h-full min-h-0 flex-col">
         <CardContent className="min-h-0 flex-1 px-4 pt-4 pb-4">
           {!isEditMode && normalizedPlacements.length === 0 ? (
@@ -305,16 +308,10 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
             </div>
           ) : null}
 
-          {isEditMode ? (
-            <div className="text-muted-foreground ml-5 text-xs">
-              Edit mode is active. Widgets snap to fixed cells and can span multiple cells.
-            </div>
-          ) : null}
-
           <ScrollArea className="h-full rounded-xl">
             <div
               ref={canvasWidthRef}
-              className="w-full p-3"
+              className="w-full p-3 pr-6"
             >
               <div
                 className="relative grid"

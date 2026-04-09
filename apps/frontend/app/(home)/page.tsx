@@ -13,15 +13,37 @@ export default function HomePage() {
   return (
     <div className="bg-background text-foreground relative flex h-screen w-full flex-col overflow-hidden">
       <HomeHeader isEditMode={isEditMode} onEditModeChange={setIsEditMode} />
-      <EditWidgetDrawer open={isEditMode} />
-      <main
-        className={cn(
-          'grid flex-1 grid-cols-1 overflow-hidden transition-[padding-left] duration-300 lg:grid-cols-[1fr_360px]',
-          isEditMode && 'lg:pl-72',
-        )}
-      >
-        <WidgetCanvas isEditMode={isEditMode} />
-        <ChatPanel />
+      <main className="relative flex-1 overflow-hidden">
+        <div
+          className={cn(
+            'h-full min-h-0 transition-[padding-left,padding-right] duration-300 ease-out',
+            isEditMode ? 'lg:pl-[360px] lg:pr-0' : 'lg:pr-[360px] lg:pl-0',
+          )}
+        >
+          <WidgetCanvas isEditMode={isEditMode} />
+        </div>
+
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-y-0 left-0 hidden w-[360px] transition-all duration-300 ease-out lg:block',
+            isEditMode ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
+          )}
+          aria-hidden={!isEditMode}
+        >
+          <EditWidgetDrawer open={isEditMode} mode="inline" className="h-full" />
+        </div>
+
+        <div
+          className={cn(
+            'absolute inset-y-0 right-0 hidden w-[360px] transition-all duration-300 ease-out lg:block',
+            isEditMode ? 'pointer-events-none translate-x-full opacity-0' : 'pointer-events-auto translate-x-0 opacity-100',
+          )}
+          aria-hidden={isEditMode}
+        >
+          <ChatPanel />
+        </div>
+
+        <EditWidgetDrawer open={isEditMode} className="lg:hidden" />
       </main>
     </div>
   );

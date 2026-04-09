@@ -9,27 +9,37 @@ import { cn } from '@/lib/utils';
 
 interface EditWidgetDrawerProps {
   open: boolean;
+  mode?: 'overlay' | 'inline';
+  className?: string;
 }
 
-export function EditWidgetDrawer({ open }: EditWidgetDrawerProps) {
+export function EditWidgetDrawer({ open, mode = 'overlay', className }: EditWidgetDrawerProps) {
   const onDragStart = (event: DragEvent<HTMLDivElement>, widgetType: WidgetType) => {
     event.dataTransfer.setData(DRAWER_WIDGET_MIME, widgetType);
     event.dataTransfer.setData('text/plain', widgetType);
     event.dataTransfer.effectAllowed = 'copyMove';
   };
 
+  const isInline = mode === 'inline';
+
   return (
     <aside
       className={cn(
-        'pointer-events-none absolute top-16 right-auto bottom-0 left-0 z-50 w-72 p-3 sm:p-4 transition-all duration-300 ease-out',
-        open ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
+        isInline
+          ? 'h-full min-h-0 p-3 sm:p-4'
+          : 'pointer-events-none absolute top-16 right-auto bottom-0 left-0 z-50 w-72 p-3 sm:p-4 transition-all duration-300 ease-out',
+        !isInline && (open ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'),
+        className,
       )}
       aria-hidden={!open}
     >
       <Card
         className={cn(
-          'pointer-events-auto flex h-full min-h-0 flex-col overflow-hidden rounded-xl shadow-sm transition-transform duration-300 ease-out',
-          open ? 'translate-x-0' : '-translate-x-2',
+          'flex h-full min-h-0 flex-col overflow-hidden rounded-xl shadow-sm',
+          isInline
+            ? 'pointer-events-auto'
+            : 'pointer-events-auto transition-transform duration-300 ease-out',
+          !isInline && (open ? 'translate-x-0' : '-translate-x-2'),
         )}
       >
         <CardHeader className="border-b px-4 py-3 text-left">

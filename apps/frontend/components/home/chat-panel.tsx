@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 export function ChatPanel() {
   return (
-    <aside className="min-h-0 p-3 sm:p-4">
+    <aside className="h-full min-h-0 p-3 sm:p-4">
       <Card className="flex h-full min-h-0 flex-col">
         <CardHeader>
           <CardTitle>Chat</CardTitle>

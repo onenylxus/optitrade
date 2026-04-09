@@ -177,6 +177,7 @@ export function PortfolioWidget({ size }: PortfolioWidgetProps) {
                         <h3 className="text-[11px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Sector Allocation</h3>
                         <div className="w-full aspect-square">
                             <ChartWidget
+                                title=""
                                 chartType="pie"
                                 config={chartConfig}
                                 data={allocationData}
