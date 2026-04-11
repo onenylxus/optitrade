@@ -373,10 +373,7 @@ export const Default: Story = {
 
             <div className="space-y-2">
               <Typography variant="muted">table</Typography>
-              <Typography
-                variant="table"
-                className="my-0 overflow-x-auto rounded-md border border-border"
-              >
+              <div className="my-0 overflow-x-auto rounded-md border border-border">
                 <table className="w-full text-sm">
                   <thead className="border-b border-border">
                     <tr>
@@ -389,16 +386,16 @@ export const Default: Story = {
                     <tr className="border-b border-border">
                       <td className="px-3 py-2">AAPL</td>
                       <td className="px-3 py-2">182.45</td>
-                      <td className="px-3 py-2 text-green-600">+1.86%</td>
+                      <td className="px-3 py-2 text-indicator-positive">+1.86%</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-2">MSFT</td>
                       <td className="px-3 py-2">412.11</td>
-                      <td className="px-3 py-2 text-red-600">-0.42%</td>
+                      <td className="px-3 py-2 text-indicator-negative">-0.42%</td>
                     </tr>
                   </tbody>
                 </table>
-              </Typography>
+              </div>
             </div>
           </div>
         </section>

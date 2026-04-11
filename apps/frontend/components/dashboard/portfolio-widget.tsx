@@ -1,211 +1,289 @@
-import { useState, useMemo } from 'react';
-import {
-    RefreshCw,
-    MessageSquare,
-    TrendingUp,
-    TrendingDown,
-    Sparkles
-} from 'lucide-react';
-import { ChartWidget } from './chart-widget';
-import { ChartConfig } from '@/components/ui/chart';
+import { MessageSquare, TrendingDown, TrendingUp } from 'lucide-react';
+import { BaseWidget } from './base-widget';
 
-// --- Internal Types ---
 export interface Stock {
-    id: string;
-    symbol: string;
-    quantity: number;
-    avgPrice: number;
-    currentPrice: number;
-    sector: string;
+  id: string;
+  symbol: string;
+  quantity: number;
+  avgPrice: number;
+  currentPrice: number;
+  sector: string;
 }
 
-interface PortfolioWidgetProps {
-    size: 'small' | 'medium' | 'large';
+type PortfolioVariant = 'small' | 'medium' | 'large';
+
+interface PortfolioWidgetProps extends Omit<
+  React.ComponentProps<typeof BaseWidget>,
+  'title' | 'size'
+> {
+  title?: string;
+  stocks?: Stock[];
+  variant?: PortfolioVariant;
+  /** Backward-compatible alias for `variant`. */
+  size?: PortfolioVariant;
 }
 
-const chartConfig = {
-    Technology: { label: 'Tech', color: '#3B82F6' },
-    Energy: { label: 'Energy', color: '#F59E0B' },
-    Cash: { label: 'Cash', color: '#10B981' },
-} satisfies ChartConfig;
+interface PortfolioDerivedData {
+  totalValue: number;
+  pnl: number;
+  pnlPercent: number;
+  sectorValues: Array<{ sector: string; value: number; percent: number }>;
+}
 
-const MOCK_STOCKS: Stock[] = [
-    { id: '1', symbol: 'NVDA', quantity: 200, avgPrice: 120, currentPrice: 145.75, sector: 'Technology' },
-    { id: '2', symbol: 'AAPL', quantity: 100, avgPrice: 175, currentPrice: 189.50, sector: 'Technology' },
-    { id: '3', symbol: 'TSLA', quantity: 50, avgPrice: 160, currentPrice: 182.30, sector: 'Energy' },
+interface PortfolioVariantProps {
+  stocks: Stock[];
+  data: PortfolioDerivedData;
+}
+
+const DEFAULT_STOCKS: Stock[] = [
+  {
+    id: '1',
+    symbol: 'NVDA',
+    quantity: 200,
+    avgPrice: 120,
+    currentPrice: 145.75,
+    sector: 'Technology',
+  },
+  {
+    id: '2',
+    symbol: 'AAPL',
+    quantity: 100,
+    avgPrice: 175,
+    currentPrice: 189.5,
+    sector: 'Technology',
+  },
+  { id: '3', symbol: 'TSLA', quantity: 50, avgPrice: 160, currentPrice: 182.3, sector: 'Energy' },
 ];
 
-export function PortfolioWidget({ size }: PortfolioWidgetProps) {
-    const [stocks] = useState<Stock[]>(MOCK_STOCKS);
-    const [isSyncing, setIsSyncing] = useState(false);
+const formatCurrency = (value: number, maximumFractionDigits = 0) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits,
+  }).format(value);
 
-    const portfolioSummary = useMemo(() => {
-        const totalValue = stocks.reduce((sum, s) => sum + s.currentPrice * s.quantity, 0);
-        const totalCost = stocks.reduce((sum, s) => sum + s.avgPrice * s.quantity, 0);
-        const pnl = totalValue - totalCost;
-        const pnlPercent = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
-        return { totalValue, pnl, pnlPercent };
-    }, [stocks]);
+const percentClass = (value: number) => (value >= 0 ? 'text-emerald-600' : 'text-rose-600');
 
-    const allocationData = useMemo(() => {
-        const total = portfolioSummary.totalValue || 1;
-        const techVal = stocks.filter(s => s.sector === 'Technology').reduce((sum, s) => sum + s.currentPrice * s.quantity, 0);
-        const energyVal = stocks.filter(s => s.sector === 'Energy').reduce((sum, s) => sum + s.currentPrice * s.quantity, 0);
-        return [
-            { label: 'Technology', value: techVal },
-            { label: 'Energy', value: energyVal },
-            { label: 'Cash', value: total * 0.1 },
-        ];
-    }, [stocks, portfolioSummary.totalValue]);
+function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
+  const totalValue = stocks.reduce((sum, stock) => sum + stock.currentPrice * stock.quantity, 0);
+  const totalCost = stocks.reduce((sum, stock) => sum + stock.avgPrice * stock.quantity, 0);
+  const pnl = totalValue - totalCost;
+  const pnlPercent = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
 
-    const formatCurrency = (val: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+  const groupedSectorValues = stocks.reduce<Record<string, number>>((acc, stock) => {
+    const sector = stock.sector || 'Uncategorized';
+    acc[sector] = (acc[sector] ?? 0) + stock.currentPrice * stock.quantity;
+    return acc;
+  }, {});
 
-    const handleSync = () => {
-        setIsSyncing(true);
-        setTimeout(() => setIsSyncing(false), 1500);
-    };
+  const sectorValues = Object.entries(groupedSectorValues)
+    .map(([sector, value]) => ({
+      sector,
+      value,
+      percent: totalValue > 0 ? (value / totalValue) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
 
-    // --- 1. SMALL LAYOUT (1x1) ---
-    if (size === 'small') {
-        return (
-            <div className="h-full bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center shadow-sm">
-                <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-2 text-center">Total P/L</div>
-                <div className={`text-4xl font-black ${portfolioSummary.pnl >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {portfolioSummary.pnl >= 0 ? '+' : ''}{portfolioSummary.pnlPercent.toFixed(1)}%
-                </div>
-            </div>
-        );
-    }
-
-    // --- 2. MEDIUM LAYOUT (Light List View) ---
-    if (size === 'medium') {
-        return (
-            <div className="h-full bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-lg">
-                {/* Header */}
-                <div className="p-5 flex justify-between items-center border-b border-slate-100 bg-slate-50/50">
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-slate-800">Portfolio</h2>
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-100 text-[10px] text-emerald-700 font-bold uppercase">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Connected
-                        </div>
-                    </div>
-                    <button onClick={handleSync} className="text-slate-400 hover:text-slate-600 transition-colors">
-                        <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
-                    </button>
-                </div>
-
-                {/* Summary Row */}
-                <div className="px-6 py-6 grid grid-cols-2 gap-4 border-b border-slate-100">
-                    <div>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Value</p>
-                        <p className="text-2xl font-black text-slate-900 tracking-tight">{formatCurrency(portfolioSummary.totalValue)}</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Unrealized P/L</p>
-                        <p className="text-2xl font-black text-emerald-600 tracking-tight">+{formatCurrency(portfolioSummary.pnl)}</p>
-                    </div>
-                </div>
-
-                {/* Stock List - No Pie Chart */}
-                <div className="flex-1 overflow-y-auto px-6 py-2">
-                    {stocks.map((s) => (
-                        <div key={s.id} className="py-4 border-b border-slate-50 flex justify-between items-center last:border-0 hover:bg-slate-50 -mx-2 px-2 rounded-xl transition-colors group">
-                            <div>
-                                <p className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{s.symbol}</p>
-                                <p className="text-[11px] text-slate-400 font-medium">{s.quantity} shares</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="font-bold text-slate-700">{formatCurrency(s.currentPrice)}</p>
-                                <p className="text-[10px] text-emerald-600 font-bold">+{((s.currentPrice / s.avgPrice - 1) * 100).toFixed(1)}%</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    // --- 3. LARGE LAYOUT (Dashboard View) ---
-    return (
-        <div className="h-full bg-white border border-slate-200 rounded-3xl flex flex-col overflow-hidden shadow-2xl">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center shrink-0">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Portfolio Optimizer</h2>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-700 font-bold uppercase tracking-wider">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Connected
-                    </div>
-                </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-200 transition-transform active:scale-95">
-                    <MessageSquare size={16} /> Add to Context
-                </button>
-            </div>
-
-            <div className="flex flex-1 min-h-0 overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-8 bg-white custom-scrollbar">
-                    <table className="w-full text-xs text-left border-separate border-spacing-y-3">
-                        <thead className="text-slate-400 uppercase font-bold tracking-widest sticky top-0 bg-white z-10">
-                            <tr>
-                                <th className="px-4 py-2">Symbol</th>
-                                <th className="px-4 py-2 text-right">Price</th>
-                                <th className="px-4 py-2 text-right">Day Change</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {stocks.map(s => (
-                                <tr key={s.id} className="group">
-                                    <td className="py-5 px-5 font-bold text-slate-800 bg-slate-50/50 rounded-l-2xl group-hover:bg-slate-100 transition-colors border-y border-l border-transparent">
-                                        {s.symbol}
-                                    </td>
-                                    <td className="py-5 px-5 text-right text-slate-600 font-medium bg-slate-50/50 group-hover:bg-slate-100 transition-colors border-y border-transparent">
-                                        {formatCurrency(s.currentPrice)}
-                                    </td>
-                                    <td className={`py-5 px-5 text-right font-black bg-slate-50/50 rounded-r-2xl group-hover:bg-slate-100 transition-colors border-y border-r border-transparent ${s.currentPrice > s.avgPrice ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        <div className="flex items-center justify-end gap-1.5">
-                                            {s.currentPrice > s.avgPrice ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                                            {((s.currentPrice / s.avgPrice - 1) * 100).toFixed(1)}%
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="w-80 flex flex-col bg-slate-50/40 border-l border-slate-100 overflow-y-auto p-8 gap-8 custom-scrollbar">
-                    <div className="shrink-0 flex flex-col items-center">
-                        <h3 className="text-[11px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Sector Allocation</h3>
-                        <div className="w-full aspect-square">
-                            <ChartWidget
-                                title=""
-                                chartType="pie"
-                                config={chartConfig}
-                                data={allocationData}
-                                valueKey="value"
-                                categoryKey="label"
-                                showLegend={false}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="shrink-0 p-6 bg-white border border-blue-50 rounded-2xl shadow-sm ring-1 ring-black/5">
-                        <div className="flex items-center gap-2 mb-4 text-blue-600">
-                            <Sparkles size={18} />
-                            <span className="text-[11px] font-black uppercase tracking-widest">AI Insights</span>
-                        </div>
-                        <ul className="text-[11px] text-slate-600 space-y-4 leading-relaxed">
-                            <li className="flex gap-3 items-start">
-                                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.4)]" />
-                                <span>High <span className="font-bold text-slate-900 text-xs">Tech</span> concentration (85%).</span>
-                            </li>
-                            <li className="flex gap-3 items-start">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
-                                <span>Portfolio beta is within optimal range.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+  return {
+    totalValue,
+    pnl,
+    pnlPercent,
+    sectorValues,
+  };
 }
+
+function PortfolioWidgetSmall({ data }: PortfolioVariantProps) {
+  return (
+    <div className="flex h-full items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-center shadow-sm">
+      <div>
+        <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+          Total P/L
+        </div>
+        <div className={`text-3xl font-black leading-none ${percentClass(data.pnlPercent)}`}>
+          {data.pnlPercent >= 0 ? '+' : ''}
+          {data.pnlPercent.toFixed(1)}%
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PortfolioWidgetMedium({ stocks, data }: PortfolioVariantProps) {
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+      <div className="grid grid-cols-2 gap-3 border-b border-slate-100 px-3 py-2.5">
+        <div>
+          <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+            Total Value
+          </div>
+          <div className="text-xl font-black tracking-tight text-slate-900">
+            {formatCurrency(data.totalValue)}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+            Unrealized P/L
+          </div>
+          <div className={`text-xl font-black tracking-tight ${percentClass(data.pnl)}`}>
+            {data.pnl >= 0 ? '+' : ''}
+            {formatCurrency(data.pnl)}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-1.5">
+        {stocks.map((stock) => {
+          const stockPnlPercent = (stock.currentPrice / stock.avgPrice - 1) * 100 || 0;
+
+          return (
+            <div
+              key={stock.id}
+              className="-mx-0.5 flex items-center justify-between rounded-lg border-b border-slate-50 px-1.5 py-2 transition-colors hover:bg-slate-50 last:border-0"
+            >
+              <div>
+                <div className="text-sm font-bold text-slate-800">{stock.symbol}</div>
+                <div className="text-[10px] font-medium text-slate-400">
+                  {stock.quantity} shares
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold text-slate-700">
+                  {formatCurrency(stock.currentPrice, 2)}
+                </div>
+                <div className={`text-[9px] font-bold ${percentClass(stockPnlPercent)}`}>
+                  {stockPnlPercent >= 0 ? '+' : ''}
+                  {stockPnlPercent.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PortfolioWidgetLarge({ stocks, data }: PortfolioVariantProps) {
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div className="text-sm font-black uppercase tracking-wider text-slate-700">
+          Portfolio Optimizer
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> Connected
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4">
+          <table className="w-full border-separate border-spacing-y-2 text-xs text-left">
+            <thead className="sticky top-0 z-10 bg-white text-slate-400">
+              <tr>
+                <th className="px-3 py-2 uppercase tracking-widest">Symbol</th>
+                <th className="px-3 py-2 text-right uppercase tracking-widest">Price</th>
+                <th className="px-3 py-2 text-right uppercase tracking-widest">Day Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stocks.map((stock) => {
+                const stockPnlPercent = (stock.currentPrice / stock.avgPrice - 1) * 100 || 0;
+                return (
+                  <tr key={stock.id} className="group">
+                    <td className="rounded-l-xl border border-transparent bg-slate-50/60 px-3 py-3 font-bold text-slate-800 transition-colors group-hover:bg-slate-100">
+                      {stock.symbol}
+                    </td>
+                    <td className="border-y border-transparent bg-slate-50/60 px-3 py-3 text-right font-medium text-slate-600 transition-colors group-hover:bg-slate-100">
+                      {formatCurrency(stock.currentPrice, 2)}
+                    </td>
+                    <td
+                      className={`rounded-r-xl border border-transparent bg-slate-50/60 px-3 py-3 text-right font-black transition-colors group-hover:bg-slate-100 ${percentClass(stockPnlPercent)}`}
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        {stockPnlPercent >= 0 ? (
+                          <TrendingUp size={14} />
+                        ) : (
+                          <TrendingDown size={14} />
+                        )}
+                        {stockPnlPercent >= 0 ? '+' : ''}
+                        {stockPnlPercent.toFixed(1)}%
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="w-64 space-y-5 overflow-y-auto border-l border-slate-100 bg-slate-50/50 p-4">
+          <div>
+            <h3 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              Sector Allocation
+            </h3>
+            <div className="space-y-2">
+              {data.sectorValues.map((sector) => (
+                <div key={sector.sector} className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-600">
+                    <span>{sector.sector}</span>
+                    <span className="font-bold">{sector.percent.toFixed(0)}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-200">
+                    <div
+                      className="h-full rounded-full bg-blue-500"
+                      style={{ width: `${sector.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-200 transition-colors hover:bg-blue-700"
+          >
+            <MessageSquare size={14} /> Add to Context
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type PortfolioWidgetComponent = ((props: PortfolioWidgetProps) => React.JSX.Element) & {
+  Small: (props: PortfolioVariantProps) => React.JSX.Element;
+  Medium: (props: PortfolioVariantProps) => React.JSX.Element;
+  Large: (props: PortfolioVariantProps) => React.JSX.Element;
+};
+
+const PortfolioWidgetRoot = ({
+  title = 'Portfolio',
+  description = 'Holdings snapshot',
+  stocks = DEFAULT_STOCKS,
+  variant,
+  size,
+  ...props
+}: PortfolioWidgetProps) => {
+  const resolvedVariant = variant ?? size ?? 'medium';
+  const portfolioData = buildPortfolioData(stocks);
+  const variantProps: PortfolioVariantProps = { stocks, data: portfolioData };
+
+  return (
+    <BaseWidget title={title} description={description} {...props}>
+      {resolvedVariant === 'small' ? (
+        <PortfolioWidgetSmall {...variantProps} />
+      ) : resolvedVariant === 'large' ? (
+        <PortfolioWidgetLarge {...variantProps} />
+      ) : (
+        <PortfolioWidgetMedium {...variantProps} />
+      )}
+    </BaseWidget>
+  );
+};
+
+export const PortfolioWidget = Object.assign(PortfolioWidgetRoot, {
+  Small: PortfolioWidgetSmall,
+  Medium: PortfolioWidgetMedium,
+  Large: PortfolioWidgetLarge,
+}) as PortfolioWidgetComponent;

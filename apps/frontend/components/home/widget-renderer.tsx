@@ -1,6 +1,7 @@
 import { CandlestickWidget } from '@/components/dashboard/candlestick-widget';
 import { ChartWidget } from '@/components/dashboard/chart-widget';
 import { NumberWidget } from '@/components/dashboard/number-widget';
+import { PortfolioWidget } from '@/components/dashboard/portfolio-widget';
 import { TableWidget } from '@/components/dashboard/table-widget';
 import { TextWidget } from '@/components/dashboard/text-widget';
 import { candleData, lineConfig, lineData } from '@/app/(home)/fixtures';
@@ -69,6 +70,32 @@ export function WidgetRenderer({
         title="QQQ 5D"
         description="Candlestick trend"
         data={candleData}
+        {...widgetControls}
+      />
+    );
+  }
+
+  if (widgetType === 'portfolio-small') {
+    return <PortfolioWidget title="Portfolio" variant="small" {...widgetControls} />;
+  }
+
+  if (widgetType === 'portfolio-medium') {
+    return (
+      <PortfolioWidget
+        title="Portfolio Snapshot"
+        description="Live holdings"
+        variant="medium"
+        {...widgetControls}
+      />
+    );
+  }
+
+  if (widgetType === 'portfolio-large') {
+    return (
+      <PortfolioWidget
+        title="Portfolio Snapshot"
+        description="Live holdings and allocation"
+        variant="large"
         {...widgetControls}
       />
     );

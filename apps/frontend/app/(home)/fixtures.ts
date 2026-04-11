@@ -1,6 +1,14 @@
 import type { CandlestickData, Time } from 'lightweight-charts';
 
-export type WidgetType = 'number' | 'chart' | 'table' | 'text' | 'candlestick';
+export type WidgetType =
+  | 'number'
+  | 'chart'
+  | 'table'
+  | 'text'
+  | 'candlestick'
+  | 'portfolio-small'
+  | 'portfolio-medium'
+  | 'portfolio-large';
 
 export interface WidgetSpan {
   cols: number;
@@ -28,6 +36,9 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   table: { cols: 5, rows: 4 },
   text: { cols: 5, rows: 4 },
   candlestick: { cols: 8, rows: 6 },
+  'portfolio-small': { cols: 5, rows: 4 },
+  'portfolio-medium': { cols: 6, rows: 6 },
+  'portfolio-large': { cols: 8, rows: 7 },
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
@@ -36,6 +47,9 @@ export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }
   { id: 'table', label: 'Table Widget', sizeLabel: '5x4' },
   { id: 'text', label: 'Text Widget', sizeLabel: '5x4' },
   { id: 'candlestick', label: 'Candlestick Widget', sizeLabel: '8x6' },
+  { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '5x4' },
+  { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '6x6' },
+  { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '8x7' },
 ];
 
 export const initialPlacements: WidgetPlacement[] = [
@@ -44,6 +58,30 @@ export const initialPlacements: WidgetPlacement[] = [
   { id: 'widget-text-1', widgetType: 'text', col: 9, row: 0, colSpan: 5, rowSpan: 4 },
   { id: 'widget-table-1', widgetType: 'table', col: 0, row: 4, colSpan: 5, rowSpan: 4 },
   { id: 'widget-candlestick-1', widgetType: 'candlestick', col: 5, row: 4, colSpan: 8, rowSpan: 6 },
+  {
+    id: 'widget-portfolio-small-1',
+    widgetType: 'portfolio-small',
+    col: 13,
+    row: 4,
+    colSpan: 5,
+    rowSpan: 4,
+  },
+  {
+    id: 'widget-portfolio-medium-1',
+    widgetType: 'portfolio-medium',
+    col: 0,
+    row: 10,
+    colSpan: 6,
+    rowSpan: 6,
+  },
+  {
+    id: 'widget-portfolio-large-1',
+    widgetType: 'portfolio-large',
+    col: 5,
+    row: 10,
+    colSpan: 8,
+    rowSpan: 7,
+  },
 ];
 
 export const lineData = [
