@@ -21,6 +21,13 @@ interface WidgetCanvasProps {
   isEditMode: boolean;
 }
 
+interface DragPreviewPlacement {
+  col: number;
+  row: number;
+  colSpan: number;
+  rowSpan: number;
+}
+
 const MIN_EDIT_ROWS = 2;
 
 const cellKey = (col: number, row: number) => `${col}:${row}`;
@@ -35,7 +42,9 @@ const getRemInPixels = () => {
     return 16;
   }
 
-  const rootFontSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+  const rootFontSize = Number.parseFloat(
+    window.getComputedStyle(document.documentElement).fontSize,
+  );
   return Number.isFinite(rootFontSize) ? rootFontSize : 16;
 };
 
@@ -79,7 +88,9 @@ const canPlaceWidget = (
 
   for (let rowOffset = 0; rowOffset < candidatePlacement.rowSpan; rowOffset += 1) {
     for (let colOffset = 0; colOffset < candidatePlacement.colSpan; colOffset += 1) {
-      const owner = occupancy.get(cellKey(candidatePlacement.col + colOffset, candidatePlacement.row + rowOffset));
+      const owner = occupancy.get(
+        cellKey(candidatePlacement.col + colOffset, candidatePlacement.row + rowOffset),
+      );
 
       if (owner && owner !== sourceWidgetId) {
         return false;
@@ -88,6 +99,51 @@ const canPlaceWidget = (
   }
 
   return true;
+};
+
+const findClosestValidOrigin = (
+  requestedPlacement: Pick<WidgetPlacement, 'col' | 'row' | 'colSpan' | 'rowSpan'>,
+  sourceWidgetId: string | null,
+  occupancy: Map<string, string>,
+  gridColumns: number,
+  maxScanRow: number,
+) => {
+  const maxColStart = Math.max(0, gridColumns - requestedPlacement.colSpan);
+  let bestPlacement: Pick<WidgetPlacement, 'col' | 'row' | 'colSpan' | 'rowSpan'> | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let row = 0; row <= maxScanRow; row += 1) {
+    for (let col = 0; col <= maxColStart; col += 1) {
+      const candidate = {
+        col,
+        row,
+        colSpan: requestedPlacement.colSpan,
+        rowSpan: requestedPlacement.rowSpan,
+      };
+
+      if (!canPlaceWidget(candidate, sourceWidgetId, occupancy, gridColumns)) {
+        continue;
+      }
+
+      const colDiff = col - requestedPlacement.col;
+      const rowDiff = row - requestedPlacement.row;
+      const distance = colDiff * colDiff + rowDiff * rowDiff;
+
+      if (
+        distance < bestDistance ||
+        (distance === bestDistance && bestPlacement && row < bestPlacement.row) ||
+        (distance === bestDistance &&
+          bestPlacement &&
+          row === bestPlacement.row &&
+          col < bestPlacement.col)
+      ) {
+        bestDistance = distance;
+        bestPlacement = candidate;
+      }
+    }
+  }
+
+  return bestPlacement;
 };
 
 const findNextAvailableOrigin = (
@@ -128,7 +184,10 @@ const normalizePlacements = (items: WidgetPlacement[], gridColumns: number) => {
 
     for (let rowOffset = 0; rowOffset < nextPlacement.rowSpan; rowOffset += 1) {
       for (let colOffset = 0; colOffset < nextPlacement.colSpan; colOffset += 1) {
-        occupancy.set(cellKey(nextPlacement.col + colOffset, nextPlacement.row + rowOffset), nextPlacement.id);
+        occupancy.set(
+          cellKey(nextPlacement.col + colOffset, nextPlacement.row + rowOffset),
+          nextPlacement.id,
+        );
       }
     }
   }
@@ -154,7 +213,41 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
   const [draggedWidget, setDraggedWidget] = useState<{
     widgetType: WidgetType;
     sourceWidgetId: string | null;
+    pickupOffsetPx: { x: number; y: number };
   } | null>(null);
+  const [dragPreview, setDragPreview] = useState<DragPreviewPlacement | null>(null);
+
+  const getClosestGridOriginFromPointer = (
+    event: DragEvent<HTMLElement>,
+    pickupOffsetPx: { x: number; y: number } | null,
+  ) => {
+    const gridElement = event.currentTarget;
+
+    if (!gridElement) {
+      return { col: 0, row: 0 };
+    }
+
+    const bounds = gridElement.getBoundingClientRect();
+    const remInPixels = getRemInPixels();
+    const cellWidthPx = GRID_CELL_WIDTH_REM * remInPixels;
+    const cellHeightPx = GRID_CELL_HEIGHT_REM * remInPixels;
+    const gapPx = GRID_GAP_REM * remInPixels;
+    const colPitch = cellWidthPx + gapPx;
+    const rowPitch = cellHeightPx + gapPx;
+
+    const relativeX = event.clientX - bounds.left;
+    const relativeY = event.clientY - bounds.top;
+    const adjustedX = relativeX - (pickupOffsetPx?.x ?? 0);
+    const adjustedY = relativeY - (pickupOffsetPx?.y ?? 0);
+
+    const roughCol = Number.isFinite(adjustedX) ? Math.round(adjustedX / colPitch) : 0;
+    const roughRow = Number.isFinite(adjustedY) ? Math.round(adjustedY / rowPitch) : 0;
+
+    return {
+      col: Math.max(0, Math.min(roughCol, gridColumns - 1)),
+      row: Math.max(0, roughRow),
+    };
+  };
 
   useEffect(() => {
     const element = canvasWidthRef.current;
@@ -169,9 +262,13 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
       const gapPx = GRID_GAP_REM * remInPixels;
       const computedStyle = window.getComputedStyle(element);
       const horizontalPaddingPx =
-        Number.parseFloat(computedStyle.paddingLeft) + Number.parseFloat(computedStyle.paddingRight);
+        Number.parseFloat(computedStyle.paddingLeft) +
+        Number.parseFloat(computedStyle.paddingRight);
       const availableWidthPx = Math.max(0, element.clientWidth - horizontalPaddingPx);
-      const computedColumns = Math.max(1, Math.floor((availableWidthPx + gapPx) / (cellWidthPx + gapPx)));
+      const computedColumns = Math.max(
+        1,
+        Math.floor((availableWidthPx + gapPx) / (cellWidthPx + gapPx)),
+      );
 
       setGridColumns((prev) => (prev === computedColumns ? prev : computedColumns));
     };
@@ -196,7 +293,9 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
   const visibleRowCount = useMemo(() => {
     const maxOccupiedRow =
       normalizedPlacements.length > 0
-        ? Math.max(...normalizedPlacements.map((placement) => placement.row + placement.rowSpan - 1))
+        ? Math.max(
+            ...normalizedPlacements.map((placement) => placement.row + placement.rowSpan - 1),
+          )
         : -1;
 
     if (!isEditMode) {
@@ -216,6 +315,103 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
     [gridColumns, visibleRowCount],
   );
 
+  const resolvePlacementForDrop = (
+    placementItems: WidgetPlacement[],
+    requestedCol: number,
+    requestedRow: number,
+    draggedWidgetType: WidgetType,
+    sourceWidgetId: string | null,
+  ) => {
+    const normalizedItems = normalizePlacements(placementItems, gridColumns);
+    const existingPlacement = sourceWidgetId
+      ? normalizedItems.find((placement) => placement.id === sourceWidgetId)
+      : null;
+    const defaultSpan = widgetDefaultSpans[draggedWidgetType];
+    const colSpan = Math.max(
+      1,
+      Math.min(existingPlacement?.colSpan ?? defaultSpan.cols, gridColumns),
+    );
+    const rowSpan = existingPlacement?.rowSpan ?? defaultSpan.rows;
+    const occupancy = buildOccupancy(normalizedItems);
+    const requestedPlacement = { col: requestedCol, row: requestedRow, colSpan, rowSpan };
+
+    const maxOccupiedRow =
+      normalizedItems.length > 0
+        ? Math.max(...normalizedItems.map((placement) => placement.row + placement.rowSpan - 1))
+        : 0;
+    const maxScanRow = Math.max(maxOccupiedRow + rowSpan + MIN_EDIT_ROWS + 2, requestedRow + 20);
+
+    const resolvedPlacement = canPlaceWidget(
+      requestedPlacement,
+      sourceWidgetId,
+      occupancy,
+      gridColumns,
+    )
+      ? requestedPlacement
+      : findClosestValidOrigin(
+          requestedPlacement,
+          sourceWidgetId,
+          occupancy,
+          gridColumns,
+          maxScanRow,
+        );
+
+    return {
+      normalizedItems,
+      existingPlacement,
+      resolvedPlacement,
+      colSpan,
+      rowSpan,
+    };
+  };
+
+  const updateDragPreview = (event: DragEvent<HTMLElement>) => {
+    const draggedWidgetType =
+      draggedWidget?.widgetType ??
+      (event.dataTransfer.getData(DRAWER_WIDGET_MIME) as WidgetType) ??
+      (event.dataTransfer.getData('text/plain') as WidgetType);
+    const sourceWidgetIdFromEvent = event.dataTransfer.getData(SOURCE_WIDGET_MIME);
+    const sourceWidgetId =
+      draggedWidget?.sourceWidgetId ??
+      (sourceWidgetIdFromEvent.length > 0 ? sourceWidgetIdFromEvent : null);
+    const pickupOffsetPx = draggedWidget?.pickupOffsetPx ?? null;
+
+    if (!draggedWidgetType || !widgetLibrary.some((widget) => widget.id === draggedWidgetType)) {
+      setDragPreview(null);
+      return;
+    }
+
+    const pointerOrigin = getClosestGridOriginFromPointer(event, pickupOffsetPx);
+    const requestedCol = pointerOrigin.col;
+    const requestedRow = pointerOrigin.row;
+    const { resolvedPlacement } = resolvePlacementForDrop(
+      normalizedPlacements,
+      requestedCol,
+      requestedRow,
+      draggedWidgetType,
+      sourceWidgetId,
+    );
+
+    if (!resolvedPlacement) {
+      setDragPreview(null);
+      return;
+    }
+
+    setDragPreview((prev) => {
+      if (
+        prev &&
+        prev.col === resolvedPlacement.col &&
+        prev.row === resolvedPlacement.row &&
+        prev.colSpan === resolvedPlacement.colSpan &&
+        prev.rowSpan === resolvedPlacement.rowSpan
+      ) {
+        return prev;
+      }
+
+      return resolvedPlacement;
+    });
+  };
+
   const onDragStartFromCell = (
     event: DragEvent<HTMLDivElement>,
     widgetType: WidgetType,
@@ -230,11 +426,18 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
     event.dataTransfer.setData(SOURCE_WIDGET_MIME, sourceWidgetId);
     event.dataTransfer.effectAllowed = 'copyMove';
 
-    setDraggedWidget({ widgetType, sourceWidgetId });
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const pickupOffsetPx = {
+      x: Math.max(0, event.clientX - bounds.left),
+      y: Math.max(0, event.clientY - bounds.top),
+    };
+
+    setDraggedWidget({ widgetType, sourceWidgetId, pickupOffsetPx });
   };
 
-  const onDropToCell = (event: DragEvent<HTMLDivElement>, col: number, row: number) => {
+  const onDropToCell = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
+    event.stopPropagation();
 
     if (!isEditMode) {
       return;
@@ -246,34 +449,46 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
       (event.dataTransfer.getData('text/plain') as WidgetType);
     const sourceWidgetIdFromEvent = event.dataTransfer.getData(SOURCE_WIDGET_MIME);
     const sourceWidgetId =
-      draggedWidget?.sourceWidgetId ?? (sourceWidgetIdFromEvent.length > 0 ? sourceWidgetIdFromEvent : null);
+      draggedWidget?.sourceWidgetId ??
+      (sourceWidgetIdFromEvent.length > 0 ? sourceWidgetIdFromEvent : null);
+    const pickupOffsetPx = draggedWidget?.pickupOffsetPx ?? null;
 
     if (!draggedWidgetType || !widgetLibrary.some((widget) => widget.id === draggedWidgetType)) {
       setDraggedWidget(null);
+      setDragPreview(null);
       return;
     }
 
+    const pointerOrigin = getClosestGridOriginFromPointer(event, pickupOffsetPx);
+    const requestedCol = pointerOrigin.col;
+    const requestedRow = pointerOrigin.row;
+
     setPlacements((prev) => {
-      const normalizedPrev = normalizePlacements(prev, gridColumns);
-      const existingPlacement = sourceWidgetId
-        ? normalizedPrev.find((placement) => placement.id === sourceWidgetId)
-        : null;
-      const defaultSpan = widgetDefaultSpans[draggedWidgetType];
-      const colSpan = Math.max(1, Math.min(existingPlacement?.colSpan ?? defaultSpan.cols, gridColumns));
-      const rowSpan = existingPlacement?.rowSpan ?? defaultSpan.rows;
+      const { normalizedItems, existingPlacement, resolvedPlacement, colSpan, rowSpan } =
+        resolvePlacementForDrop(
+          prev,
+          requestedCol,
+          requestedRow,
+          draggedWidgetType,
+          sourceWidgetId,
+        );
 
-      const occupancy = buildOccupancy(normalizedPrev);
-
-      const nextPlacement = { col, row, colSpan, rowSpan };
-
-      if (!canPlaceWidget(nextPlacement, sourceWidgetId, occupancy, gridColumns)) {
+      if (!resolvedPlacement) {
         return prev;
       }
 
       if (existingPlacement) {
         return normalizePlacements(
-          normalizedPrev.map((placement) =>
-            placement.id === existingPlacement.id ? { ...placement, col, row, colSpan, rowSpan } : placement,
+          normalizedItems.map((placement) =>
+            placement.id === existingPlacement.id
+              ? {
+                  ...placement,
+                  col: resolvedPlacement.col,
+                  row: resolvedPlacement.row,
+                  colSpan,
+                  rowSpan,
+                }
+              : placement,
           ),
           gridColumns,
         );
@@ -282,16 +497,17 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
       const newPlacement: WidgetPlacement = {
         id: createWidgetId(draggedWidgetType),
         widgetType: draggedWidgetType,
-        col,
-        row,
+        col: resolvedPlacement.col,
+        row: resolvedPlacement.row,
         colSpan,
         rowSpan,
       };
 
-      return normalizePlacements([...normalizedPrev, newPlacement], gridColumns);
+      return normalizePlacements([...normalizedItems, newPlacement], gridColumns);
     });
 
     setDraggedWidget(null);
+    setDragPreview(null);
   };
 
   const clearWidget = (widgetId: string) => {
@@ -309,10 +525,7 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
           ) : null}
 
           <ScrollArea className="h-full rounded-xl">
-            <div
-              ref={canvasWidthRef}
-              className="w-full p-3 pr-6"
-            >
+            <div ref={canvasWidthRef} className="w-full p-3 pr-6">
               <div
                 className="relative grid"
                 style={{
@@ -320,9 +533,30 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
                   gridAutoRows: `${GRID_CELL_HEIGHT_REM}rem`,
                   gap: `${GRID_GAP_REM}rem`,
                 }}
+                onDragOver={
+                  isEditMode
+                    ? (dropEvent) => {
+                        dropEvent.preventDefault();
+                        dropEvent.dataTransfer.dropEffect = 'move';
+                        updateDragPreview(dropEvent);
+                      }
+                    : undefined
+                }
+                onDragLeave={
+                  isEditMode
+                    ? (dropEvent) => {
+                        const nextTarget = dropEvent.relatedTarget as Node | null;
+
+                        if (!nextTarget || !dropEvent.currentTarget.contains(nextTarget)) {
+                          setDragPreview(null);
+                        }
+                      }
+                    : undefined
+                }
+                onDrop={isEditMode ? (dropEvent) => onDropToCell(dropEvent) : undefined}
               >
                 {isEditMode
-                  ? visibleCells.map(({ col, row, key }) => {
+                  ? visibleCells.map(({ key }) => {
                       const occupiedBy = occupiedCells.get(key);
 
                       if (occupiedBy) {
@@ -336,15 +570,20 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
                             'flex min-w-0 items-center justify-center rounded-lg border transition-colors',
                             'border-border/70 bg-muted/10 border-dashed hover:bg-muted/25',
                           )}
-                          onDragOver={(dropEvent) => {
-                            dropEvent.preventDefault();
-                            dropEvent.dataTransfer.dropEffect = 'move';
-                          }}
-                          onDrop={(dropEvent) => onDropToCell(dropEvent, col, row)}
                         />
                       );
                     })
                   : null}
+
+                {isEditMode && dragPreview ? (
+                  <div
+                    className="pointer-events-none z-5 rounded-lg border-2 border-primary/70 bg-primary/15"
+                    style={{
+                      gridColumn: `${dragPreview.col + 1} / span ${dragPreview.colSpan}`,
+                      gridRow: `${dragPreview.row + 1} / span ${dragPreview.rowSpan}`,
+                    }}
+                  />
+                ) : null}
 
                 {normalizedPlacements.map((placement) => (
                   <div
@@ -361,7 +600,10 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
                       onDragStart={(event) =>
                         onDragStartFromCell(event, placement.widgetType, placement.id)
                       }
-                      onDragEnd={() => setDraggedWidget(null)}
+                      onDragEnd={() => {
+                        setDraggedWidget(null);
+                        setDragPreview(null);
+                      }}
                     >
                       <div
                         className={cn(
