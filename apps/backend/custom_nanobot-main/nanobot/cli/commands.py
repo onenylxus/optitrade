@@ -611,7 +611,8 @@ def serve(
     import os
     cors_env = os.environ.get("NANOBOT_CORS_ORIGIN", "http://localhost:3000")
     cors_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
-    api_app = create_app(agent_loop, model_name=model_name, request_timeout=timeout, cors_origins=cors_origins)
+    api_token = os.environ.get("NANOBOT_API_TOKEN") or None
+    api_app = create_app(agent_loop, model_name=model_name, request_timeout=timeout, cors_origins=cors_origins, api_token=api_token)
 
     async def on_startup(_app):
         await agent_loop._connect_mcp()

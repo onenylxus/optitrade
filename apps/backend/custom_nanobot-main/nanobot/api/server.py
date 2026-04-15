@@ -360,6 +360,7 @@ def create_app(
     model_name: str = "nanobot",
     request_timeout: float = 120.0,
     cors_origins: list[str] | None = None,
+    api_token: str | None = None,
 ) -> web.Application:
     """Create the aiohttp application.
 
@@ -369,7 +370,19 @@ def create_app(
         request_timeout: Per-request timeout in seconds.
         cors_origins: List of allowed CORS origins. Defaults to localhost:3000 for dev.
     """
-    app = web.Application(client_max_size=20 * 1024 * 1024)  # 20MB for base64 images
+    @web.middleware
+    async def _auth_middleware(request: web.Request, handler):
+        if api_token and request.path != "/health":
+            auth = request.headers.get("Authorization", "")
+            if not auth.startswith("Bearer ") or auth[len("Bearer "):] != api_token:
+                return web.json_response(
+                    {"error": {"message": "Unauthorized", "type": "auth_error", "code": 401}},
+                    status=401,
+                )
+        return await handler(request)
+
+    middlewares = [_auth_middleware] if api_token else []
+    app = web.Application(client_max_size=20 * 1024 * 1024, middlewares=middlewares)  # 20MB for base64 images
     app["agent_loop"] = agent_loop
     app["model_name"] = model_name
     app["request_timeout"] = request_timeout
