@@ -279,6 +279,7 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
         display_name="MiniMax",
         backend="openai_compat",
         default_api_base="https://api.minimax.io/v1",
+        strip_model_prefix=True,
     ),
     # Mistral AI: OpenAI-compatible API
     ProviderSpec(
