@@ -28,7 +28,7 @@ type ChartWidgetType = 'bar' | 'line' | 'area' | 'pie';
 
 type ChartDatum = Record<string, string | number>;
 
-interface ChartWidgetProps extends ComponentProps<typeof BaseWidget> {
+interface ChartWidgetProps extends Omit<ComponentProps<typeof BaseWidget>, 'children'> {
   chartType: ChartWidgetType;
   config: ChartConfig;
   data: ChartDatum[];

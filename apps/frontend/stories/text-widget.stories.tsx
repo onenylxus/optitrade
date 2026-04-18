@@ -21,16 +21,13 @@ type Story = StoryObj<typeof TextWidget>;
 export const Default: Story = {
   args: {
     title: 'Market Summary',
-    description: 'Quick performance snapshot.',
     text: 'The portfolio was up 2.1% today with strongest gains in energy and finance.',
-    isAiWidget: false,
   },
 };
 
 export const RichText = {
   args: {
     title: 'Daily Briefing',
-    description: 'AI-generated summary',
     text: (
       <>
         <h2>Top Takeaways</h2>
@@ -49,6 +46,5 @@ export const RichText = {
         Read the full report in the <a href="#">strategy panel</a>.
       </>
     ),
-    isAiWidget: true,
   },
 };

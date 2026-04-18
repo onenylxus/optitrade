@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import { BaseWidget } from './base-widget';
 
-interface TableWidgetProps extends ComponentProps<typeof BaseWidget> {
+interface TableWidgetProps extends Omit<ComponentProps<typeof BaseWidget>, 'children'> {
   headers: string[];
   rows: ReactNode[][];
 }

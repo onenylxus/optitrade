@@ -1,12 +1,6 @@
 'use client';
 
-import type {
-  CandlestickData,
-  IChartApi,
-  ISeriesApi,
-  LineData,
-  Time,
-} from 'lightweight-charts';
+import type { CandlestickData, IChartApi, ISeriesApi, LineData, Time } from 'lightweight-charts';
 import {
   CandlestickSeries,
   ColorType,
@@ -164,10 +158,7 @@ function indicatorToggleButtonClass(active: boolean) {
 }
 
 function indicatorToggleSuffixClass(active: boolean) {
-  return cn(
-    'tabular-nums',
-    active ? 'font-medium text-primary/80' : 'text-muted-foreground/35',
-  );
+  return cn('tabular-nums', active ? 'font-medium text-primary/80' : 'text-muted-foreground/35');
 }
 
 /**
@@ -297,7 +288,10 @@ const emptySeriesRefs = (): SeriesRefs => ({
   rsi: null,
 });
 
-export interface CandlestickWidgetProps extends React.ComponentProps<typeof BaseWidget> {
+export interface CandlestickWidgetProps extends Omit<
+  React.ComponentProps<typeof BaseWidget>,
+  'children'
+> {
   /** When omitted, demo OHLC is generated from timeframe + interval. */
   data?: CandlestickData<Time>[];
   borderVisible?: boolean;
@@ -319,11 +313,6 @@ export interface CandlestickWidgetProps extends React.ComponentProps<typeof Base
   /** Show MA / BB / RSI toggles. Default `true`. */
   showIndicatorToggles?: boolean;
   /**
-   * When true, shows the sparkles control in the header. Click it to toggle an AI-style summary
-   * (rule-based from the current series) under the title. Inherits the same idea as `BaseWidget`.
-   */
-  isAiWidget?: boolean;
-  /**
    * Layout footprint: `default` (compact), `medium` (same chart height as default, wider card),
    * `large` (taller and wider chart area).
    */
@@ -343,7 +332,6 @@ export function CandlestickWidget({
   onIntervalChange,
   showControls: showControlsProp,
   showIndicatorToggles = true,
-  isAiWidget = false,
   variant = 'default',
   className,
   ...props
@@ -362,13 +350,6 @@ export function CandlestickWidget({
   const [showMA, setShowMA] = React.useState(false);
   const [showBB, setShowBB] = React.useState(false);
   const [showRSI, setShowRSI] = React.useState(false);
-  const [aiInsightOpen, setAiInsightOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isAiWidget) {
-      setAiInsightOpen(false);
-    }
-  }, [isAiWidget]);
 
   const timeframe = timeframeProp ?? internalTf;
   const interval = intervalProp ?? internalIv;
@@ -686,23 +667,9 @@ export function CandlestickWidget({
     chart.priceScale('right', 0).setAutoScale(true);
   }, [resolvedData, showMA, showBB, showRSI, indicatorLines]);
 
-  const aiInsightText = React.useMemo(
-    () =>
-      buildCandlestickInsight(
-        resolvedData,
-        timeframe,
-        interval,
-        { showMA, showBB, showRSI },
-        indicatorLines,
-      ),
-    [resolvedData, timeframe, interval, showMA, showBB, showRSI, indicatorLines],
-  );
-
   const studyLegendProps = React.useMemo(() => {
     const lastBar = resolvedData[resolvedData.length - 1];
-    const maPoint = showMA
-      ? indicatorLines.ma[indicatorLines.ma.length - 1]
-      : undefined;
+    const maPoint = showMA ? indicatorLines.ma[indicatorLines.ma.length - 1] : undefined;
     let bbLast: { upper: number; middle: number; lower: number } | undefined;
     if (showBB) {
       const u = indicatorLines.bb.upper;
@@ -715,33 +682,27 @@ export function CandlestickWidget({
         bbLast = { upper: lu.value, middle: lm.value, lower: ll.value };
       }
     }
-    const rsiPoint = showRSI
-      ? indicatorLines.rsi[indicatorLines.rsi.length - 1]
-      : undefined;
+    const rsiPoint = showRSI ? indicatorLines.rsi[indicatorLines.rsi.length - 1] : undefined;
     return { lastBar, maPoint, bbLast, rsiPoint };
   }, [resolvedData, indicatorLines, showMA, showBB, showRSI]);
+
+  const aiInsightText = React.useMemo(
+    () =>
+      buildCandlestickInsight(
+        resolvedData,
+        timeframe,
+        interval,
+        { showMA, showBB, showRSI },
+        indicatorLines,
+      ),
+    [resolvedData, timeframe, interval, showMA, showBB, showRSI, indicatorLines],
+  );
 
   const showToolbar = showControls || showIndicatorToggles;
   const variantClasses = candlestickVariantClassNames(variant);
 
   return (
-    <BaseWidget
-      {...props}
-      className={cn(variantClasses.root, className)}
-      isAiWidget={isAiWidget}
-      onAiButtonClick={
-        isAiWidget ? () => setAiInsightOpen((open) => !open) : undefined
-      }
-      aiButtonExpanded={isAiWidget ? aiInsightOpen : undefined}
-      titleSupplement={
-        isAiWidget && aiInsightOpen ? (
-          <p className="mt-2 border-l-2 border-primary/35 pl-3 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-            <span className="sr-only">AI-generated summary: </span>
-            {aiInsightText}
-          </p>
-        ) : null
-      }
-    >
+    <BaseWidget {...props} summary={aiInsightText} className={cn(variantClasses.root, className)}>
       {showToolbar ? (
         <div className="mb-3 flex flex-col gap-2">
           {showControls ? (
@@ -797,8 +758,7 @@ export function CandlestickWidget({
                 onClick={() => setShowMA((v) => !v)}
                 className={indicatorToggleButtonClass(showMA)}
               >
-                MA{' '}
-                <span className={indicatorToggleSuffixClass(showMA)}>({MA_PERIOD})</span>
+                MA <span className={indicatorToggleSuffixClass(showMA)}>({MA_PERIOD})</span>
               </Button>
               <span className="select-none px-0.5 text-muted-foreground/40" aria-hidden>
                 ·
@@ -829,8 +789,7 @@ export function CandlestickWidget({
                 onClick={() => setShowRSI((v) => !v)}
                 className={indicatorToggleButtonClass(showRSI)}
               >
-                RSI{' '}
-                <span className={indicatorToggleSuffixClass(showRSI)}>({RSI_PERIOD})</span>
+                RSI <span className={indicatorToggleSuffixClass(showRSI)}>({RSI_PERIOD})</span>
               </Button>
             </div>
           ) : null}

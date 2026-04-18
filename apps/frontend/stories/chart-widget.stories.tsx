@@ -47,7 +47,7 @@ type Story = StoryObj<typeof ChartWidget>;
 export const BarChart: Story = {
   args: {
     title: 'Monthly P&L',
-    description: 'Realized performance over the last 6 months',
+    summary: 'Realized performance over the last 6 months',
     chartType: 'bar',
     xKey: 'month',
     valueKey: 'pnl',
@@ -64,7 +64,7 @@ export const BarChart: Story = {
 export const BarChartMulti: Story = {
   args: {
     title: 'Portfolio vs Benchmark',
-    description: 'Monthly P&L comparison',
+    summary: 'Monthly P&L comparison',
     chartType: 'bar',
     xKey: 'month',
     valueKeys: ['portfolio', 'benchmark'],
@@ -85,7 +85,7 @@ export const BarChartMulti: Story = {
 export const LineChart: Story = {
   args: {
     title: 'Equity Curve',
-    description: 'Portfolio progression trend',
+    summary: 'Portfolio progression trend',
     chartType: 'line',
     xKey: 'month',
     valueKey: 'pnl',
@@ -102,7 +102,7 @@ export const LineChart: Story = {
 export const LineChartMulti: Story = {
   args: {
     title: 'Portfolio vs Benchmark',
-    description: 'Equity curve comparison',
+    summary: 'Equity curve comparison',
     chartType: 'line',
     xKey: 'month',
     valueKeys: ['portfolio', 'benchmark'],
@@ -123,7 +123,7 @@ export const LineChartMulti: Story = {
 export const PieChart: Story = {
   args: {
     title: 'Asset Allocation',
-    description: 'Portfolio distribution by asset class',
+    summary: 'Portfolio distribution by asset class',
     chartType: 'pie',
     xKey: 'asset',
     categoryKey: 'asset',
@@ -156,7 +156,7 @@ export const PieChart: Story = {
 export const AreaChart: Story = {
   args: {
     title: 'Equity Curve',
-    description: 'Portfolio performance with filled area',
+    summary: 'Portfolio performance with filled area',
     chartType: 'area',
     xKey: 'month',
     valueKey: 'pnl',
@@ -173,7 +173,7 @@ export const AreaChart: Story = {
 export const AreaChartMulti: Story = {
   args: {
     title: 'Portfolio vs Benchmark',
-    description: 'Equity curve comparison with filled area',
+    summary: 'Equity curve comparison with filled area',
     chartType: 'area',
     xKey: 'month',
     valueKeys: ['portfolio', 'benchmark'],
