@@ -1,6 +1,6 @@
 'use client';
 
-import { PenLine, Search, UserRound } from 'lucide-react';
+import { MessageSquare, PenLine, Search, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,11 @@ import { Typography } from '@/components/ui/typography';
 interface HomeHeaderProps {
   isEditMode: boolean;
   onEditModeChange: (nextValue: boolean) => void;
+  isChatOpen: boolean;
+  onChatOpenChange: (nextValue: boolean) => void;
 }
 
-export function HomeHeader({ isEditMode, onEditModeChange }: HomeHeaderProps) {
+export function HomeHeader({ isEditMode, onEditModeChange, isChatOpen, onChatOpenChange }: HomeHeaderProps) {
   return (
     <header className="border-border/60 bg-card/70 grid h-16 grid-cols-[minmax(0,1fr)_minmax(0,40rem)_minmax(0,1fr)] items-center gap-4 border-b px-4 backdrop-blur sm:px-6">
       <div className="min-w-0">
@@ -29,6 +31,17 @@ export function HomeHeader({ isEditMode, onEditModeChange }: HomeHeaderProps) {
       </div>
 
       <div className="flex items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant={isChatOpen ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onChatOpenChange(!isChatOpen)}
+          aria-label={isChatOpen ? 'Hide chat' : 'Show chat'}
+        >
+          <MessageSquare className="size-4" />
+          {isChatOpen ? 'Hide Chat' : 'Chat'}
+        </Button>
+
         <Button
           type="button"
           variant={isEditMode ? 'default' : 'outline'}

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { fontGeist } from '../lib/fonts';
-import { DifyChatbot } from '../components/dify-chatbot';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -17,7 +16,6 @@ export default function RootLayout({
     <html lang="en" className={fontGeist}>
       <body>
         {children}
-        <DifyChatbot />
       </body>
     </html>
   );
