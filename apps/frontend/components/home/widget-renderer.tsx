@@ -9,29 +9,12 @@ import type { WidgetType } from '@/app/(home)/fixtures';
 
 interface WidgetRendererProps {
   widgetType: WidgetType;
-  showRemoveButton?: boolean;
-  onRemove?: () => void;
 }
 
-export function WidgetRenderer({
-  widgetType,
-  showRemoveButton = false,
-  onRemove,
-}: WidgetRendererProps) {
-  const widgetControls = {
-    showRemoveButton,
-    onRemove,
-  };
-
+export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
   if (widgetType === 'number') {
     return (
-      <NumberWidget
-        title="Portfolio Value"
-        value={182450.52}
-        prev={179935.2}
-        type="absolute"
-        {...widgetControls}
-      />
+      <NumberWidget title="Portfolio Value" value={182450.52} prev={179935.2} type="absolute" />
     );
   }
 
@@ -39,12 +22,10 @@ export function WidgetRenderer({
     return (
       <ChartWidget
         title="Weekly PnL"
-        description="Last 5 sessions"
         chartType="line"
         config={lineConfig}
         data={lineData}
         valueKey="pnl"
-        {...widgetControls}
       />
     );
   }
@@ -59,55 +40,30 @@ export function WidgetRenderer({
           ['AMD', '200', '+$860'],
           ['AAPL', '80', '-$210'],
         ]}
-        {...widgetControls}
       />
     );
   }
 
   if (widgetType === 'candlestick') {
-    return (
-      <CandlestickWidget
-        title="QQQ 5D"
-        description="Candlestick trend"
-        data={candleData}
-        {...widgetControls}
-      />
-    );
+    return <CandlestickWidget title="QQQ 5D" data={candleData} />;
   }
 
   if (widgetType === 'portfolio-small') {
-    return <PortfolioWidget title="Portfolio" variant="small" {...widgetControls} />;
+    return <PortfolioWidget title="Portfolio" variant="small" />;
   }
 
   if (widgetType === 'portfolio-medium') {
-    return (
-      <PortfolioWidget
-        title="Portfolio Snapshot"
-        description="Live holdings"
-        variant="medium"
-        {...widgetControls}
-      />
-    );
+    return <PortfolioWidget title="Portfolio Snapshot" variant="medium" />;
   }
 
   if (widgetType === 'portfolio-large') {
-    return (
-      <PortfolioWidget
-        title="Portfolio Snapshot"
-        description="Live holdings and allocation"
-        variant="large"
-        {...widgetControls}
-      />
-    );
+    return <PortfolioWidget title="Portfolio Snapshot" variant="large" />;
   }
 
   return (
     <TextWidget
       title="AI Insight"
-      description="Session summary"
-      isAiWidget
       text="Momentum remains positive across large-cap tech while breadth is narrowing. Keep position sizes controlled into the next macro event window."
-      {...widgetControls}
     />
   );
 }

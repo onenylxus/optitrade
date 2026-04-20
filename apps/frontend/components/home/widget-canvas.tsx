@@ -12,6 +12,7 @@ import {
   widgetLibrary,
 } from '@/app/(home)/fixtures';
 import type { WidgetPlacement, WidgetType } from '@/app/(home)/fixtures';
+import { WidgetProvider } from '@/contexts/widget-context';
 import { WidgetRenderer } from '@/components/home/widget-renderer';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -611,11 +612,12 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
                           isEditMode ? 'bg-muted/25 hover:bg-muted/40' : '',
                         )}
                       >
-                        <WidgetRenderer
-                          widgetType={placement.widgetType}
-                          showRemoveButton={isEditMode}
-                          onRemove={() => clearWidget(placement.id)}
-                        />
+                        <WidgetProvider
+                          isEditMode={isEditMode}
+                          onDelete={() => clearWidget(placement.id)}
+                        >
+                          <WidgetRenderer widgetType={placement.widgetType} />
+                        </WidgetProvider>
                       </div>
                     </div>
                   </div>

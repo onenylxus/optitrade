@@ -57,21 +57,18 @@ type Story = StoryObj<typeof CandlestickWidget>;
 export const Default: Story = {
   args: {
     title: 'AAPL Candlesticks',
-    description: 'Adjust lookback, bar size, and studies',
     defaultTimeframe: '1M',
     defaultInterval: '1d',
     variant: 'default',
   },
 };
 
-/** Sparkles button in the header toggles a rule-based summary under the title. */
+/** The header summary is generated from the current series and indicators. */
 export const WithAiInsight: Story = {
   args: {
     title: 'AAPL Candlesticks',
-    description: 'Click the sparkles to show or hide the AI-style summary',
     defaultTimeframe: '1M',
     defaultInterval: '1d',
-    isAiWidget: true,
     variant: 'medium',
   },
 };
@@ -79,7 +76,6 @@ export const WithAiInsight: Story = {
 export const BordersAndPriceLine: Story = {
   args: {
     title: 'Candlestick Detail',
-    description: 'Candles with borders and live price line enabled',
     defaultTimeframe: '5D',
     defaultInterval: '1h',
     borderVisible: true,
@@ -92,7 +88,6 @@ export const BordersAndPriceLine: Story = {
 export const StaticData: Story = {
   args: {
     title: 'Static OHLC',
-    description: 'Precomputed candles only; indicator toggles still available',
     data: ohlcData,
     showControls: false,
     showIndicatorToggles: true,
@@ -104,7 +99,6 @@ export const StaticData: Story = {
 export const VariantMedium: Story = {
   args: {
     title: 'Medium layout',
-    description: 'Same chart height as default, more horizontal room',
     variant: 'medium',
     defaultTimeframe: '3M',
     defaultInterval: '1d',
@@ -116,7 +110,6 @@ export const VariantMedium: Story = {
 export const VariantLarge: Story = {
   args: {
     title: 'Large layout',
-    description: 'Taller plot (18–20rem) and wider min-width for dashboards',
     variant: 'large',
     defaultTimeframe: '6M',
     defaultInterval: '1d',
@@ -147,7 +140,6 @@ export const ControlledFromParent: Story = {
   render: (args) => <ControlledDemo {...args} />,
   args: {
     title: 'Controlled (parent-owned data)',
-    description: 'Callbacks + derived `data` — how a real feed would integrate',
     defaultTimeframe: '3M',
     defaultInterval: '1d',
     variant: 'large',

@@ -1,90 +1,61 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Sparkles, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
+import { useWidgetContext } from '@/contexts/widget-context';
 
 interface BaseWidgetProps extends ComponentProps<typeof Card> {
   title: string;
-  description?: string;
-  children?: ReactNode;
-  isAiWidget?: boolean;
-  showRemoveButton?: boolean;
-  onRemove?: () => void;
-  /** Renders directly under the title (e.g. AI-generated insight). */
-  titleSupplement?: React.ReactNode;
-  /**
-   * When `isAiWidget` is true and this is set, the sparkles control becomes a button
-   * that invokes this handler (e.g. toggle insight). Otherwise the icon is decorative only.
-   */
-  onAiButtonClick?: () => void;
-  /** `aria-expanded` for the AI control when it is a button. */
-  aiButtonExpanded?: boolean;
+  summary?: string;
+  children: ReactNode;
 }
 
-export function BaseWidget({
-  title,
-  description,
-  children,
-  isAiWidget = false,
-  showRemoveButton = false,
-  onRemove,
-  titleSupplement,
-  onAiButtonClick,
-  aiButtonExpanded,
-  className,
-  ...props
-}: BaseWidgetProps) {
-  const aiControl =
-    isAiWidget &&
-    (onAiButtonClick ? (
-      <button
-        type="button"
-        onClick={onAiButtonClick}
-        aria-expanded={aiButtonExpanded ?? false}
-        aria-label="Toggle AI-generated insight"
-        className={cn(
-          'text-primary shrink-0 self-start rounded-md p-1 outline-none',
-          'hover:bg-muted/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        )}
-      >
-        <Sparkles size={18} aria-hidden />
-      </button>
-    ) : (
-      <Sparkles className="text-primary shrink-0 self-start" size={18} aria-hidden />
-    ));
+export function BaseWidget({ title, summary, children, className, ...props }: BaseWidgetProps) {
+  const { isEditMode, onDelete } = useWidgetContext();
 
   return (
-    <Card className={cn('w-full h-full gap-1 px-4', className)} {...props}>
+    <Card className={cn('h-full min-h-0 w-full gap-1 px-4', className)} {...props}>
       <CardHeader className="px-0">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <CardTitle>{title}</CardTitle>
-            {titleSupplement}
-            {description ? <CardDescription>{description}</CardDescription> : null}
+        <CardTitle>{title}</CardTitle>
+        {summary ? (
+          <div className="mt-1 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs leading-relaxed text-primary/90">
+            {summary}
           </div>
-
-          <div className="flex items-center gap-2 self-start">
-            {aiControl}
-            {showRemoveButton && onRemove ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                aria-label="Remove widget"
-                onClick={onRemove}
-              >
-                <Trash2 className="size-4.5" />
-              </Button>
-            ) : null}
-          </div>
-        </div>
+        ) : null}
       </CardHeader>
 
       <Separator />
 
-      <CardContent className="flex-1 px-0">{children}</CardContent>
+      <CardContent className="flex-1 min-h-0 overflow-y-auto px-0 py-1">{children}</CardContent>
+
+      <Separator />
+
+      <CardFooter className="mt-1 flex items-center justify-between gap-2 border-0 bg-transparent px-0 py-1.5">
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          className="shadow-sm shadow-primary/20 ring-1 ring-primary/25"
+        >
+          <Plus className="size-3.5" />
+          Add to Context
+        </Button>
+        {isEditMode && onDelete ? (
+          <Button
+            type="button"
+            size="sm"
+            aria-label="Remove widget"
+            onClick={onDelete}
+            className="ml-auto bg-destructive hover:bg-destructive/90 ring-1 ring-destructive/30"
+          >
+            <Trash2 className="size-3.5" />
+            Delete
+          </Button>
+        ) : null}
+      </CardFooter>
     </Card>
   );
 }

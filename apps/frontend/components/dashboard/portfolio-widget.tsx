@@ -14,7 +14,7 @@ type PortfolioVariant = 'small' | 'medium' | 'large';
 
 interface PortfolioWidgetProps extends Omit<
   React.ComponentProps<typeof BaseWidget>,
-  'title' | 'size'
+  'children' | 'title' | 'summary' | 'size'
 > {
   title?: string;
   stocks?: Stock[];
@@ -259,7 +259,6 @@ type PortfolioWidgetComponent = ((props: PortfolioWidgetProps) => React.JSX.Elem
 
 const PortfolioWidgetRoot = ({
   title = 'Portfolio',
-  description = 'Holdings snapshot',
   stocks = DEFAULT_STOCKS,
   variant,
   size,
@@ -270,7 +269,7 @@ const PortfolioWidgetRoot = ({
   const variantProps: PortfolioVariantProps = { stocks, data: portfolioData };
 
   return (
-    <BaseWidget title={title} description={description} {...props}>
+    <BaseWidget title={title} {...props}>
       {resolvedVariant === 'small' ? (
         <PortfolioWidgetSmall {...variantProps} />
       ) : resolvedVariant === 'large' ? (

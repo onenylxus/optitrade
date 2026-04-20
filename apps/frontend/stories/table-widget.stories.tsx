@@ -22,7 +22,6 @@ type Story = StoryObj<typeof TableWidget>;
 export const Default: Story = {
   args: {
     title: 'Holdings',
-    description: 'Current portfolio positions',
     headers: ['Symbol', 'Shares', 'Price', 'Value'],
     rows: [
       ['AAPL', '10', '$178.20', '$1,782.00'],
@@ -36,7 +35,6 @@ export const Default: Story = {
 export const Empty: Story = {
   args: {
     title: 'Watchlist',
-    description: 'No items added yet',
     headers: ['Symbol', 'Last Price', 'Change'],
     rows: [],
   },
@@ -45,8 +43,6 @@ export const Empty: Story = {
 export const AiWidget: Story = {
   args: {
     title: 'AI Signals',
-    description: 'Model-generated trade signals',
-    isAiWidget: true,
     headers: ['Symbol', 'Signal', 'Confidence', 'Target'],
     rows: [
       ['TSLA', 'BUY', '87%', '$280.00'],
