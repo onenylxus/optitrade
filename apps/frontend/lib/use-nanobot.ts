@@ -25,7 +25,6 @@ export function useNanobot() {
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
-    setStatus('connecting');
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
@@ -46,30 +45,32 @@ export function useNanobot() {
             const msgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
             streamMsgIdRef.current.set(stream_id, msgId);
             streamBufferRef.current.set(stream_id, text);
-            setMessages(prev => [
+            setMessages((prev) => [
               ...prev,
               { id: msgId, role: 'assistant', text, isStreaming: true },
             ]);
           } else {
-            const msgId = streamMsgIdRef.current.get(stream_id)!;
+            const msgId = streamMsgIdRef.current.get(stream_id);
+            if (!msgId) return;
+
             const accumulated = (streamBufferRef.current.get(stream_id) ?? '') + text;
             streamBufferRef.current.set(stream_id, accumulated);
-            setMessages(prev =>
-              prev.map(m => (m.id === msgId ? { ...m, text: accumulated } : m)),
+            setMessages((prev) =>
+              prev.map((m) => (m.id === msgId ? { ...m, text: accumulated } : m)),
             );
           }
         } else if (data.event === 'stream_end') {
           const { stream_id } = data as { stream_id: string };
           const msgId = streamMsgIdRef.current.get(stream_id);
           if (msgId) {
-            setMessages(prev =>
-              prev.map(m => (m.id === msgId ? { ...m, isStreaming: false } : m)),
+            setMessages((prev) =>
+              prev.map((m) => (m.id === msgId ? { ...m, isStreaming: false } : m)),
             );
             streamMsgIdRef.current.delete(stream_id);
             streamBufferRef.current.delete(stream_id);
           }
         } else if (data.event === 'message') {
-          setMessages(prev => [
+          setMessages((prev) => [
             ...prev,
             { id: `msg-${Date.now()}`, role: 'assistant', text: data.text as string },
           ]);
@@ -91,14 +92,12 @@ export function useNanobot() {
     const trimmed = text.trim();
     if (!trimmed || wsRef.current?.readyState !== WebSocket.OPEN) return;
 
-    setMessages(prev => [
-      ...prev,
-      { id: `msg-${Date.now()}-user`, role: 'user', text: trimmed },
-    ]);
-    wsRef.current!.send(trimmed);
+    setMessages((prev) => [...prev, { id: `msg-${Date.now()}-user`, role: 'user', text: trimmed }]);
+    wsRef.current?.send(trimmed);
   }, []);
 
   const reconnect = useCallback(() => {
+    setStatus('connecting');
     wsRef.current?.close();
     wsRef.current = null;
     connect();

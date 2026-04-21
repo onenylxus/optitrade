@@ -9,7 +9,9 @@ interface NumberWidgetProps extends Omit<React.ComponentProps<typeof BaseWidget>
 export function NumberWidget({ value, prev, type = 'absolute', ...props }: NumberWidgetProps) {
   const change = prev !== undefined ? value - prev : undefined;
   const changePercent =
-    prev !== undefined && prev !== 0 ? (change! / Math.abs(prev)) * 100 : undefined;
+    change !== undefined && prev !== undefined && prev !== 0
+      ? (change / Math.abs(prev)) * 100
+      : undefined;
   const displayChange = type === 'percent' ? changePercent : change;
 
   return (

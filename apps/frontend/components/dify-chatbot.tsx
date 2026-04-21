@@ -2,29 +2,45 @@
 
 import { useEffect } from 'react';
 
-const PRIMARY   = 'oklch(0.457 0.24 277.023)';
+type DifyChatbotConfig = {
+  token: string;
+  inputs: Record<string, never>;
+  systemVariables: Record<string, never>;
+  userVariables: Record<string, never>;
+  containerProps: {
+    style: {
+      backgroundColor: string;
+      boxShadow: string;
+    };
+  };
+};
+
+const PRIMARY = 'oklch(0.457 0.24 277.023)';
 const DEFAULT_W = '24rem';
 const DEFAULT_H = '44rem';
-const EXPAND_W  = 'min(66vw, 900px)';
-const EXPAND_H  = '66vh';
+const EXPAND_W = 'min(66vw, 900px)';
+const EXPAND_H = '66vh';
 
 const VISUAL: [string, string][] = [
-  ['z-index',       '99999'],
-  ['border',        '1px solid oklch(0.457 0.24 277.023 / 30%)'],
+  ['z-index', '99999'],
+  ['border', '1px solid oklch(0.457 0.24 277.023 / 30%)'],
   ['border-radius', '0.75rem'],
-  ['box-shadow',    '0 8px 48px oklch(0.457 0.24 277.023 / 20%)'],
-  ['overflow',      'hidden'],
+  ['box-shadow', '0 8px 48px oklch(0.457 0.24 277.023 / 20%)'],
+  ['overflow', 'hidden'],
 ];
 
 function applySize(el: HTMLElement, w: string, h: string) {
-  [...VISUAL, ['width', w] as [string,string], ['height', h] as [string,string]]
-    .forEach(([p, v]) => el.style.setProperty(p, v, 'important'));
+  [...VISUAL, ['width', w] as [string, string], ['height', h] as [string, string]].forEach(
+    ([p, v]) => el.style.setProperty(p, v, 'important'),
+  );
 }
 
 export function DifyChatbot() {
   useEffect(() => {
     // Per Dify docs: containerProps styles the bubble button container
-    (window as any).difyChatbotConfig = {
+    const windowWithConfig = window as unknown as Window & { difyChatbotConfig: DifyChatbotConfig };
+
+    windowWithConfig.difyChatbotConfig = {
       token: 'tK1fSX1l8egbhA8r',
       inputs: {},
       systemVariables: {},
@@ -40,12 +56,12 @@ export function DifyChatbot() {
     if (document.getElementById('dify-chatbot-script')) return;
 
     const script = document.createElement('script');
-    script.src   = 'https://udify.app/embed.min.js';
-    script.id    = 'dify-chatbot-script';
+    script.src = 'https://udify.app/embed.min.js';
+    script.id = 'dify-chatbot-script';
     script.defer = true;
     document.body.appendChild(script);
 
-    let expanded       = false;
+    let expanded = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let styleObs: MutationObserver | null = null;
 
@@ -57,7 +73,7 @@ export function DifyChatbot() {
         applySize(winEl, DEFAULT_W, DEFAULT_H);
 
         styleObs = new MutationObserver(() => {
-          styleObs!.disconnect();
+          styleObs?.disconnect();
 
           // Read what Dify just tried to set
           const h = winEl.style.height;
@@ -87,7 +103,11 @@ export function DifyChatbot() {
       if (btnEl) {
         btnEl.style.setProperty('background-color', PRIMARY, 'important');
         btnEl.style.setProperty('z-index', '99999', 'important');
-        btnEl.style.setProperty('box-shadow', '0 4px 24px oklch(0.457 0.24 277.023 / 40%)', 'important');
+        btnEl.style.setProperty(
+          'box-shadow',
+          '0 4px 24px oklch(0.457 0.24 277.023 / 40%)',
+          'important',
+        );
       }
 
       if (winEl && btnEl) domObs.disconnect();

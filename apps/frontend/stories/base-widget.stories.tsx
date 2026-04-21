@@ -30,7 +30,7 @@ export const Default: Story = {
 export const InEditMode: Story = {
   render: (args) => (
     <div className="w-90">
-      <WidgetProvider isEditMode onDelete={() => {}}>
+      <WidgetProvider isEditMode>
         <BaseWidget {...args}>
           <div className="min-h-30 pt-1">
             Delete appears in the footer when edit mode context is enabled.
