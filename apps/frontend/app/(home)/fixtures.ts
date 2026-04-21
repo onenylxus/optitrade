@@ -8,7 +8,8 @@ export type WidgetType =
   | 'candlestick'
   | 'portfolio-small'
   | 'portfolio-medium'
-  | 'portfolio-large';
+  | 'portfolio-large'
+  | 'news';
 
 export interface WidgetSpan {
   cols: number;
@@ -39,6 +40,7 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   'portfolio-small': { cols: 5, rows: 5 },
   'portfolio-medium': { cols: 6, rows: 7 },
   'portfolio-large': { cols: 8, rows: 8 },
+  news: { cols: 8, rows: 8 },
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [

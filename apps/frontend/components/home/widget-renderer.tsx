@@ -4,6 +4,7 @@ import { NumberWidget } from '@/components/dashboard/number-widget';
 import { PortfolioWidget } from '@/components/dashboard/portfolio-widget';
 import { TableWidget } from '@/components/dashboard/table-widget';
 import { TextWidget } from '@/components/dashboard/text-widget';
+import { NewsWidget } from '@/components/dashboard/news-widget';
 import { candleData, lineConfig, lineData } from '@/app/(home)/fixtures';
 import type { WidgetType } from '@/app/(home)/fixtures';
 
@@ -60,6 +61,9 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
     return <PortfolioWidget title="Portfolio Snapshot" variant="large" />;
   }
 
+  if (widgetType === 'news') {
+    return <NewsWidget />;
+  }
   return (
     <TextWidget
       title="AI Insight"
