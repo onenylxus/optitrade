@@ -21,16 +21,23 @@ import grpc
 
 from protos import helloworld_pb2, helloworld_pb2_grpc
 
+from .services import GreeterService
+
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
+    def __init__(self, service: GreeterService):
+        self.service = service
+
     def SayHello(self, request, context):
-        return helloworld_pb2.HelloReply(message=f"Hello, {request.name}!")
+        message = self.service.say_hello(request.name)
+        return helloworld_pb2.HelloReply(message=message)
 
 
 def serve():
     port = "50051"
+    service = GreeterService()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
+    helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(service), server)
     server.add_insecure_port("[::]:" + port)
     server.start()
     print("Server started, listening on " + port)

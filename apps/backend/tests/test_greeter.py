@@ -4,11 +4,15 @@ import grpc
 
 from protos import helloworld_pb2, helloworld_pb2_grpc
 from src import greeter_server
+from src.services import GreeterService
 
 
 def test_say_hello_returns_expected_message():
+    service = GreeterService()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
-    helloworld_pb2_grpc.add_GreeterServicer_to_server(greeter_server.Greeter(), server)
+    helloworld_pb2_grpc.add_GreeterServicer_to_server(
+        greeter_server.Greeter(service), server
+    )
     port = server.add_insecure_port("[::]:0")
     assert port != 0
     server.start()
@@ -21,3 +25,4 @@ def test_say_hello_returns_expected_message():
         assert resp.message == "Hello, pytest!"
     finally:
         server.stop(0).wait()
+
