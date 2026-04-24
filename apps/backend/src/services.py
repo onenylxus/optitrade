@@ -15,3 +15,21 @@ class GreeterService:
             A greeting message.
         """
         return f"Hello, {name}!"
+
+    def say_hello_with_prefix(self, name: str, prefix: str = "Hello") -> str:
+        """Generate a greeting with a configurable prefix."""
+        return f"{prefix}, {name}!"
+
+    def say_hello_with_suffix(self, name: str, suffix: str = "!") -> str:
+        """Generate a greeting with a configurable suffix."""
+        return f"Hello, {name}{suffix}"
+
+    def say_goodbye(self, name: str) -> str:
+        """Generate a goodbye message."""
+        return f"Goodbye, {name}!"
+
+    def aggregate_hellos(self, names: list[str]) -> str:
+        """Generate a single response that includes greetings for multiple names."""
+        if not names:
+            return "Hello, nobody!"
+        return " | ".join(self.say_hello(name) for name in names)

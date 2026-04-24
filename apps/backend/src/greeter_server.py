@@ -32,6 +32,24 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
         message = self.service.say_hello(request.name)
         return helloworld_pb2.HelloReply(message=message)
 
+    def SayHelloServerStream(self, request, context):
+        for i in range(1, 4):
+            message = self.service.say_hello_with_prefix(
+                request.name,
+                prefix=f"Hello #{i}",
+            )
+            yield helloworld_pb2.HelloReply(message=message)
+
+    def SayHelloClientStream(self, request_iterator, context):
+        names = [request.name for request in request_iterator]
+        message = self.service.aggregate_hellos(names)
+        return helloworld_pb2.HelloReply(message=message)
+
+    def SayHelloBidirectional(self, request_iterator, context):
+        for request in request_iterator:
+            message = self.service.say_hello(request.name)
+            yield helloworld_pb2.HelloReply(message=message)
+
 
 def serve():
     port = "50051"

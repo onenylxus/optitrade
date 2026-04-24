@@ -50,3 +50,31 @@ def test_invalid_request_returns_validation_error(client):
     """Test that invalid requests return validation errors."""
     response = client.post("/api/v1/hello", json={})
     assert response.status_code == 422  # Unprocessable Entity
+
+
+def test_say_hello_with_put(client):
+    """Test the hello endpoint with PUT."""
+    response = client.put("/api/v1/hello/Alice")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello (PUT), Alice!"}
+
+
+def test_say_hello_with_patch(client):
+    """Test the hello endpoint with PATCH."""
+    response = client.patch("/api/v1/hello/Alice", json={"suffix": "!!!"})
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello, Alice!!!"}
+
+
+def test_say_hello_with_delete(client):
+    """Test the hello endpoint with DELETE."""
+    response = client.delete("/api/v1/hello/Alice")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Goodbye, Alice!"}
+
+
+def test_say_hello_batch(client):
+    """Test the batch hello endpoint."""
+    response = client.post("/api/v1/hello/batch", json={"names": ["Alice", "Bob"]})
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello, Alice! | Hello, Bob!"}

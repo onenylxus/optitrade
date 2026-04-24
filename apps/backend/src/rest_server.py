@@ -19,6 +19,18 @@ class HelloResponse(BaseModel):
     message: str
 
 
+class HelloPatchRequest(BaseModel):
+    """Patch request model for hello endpoint."""
+
+    suffix: str = "!"
+
+
+class HelloBatchRequest(BaseModel):
+    """Request model for batch hello endpoint."""
+
+    names: list[str]
+
+
 def create_app() -> FastAPI:
     """
     Create and configure the FastAPI application.
@@ -79,6 +91,30 @@ def create_app() -> FastAPI:
             A hello response with the greeting message.
         """
         message = service.say_hello(name)
+        return HelloResponse(message=message)
+
+    @app.put("/api/v1/hello/{name}")
+    async def say_hello_put(name: str) -> HelloResponse:
+        """Say hello using PUT to validate idempotent update-style semantics."""
+        message = service.say_hello_with_prefix(name, prefix="Hello (PUT)")
+        return HelloResponse(message=message)
+
+    @app.patch("/api/v1/hello/{name}")
+    async def say_hello_patch(name: str, request: HelloPatchRequest) -> HelloResponse:
+        """Partially customize hello output via PATCH."""
+        message = service.say_hello_with_suffix(name, suffix=request.suffix)
+        return HelloResponse(message=message)
+
+    @app.delete("/api/v1/hello/{name}")
+    async def say_hello_delete(name: str) -> HelloResponse:
+        """Return goodbye message via DELETE."""
+        message = service.say_goodbye(name)
+        return HelloResponse(message=message)
+
+    @app.post("/api/v1/hello/batch")
+    async def say_hello_batch(request: HelloBatchRequest) -> HelloResponse:
+        """Create a single response from multiple names."""
+        message = service.aggregate_hellos(request.names)
         return HelloResponse(message=message)
 
     return app

@@ -6,7 +6,19 @@
  */
 
 import { useState } from 'react';
-import { checkHealth, sayHelloRest, sayHelloRestPath, sayHelloGrpc } from '@/lib/api/client';
+import {
+  checkHealth,
+  sayHelloGrpc,
+  sayHelloGrpcBidirectional,
+  sayHelloGrpcClientStream,
+  sayHelloGrpcServerStream,
+  sayHelloRest,
+  sayHelloRestBatch,
+  sayHelloRestDelete,
+  sayHelloRestPatch,
+  sayHelloRestPath,
+  sayHelloRestPut,
+} from '@/lib/api/client';
 
 interface TestResult {
   id: string;
@@ -25,6 +37,8 @@ export function ApiTestComponent() {
   const addResult = (result: TestResult) => {
     setResults((prev) => [result, ...prev]);
   };
+
+  const buildBatchNames = () => [testName, `${testName}-2`, `${testName}-3`];
 
   const formatForDisplay = (value: unknown): string => {
     if (value instanceof Error) {
@@ -112,6 +126,48 @@ export function ApiTestComponent() {
     );
   };
 
+  const handleRestPut = () => {
+    runTest(`rest-put-${Date.now()}`, `REST PUT - Hello ${testName}`, () =>
+      sayHelloRestPut(testName),
+    );
+  };
+
+  const handleRestPatch = () => {
+    runTest(`rest-patch-${Date.now()}`, `REST PATCH - Hello ${testName}`, () =>
+      sayHelloRestPatch(testName, { suffix: '!!!' }),
+    );
+  };
+
+  const handleRestDelete = () => {
+    runTest(`rest-delete-${Date.now()}`, `REST DELETE - Goodbye ${testName}`, () =>
+      sayHelloRestDelete(testName),
+    );
+  };
+
+  const handleRestBatch = () => {
+    runTest(`rest-batch-${Date.now()}`, `REST BATCH - Hello ${testName}*`, () =>
+      sayHelloRestBatch({ names: buildBatchNames() }),
+    );
+  };
+
+  const handleGrpcServerStream = () => {
+    runTest(`grpc-server-stream-${Date.now()}`, `gRPC Server Stream - Hello ${testName}`, () =>
+      sayHelloGrpcServerStream({ name: testName }),
+    );
+  };
+
+  const handleGrpcClientStream = () => {
+    runTest(`grpc-client-stream-${Date.now()}`, `gRPC Client Stream - Hello ${testName}*`, () =>
+      sayHelloGrpcClientStream({ names: buildBatchNames() }),
+    );
+  };
+
+  const handleGrpcBidirectional = () => {
+    runTest(`grpc-bidi-${Date.now()}`, `gRPC Bidirectional - Hello ${testName}*`, () =>
+      sayHelloGrpcBidirectional({ names: buildBatchNames() }),
+    );
+  };
+
   const handleRunAll = async () => {
     setIsRunning(true);
     setResults([]);
@@ -131,6 +187,41 @@ export function ApiTestComponent() {
 
       await new Promise((resolve) => setTimeout(resolve, 500));
       await runTest('grpc-all', `gRPC - Hello ${testName}`, () => sayHelloGrpc({ name: testName }));
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await runTest('rest-put-all', `REST PUT - Hello ${testName}`, () =>
+        sayHelloRestPut(testName),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await runTest('rest-patch-all', `REST PATCH - Hello ${testName}`, () =>
+        sayHelloRestPatch(testName, { suffix: '!!!' }),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await runTest('rest-delete-all', `REST DELETE - Goodbye ${testName}`, () =>
+        sayHelloRestDelete(testName),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await runTest('rest-batch-all', `REST BATCH - Hello ${testName}*`, () =>
+        sayHelloRestBatch({ names: buildBatchNames() }),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await runTest('grpc-server-stream-all', `gRPC Server Stream - Hello ${testName}`, () =>
+        sayHelloGrpcServerStream({ name: testName }),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await runTest('grpc-client-stream-all', `gRPC Client Stream - Hello ${testName}*`, () =>
+        sayHelloGrpcClientStream({ names: buildBatchNames() }),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await runTest('grpc-bidi-all', `gRPC Bidirectional - Hello ${testName}*`, () =>
+        sayHelloGrpcBidirectional({ names: buildBatchNames() }),
+      );
     } finally {
       setIsRunning(false);
     }
@@ -155,7 +246,7 @@ export function ApiTestComponent() {
           </div>
 
           {/* Buttons Section */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <button
               onClick={handleHealthCheck}
               disabled={isRunning}
@@ -178,11 +269,60 @@ export function ApiTestComponent() {
               REST PATH
             </button>
             <button
+              onClick={handleRestPut}
+              disabled={isRunning}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-400"
+            >
+              REST PUT
+            </button>
+            <button
+              onClick={handleRestPatch}
+              disabled={isRunning}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-400"
+            >
+              REST PATCH
+            </button>
+            <button
+              onClick={handleRestDelete}
+              disabled={isRunning}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-400"
+            >
+              REST DELETE
+            </button>
+            <button
+              onClick={handleRestBatch}
+              disabled={isRunning}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-400"
+            >
+              REST BATCH
+            </button>
+            <button
               onClick={handleGrpcCall}
               disabled={isRunning}
               className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 disabled:bg-gray-400"
             >
               gRPC Call
+            </button>
+            <button
+              onClick={handleGrpcServerStream}
+              disabled={isRunning}
+              className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 disabled:bg-gray-400"
+            >
+              gRPC Server Stream
+            </button>
+            <button
+              onClick={handleGrpcClientStream}
+              disabled={isRunning}
+              className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 disabled:bg-gray-400"
+            >
+              gRPC Client Stream
+            </button>
+            <button
+              onClick={handleGrpcBidirectional}
+              disabled={isRunning}
+              className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 disabled:bg-gray-400"
+            >
+              gRPC Bidirectional
             </button>
           </div>
 
