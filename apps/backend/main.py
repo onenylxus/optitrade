@@ -33,7 +33,7 @@ def run_grpc_server(service: GreeterService, port: str = "50051"):
     helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(service), server)
     server.add_insecure_port(f"[::]:{port}")
     server.start()
-    print(f"✓ gRPC server started on port {port}")
+    print(f"gRPC server started on port {port}")
     server.wait_for_termination()
 
 
@@ -52,7 +52,7 @@ def run_rest_server(rest_port: int = 8000):
         log_level="info",
     )
     server = uvicorn.Server(config)
-    print(f"✓ REST API server started on port {rest_port}")
+    print(f"REST API server started on port {rest_port}")
     print(f"  OpenAPI docs: http://localhost:{rest_port}/docs")
     import asyncio
     asyncio.run(server.serve())
