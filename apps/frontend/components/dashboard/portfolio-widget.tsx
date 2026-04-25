@@ -1,4 +1,5 @@
-import { MessageSquare, TrendingDown, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { MessageSquare, TrendingDown, TrendingUp, Loader2 } from 'lucide-react';
 import { BaseWidget } from './base-widget';
 
 export interface Stock {
@@ -17,9 +18,7 @@ interface PortfolioWidgetProps extends Omit<
   'children' | 'title' | 'summary' | 'size'
 > {
   title?: string;
-  stocks?: Stock[];
   variant?: PortfolioVariant;
-  /** Backward-compatible alias for `variant`. */
   size?: PortfolioVariant;
 }
 
@@ -35,23 +34,10 @@ interface PortfolioVariantProps {
   data: PortfolioDerivedData;
 }
 
+// Fallback data used if the backend (/v1/api/portfolio) returns a 404
 const DEFAULT_STOCKS: Stock[] = [
-  {
-    id: '1',
-    symbol: 'NVDA',
-    quantity: 200,
-    avgPrice: 120,
-    currentPrice: 145.75,
-    sector: 'Technology',
-  },
-  {
-    id: '2',
-    symbol: 'AAPL',
-    quantity: 100,
-    avgPrice: 175,
-    currentPrice: 189.5,
-    sector: 'Technology',
-  },
+  { id: '1', symbol: 'NVDA', quantity: 200, avgPrice: 120, currentPrice: 145.75, sector: 'Technology' },
+  { id: '2', symbol: 'AAPL', quantity: 100, avgPrice: 175, currentPrice: 189.5, sector: 'Technology' },
   { id: '3', symbol: 'TSLA', quantity: 50, avgPrice: 160, currentPrice: 182.3, sector: 'Energy' },
 ];
 
@@ -84,24 +70,18 @@ function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
     }))
     .sort((a, b) => b.value - a.value);
 
-  return {
-    totalValue,
-    pnl,
-    pnlPercent,
-    sectorValues,
-  };
+  return { totalValue, pnl, pnlPercent, sectorValues };
 }
+
+// --- UI Variants ---
 
 function PortfolioWidgetSmall({ data }: PortfolioVariantProps) {
   return (
     <div className="flex h-full items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-center shadow-sm">
       <div>
-        <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-          Total P/L
-        </div>
+        <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">Total P/L</div>
         <div className={`text-3xl font-black leading-none ${percentClass(data.pnlPercent)}`}>
-          {data.pnlPercent >= 0 ? '+' : ''}
-          {data.pnlPercent.toFixed(1)}%
+          {data.pnlPercent >= 0 ? '+' : ''}{data.pnlPercent.toFixed(1)}%
         </div>
       </div>
     </div>
@@ -113,46 +93,29 @@ function PortfolioWidgetMedium({ stocks, data }: PortfolioVariantProps) {
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
       <div className="grid grid-cols-2 gap-3 border-b border-slate-100 px-3 py-2.5">
         <div>
-          <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-            Total Value
-          </div>
-          <div className="text-xl font-black tracking-tight text-slate-900">
-            {formatCurrency(data.totalValue)}
-          </div>
+          <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">Total Value</div>
+          <div className="text-xl font-black tracking-tight text-slate-900">{formatCurrency(data.totalValue)}</div>
         </div>
         <div className="text-right">
-          <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-            Unrealized P/L
-          </div>
+          <div className="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">Unrealized P/L</div>
           <div className={`text-xl font-black tracking-tight ${percentClass(data.pnl)}`}>
-            {data.pnl >= 0 ? '+' : ''}
-            {formatCurrency(data.pnl)}
+            {data.pnl >= 0 ? '+' : ''}{formatCurrency(data.pnl)}
           </div>
         </div>
       </div>
-
       <div className="flex-1 space-y-0.5 overflow-y-auto px-3 py-1.5">
         {stocks.map((stock) => {
           const stockPnlPercent = (stock.currentPrice / stock.avgPrice - 1) * 100 || 0;
-
           return (
-            <div
-              key={stock.id}
-              className="-mx-0.5 flex items-center justify-between rounded-lg border-b border-slate-50 px-1.5 py-2 transition-colors hover:bg-slate-50 last:border-0"
-            >
+            <div key={stock.id} className="-mx-0.5 flex items-center justify-between rounded-lg border-b border-slate-50 px-1.5 py-2 transition-colors hover:bg-slate-50 last:border-0">
               <div>
                 <div className="text-sm font-bold text-slate-800">{stock.symbol}</div>
-                <div className="text-[10px] font-medium text-slate-400">
-                  {stock.quantity} shares
-                </div>
+                <div className="text-[10px] font-medium text-slate-400">{stock.quantity} shares</div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-slate-700">
-                  {formatCurrency(stock.currentPrice, 2)}
-                </div>
+                <div className="text-sm font-bold text-slate-700">{formatCurrency(stock.currentPrice, 2)}</div>
                 <div className={`text-[9px] font-bold ${percentClass(stockPnlPercent)}`}>
-                  {stockPnlPercent >= 0 ? '+' : ''}
-                  {stockPnlPercent.toFixed(1)}%
+                  {stockPnlPercent >= 0 ? '+' : ''}{stockPnlPercent.toFixed(1)}%
                 </div>
               </div>
             </div>
@@ -167,14 +130,11 @@ function PortfolioWidgetLarge({ stocks, data }: PortfolioVariantProps) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <div className="text-sm font-black uppercase tracking-wider text-slate-700">
-          Portfolio Optimizer
-        </div>
+        <div className="text-sm font-black uppercase tracking-wider text-slate-700">Portfolio Optimizer</div>
         <div className="flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
           <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> Connected
         </div>
       </div>
-
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4">
           <table className="w-full border-separate border-spacing-y-2 text-xs text-left">
@@ -190,23 +150,12 @@ function PortfolioWidgetLarge({ stocks, data }: PortfolioVariantProps) {
                 const stockPnlPercent = (stock.currentPrice / stock.avgPrice - 1) * 100 || 0;
                 return (
                   <tr key={stock.id} className="group">
-                    <td className="rounded-l-xl border border-transparent bg-slate-50/60 px-3 py-3 font-bold text-slate-800 transition-colors group-hover:bg-slate-100">
-                      {stock.symbol}
-                    </td>
-                    <td className="border-y border-transparent bg-slate-50/60 px-3 py-3 text-right font-medium text-slate-600 transition-colors group-hover:bg-slate-100">
-                      {formatCurrency(stock.currentPrice, 2)}
-                    </td>
-                    <td
-                      className={`rounded-r-xl border border-transparent bg-slate-50/60 px-3 py-3 text-right font-black transition-colors group-hover:bg-slate-100 ${percentClass(stockPnlPercent)}`}
-                    >
+                    <td className="rounded-l-xl border border-transparent bg-slate-50/60 px-3 py-3 font-bold text-slate-800 transition-colors group-hover:bg-slate-100">{stock.symbol}</td>
+                    <td className="border-y border-transparent bg-slate-50/60 px-3 py-3 text-right font-medium text-slate-600 transition-colors group-hover:bg-slate-100">{formatCurrency(stock.currentPrice, 2)}</td>
+                    <td className={`rounded-r-xl border border-transparent bg-slate-50/60 px-3 py-3 text-right font-black transition-colors group-hover:bg-slate-100 ${percentClass(stockPnlPercent)}`}>
                       <div className="flex items-center justify-end gap-1.5">
-                        {stockPnlPercent >= 0 ? (
-                          <TrendingUp size={14} />
-                        ) : (
-                          <TrendingDown size={14} />
-                        )}
-                        {stockPnlPercent >= 0 ? '+' : ''}
-                        {stockPnlPercent.toFixed(1)}%
+                        {stockPnlPercent >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        {stockPnlPercent >= 0 ? '+' : ''}{stockPnlPercent.toFixed(1)}%
                       </div>
                     </td>
                   </tr>
@@ -215,12 +164,9 @@ function PortfolioWidgetLarge({ stocks, data }: PortfolioVariantProps) {
             </tbody>
           </table>
         </div>
-
         <div className="w-64 space-y-5 overflow-y-auto border-l border-slate-100 bg-slate-50/50 p-4">
           <div>
-            <h3 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-              Sector Allocation
-            </h3>
+            <h3 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Sector Allocation</h3>
             <div className="space-y-2">
               {data.sectorValues.map((sector) => (
                 <div key={sector.sector} className="space-y-1">
@@ -229,20 +175,13 @@ function PortfolioWidgetLarge({ stocks, data }: PortfolioVariantProps) {
                     <span className="font-bold">{sector.percent.toFixed(0)}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full bg-blue-500"
-                      style={{ width: `${sector.percent}%` }}
-                    />
+                    <div className="h-full rounded-full bg-blue-500" style={{ width: `${sector.percent}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          <button
-            type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-200 transition-colors hover:bg-blue-700"
-          >
+          <button type="button" className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-200 transition-colors hover:bg-blue-700">
             <MessageSquare size={14} /> Add to Context
           </button>
         </div>
@@ -251,31 +190,64 @@ function PortfolioWidgetLarge({ stocks, data }: PortfolioVariantProps) {
   );
 }
 
-type PortfolioWidgetComponent = ((props: PortfolioWidgetProps) => React.JSX.Element) & {
-  Small: (props: PortfolioVariantProps) => React.JSX.Element;
-  Medium: (props: PortfolioVariantProps) => React.JSX.Element;
-  Large: (props: PortfolioVariantProps) => React.JSX.Element;
-};
+// --- Root Component with Unified Fetch/Fallback logic ---
 
 const PortfolioWidgetRoot = ({
   title = 'Portfolio',
-  stocks = DEFAULT_STOCKS,
   variant,
   size,
   ...props
 }: PortfolioWidgetProps) => {
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const resolvedVariant = variant ?? size ?? 'medium';
+
+  useEffect(() => {
+    const loadPortfolio = async () => {
+      try {
+        setLoading(true);
+        // GET call to the specified Portfolio Backend API 
+        const response = await fetch('/v1/api/portfolio');
+        
+        if (!response.ok) {
+          // Fallback to mock data if Darren hasn't pushed the route yet 
+          console.warn(`Backend status ${response.status}: Falling back to mock data.`);
+          setStocks(DEFAULT_STOCKS);
+          return;
+        }
+
+        const data = await response.json();
+        setStocks(data);
+      } catch (err) {
+        // Fallback if the fetch fails completely (e.g. backend server is off)
+        console.error('Fetch error:', err);
+        setStocks(DEFAULT_STOCKS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPortfolio();
+  }, []);
+
   const portfolioData = buildPortfolioData(stocks);
   const variantProps: PortfolioVariantProps = { stocks, data: portfolioData };
 
   return (
     <BaseWidget title={title} {...props}>
-      {resolvedVariant === 'small' ? (
-        <PortfolioWidgetSmall {...variantProps} />
-      ) : resolvedVariant === 'large' ? (
-        <PortfolioWidgetLarge {...variantProps} />
+      {loading ? (
+        <div className="flex h-full items-center justify-center space-x-2 text-slate-400">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-medium uppercase tracking-widest">Loading Portfolio...</span>
+        </div>
       ) : (
-        <PortfolioWidgetMedium {...variantProps} />
+        <>
+          {resolvedVariant === 'small' && <PortfolioWidgetSmall {...variantProps} />}
+          {resolvedVariant === 'medium' && <PortfolioWidgetMedium {...variantProps} />}
+          {resolvedVariant === 'large' && <PortfolioWidgetLarge {...variantProps} />}
+        </>
       )}
     </BaseWidget>
   );
@@ -285,4 +257,4 @@ export const PortfolioWidget = Object.assign(PortfolioWidgetRoot, {
   Small: PortfolioWidgetSmall,
   Medium: PortfolioWidgetMedium,
   Large: PortfolioWidgetLarge,
-}) as PortfolioWidgetComponent;
+});
