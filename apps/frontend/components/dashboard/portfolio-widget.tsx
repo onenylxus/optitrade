@@ -221,10 +221,18 @@ function PortfolioWidgetMedium({ stocks, data, onOpenSettings }: PortfolioVarian
 
       <div className="flex-1 overflow-y-auto">
         {stocks.map((stock) => (
-          <div key={stock.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-            <div className="text-xs font-medium text-slate-800">{stock.symbol}</div>
-            <div className={`text-[10px] font-medium ${percentClass(stock.currentPrice - stock.avgPrice)}`}>
-              {formatCurrency(stock.currentPrice, 1)}
+          <div key={stock.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors px-1">
+            <div className="flex flex-col">
+              <div className="text-xs font-bold text-slate-800">{stock.symbol}</div>
+              <div className="text-[8px] text-slate-400 uppercase tracking-tighter">{stock.quantity} shs</div>
+            </div>
+            <div className="flex flex-col items-end">
+              <div className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}>
+                {formatCurrency(stock.currentPrice, 1)}
+              </div>
+              <div className="text-[8px] text-slate-400 font-mono">
+                Avg: {formatCurrency(stock.avgPrice, 0)}
+              </div>
             </div>
           </div>
         ))}
@@ -236,7 +244,6 @@ function PortfolioWidgetMedium({ stocks, data, onOpenSettings }: PortfolioVarian
 function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariantProps) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
-      {/* Header */}
       <div className="flex items-center justify-between py-3 border-b border-slate-50">
         <div className="flex items-center gap-2">
           <div className="text-xs font-medium uppercase tracking-tight text-slate-500">Executive Summary</div>
@@ -247,7 +254,6 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
         </button>
       </div>
 
-      {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4 py-4 bg-slate-50/40 border-b border-slate-50 px-1">
         {[
           { label: 'Net Liq', val: formatCurrency(data.totalValue) },
@@ -262,15 +268,11 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
         ))}
       </div>
 
-      {/* Chart */}
       <div className="py-2 border-b border-slate-50 bg-white">
         <PerformanceChart data={data.history} height={60} showAxis />
       </div>
 
-      {/* Main Relative Layout Container */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        
-        {/* Left Section: Stock Table (60%) */}
         <div className="w-3/5 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-slate-100">
           <table className="w-full text-[10px] text-left border-collapse">
             <thead className="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.05)] text-slate-400 uppercase text-[8px] tracking-wider">
@@ -308,7 +310,6 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
           </table>
         </div>
 
-        {/* Right Section: Allocation (40%) */}
         <div className="w-2/5 bg-slate-50/30 p-3 border-l border-slate-50 overflow-y-auto">
           <div className="text-[8px] uppercase text-slate-400 mb-3 font-bold tracking-widest border-b border-slate-100 pb-1">
             Allocation
@@ -336,8 +337,6 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
     </div>
   );
 }
-
-// --- Main Root Component ---
 
 const PortfolioWidgetRoot = ({
   title = 'Portfolio Snapshot',
