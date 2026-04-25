@@ -62,7 +62,6 @@ interface PortfolioVariantProps {
 const DEFAULT_STOCKS: Stock[] = [
   { id: '1', symbol: 'NVDA', quantity: 200, avgPrice: 120, currentPrice: 145.75, sector: 'Technology' },
   { id: '2', symbol: 'AAPL', quantity: 100, avgPrice: 175, currentPrice: 189.5, sector: 'Technology' },
-  { id: '3', symbol: 'TSLA', quantity: 50, avgPrice: 160, currentPrice: 182.3, sector: 'Automotive' },
   { id: '4', symbol: 'MSFT', quantity: 40, avgPrice: 380, currentPrice: 420.15, sector: 'Technology' },
   { id: '5', symbol: 'AMZN', quantity: 120, avgPrice: 145, currentPrice: 178.22, sector: 'Consumer' },
   { id: '9', symbol: 'JPM', quantity: 60, avgPrice: 140, currentPrice: 195.30, sector: 'Financial' },
