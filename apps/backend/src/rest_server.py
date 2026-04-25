@@ -1,9 +1,13 @@
 """FastAPI REST server for greeter service."""
 
-from fastapi import FastAPI
+from collections.abc import Mapping
+from typing import Any
+
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from .firebase_auth import verify_firebase_id_token
 from .services import GreeterService
 
 
@@ -29,6 +33,39 @@ class HelloBatchRequest(BaseModel):
     """Request model for batch hello endpoint."""
 
     names: list[str]
+
+
+class AuthenticatedUserResponse(BaseModel):
+    """Response model for authenticated user endpoint."""
+
+    uid: str
+    email: str | None = None
+
+
+def get_current_user(
+    authorization: str | None = Header(default=None),
+) -> Mapping[str, Any]:
+    """Extract and verify Firebase ID token from Authorization header."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing bearer token",
+        )
+
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing bearer token",
+        )
+
+    try:
+        return verify_firebase_id_token(token)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        ) from exc
 
 
 def create_app() -> FastAPI:
@@ -116,6 +153,21 @@ def create_app() -> FastAPI:
         """Create a single response from multiple names."""
         message = service.aggregate_hellos(request.names)
         return HelloResponse(message=message)
+
+    @app.get("/api/v1/auth/me")
+    async def get_authenticated_user(
+        user: Mapping[str, Any] = Depends(get_current_user),
+    ) -> AuthenticatedUserResponse:
+        """Return basic profile data for a verified Firebase-authenticated user."""
+        uid = str(user.get("uid", ""))
+        if not uid:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+            )
+        email_value = user.get("email")
+        email = str(email_value) if email_value is not None else None
+        return AuthenticatedUserResponse(uid=uid, email=email)
 
     return app
 

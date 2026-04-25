@@ -26,6 +26,11 @@ export interface HealthResponse {
   status: 'healthy' | 'unhealthy';
 }
 
+export interface AuthenticatedUserResponse {
+  uid: string;
+  email: string | null;
+}
+
 export interface ApiError {
   code: string;
   message: string;

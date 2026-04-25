@@ -66,6 +66,7 @@ Features:
 - `GET /health` - Health check
 - `POST /api/v1/hello` - Greet with JSON body: `{"name": "World"}`
 - `GET /api/v1/hello/{name}` - Greet with path parameter
+- `GET /api/v1/auth/me` - Firebase-protected endpoint using bearer ID token
 
 **Example Usage**:
 ```bash
@@ -129,14 +130,46 @@ The unified runner (`main.py`) starts:
 - gRPC server on port 50051 (background thread)
 - REST server on port 8000 (main thread)
 
+## Firebase Integration (Backend)
+
+The backend supports Firebase Authentication token verification using
+`firebase-admin`.
+
+### Install dependency
+
+```bash
+npx nx run @optitrade/backend:sync
+```
+
+### Configure credentials
+
+Set `GOOGLE_APPLICATION_CREDENTIALS` to a Firebase service-account JSON file.
+
+Preferred local setup: create `apps/backend/.env`.
+
+```dotenv
+GOOGLE_APPLICATION_CREDENTIALS=path_to\firebase-service-account.json
+```
+
+The backend now reads `apps/backend/.env` automatically when initializing
+Firebase Admin.
+
+### Protected route
+
+`GET /api/v1/auth/me` expects:
+
+- Header: `Authorization: Bearer <firebase-id-token>`
+- Response: `{ "uid": "...", "email": "..." }`
+
 ## Paths
 
 - Source: `apps/backend/src`
   - `services.py` - Shared service layer with business logic
   - `rest_server.py` - FastAPI REST server
+  - `firebase_auth.py` - Firebase Admin token verification helpers
   - `greeter_server.py` - gRPC server implementation
 - Tests: `apps/backend/tests`
-  - `test_rest_api.py` - REST API tests (6 tests)
+  - `test_rest_api.py` - REST API tests (13 tests)
   - `test_greeter.py` - gRPC tests
 - Protos: `apps/backend/protos`
 - Coverage output: `coverage/apps/backend`
@@ -163,6 +196,9 @@ Tests included:
 - ✓ Response format validation
 - ✓ OpenAPI docs availability
 - ✓ Validation error handling
+- ✓ Firebase protected endpoint requires bearer token
+- ✓ Firebase protected endpoint success path
+- ✓ Firebase protected endpoint invalid token path
 
 ### Run gRPC Tests Only
 ```bash

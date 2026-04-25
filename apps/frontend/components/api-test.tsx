@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import {
   checkHealth,
+  getAuthenticatedUser,
   sayHelloGrpc,
   sayHelloGrpcBidirectional,
   sayHelloGrpcClientStream,
@@ -19,6 +20,8 @@ import {
   sayHelloRestPath,
   sayHelloRestPut,
 } from '@/lib/api/client';
+import { getCurrentUserIdToken } from '@/lib/firebase/client';
+import { isFirebaseConfigReady } from '@/lib/firebase/config';
 
 interface TestResult {
   id: string;
@@ -31,6 +34,7 @@ interface TestResult {
 
 export function ApiTestComponent() {
   const [testName, setTestName] = useState('World');
+  const [firebaseIdToken, setFirebaseIdToken] = useState('');
   const [results, setResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
 
@@ -168,6 +172,26 @@ export function ApiTestComponent() {
     );
   };
 
+  const handleLoadFirebaseToken = () => {
+    runTest(`firebase-token-${Date.now()}`, 'Firebase - Load ID Token', async () => {
+      const token = await getCurrentUserIdToken();
+      setFirebaseIdToken(token);
+      return {
+        message: 'Loaded Firebase ID token from current signed-in user.',
+        tokenPreview: `${token.slice(0, 16)}...`,
+      };
+    });
+  };
+
+  const handleAuthMe = () => {
+    runTest(`rest-auth-me-${Date.now()}`, 'REST AUTH - /api/v1/auth/me', async () => {
+      if (!firebaseIdToken.trim()) {
+        throw new Error('Missing Firebase ID token. Paste one or use Load ID Token.');
+      }
+      return getAuthenticatedUser(firebaseIdToken.trim());
+    });
+  };
+
   const handleRunAll = async () => {
     setIsRunning(true);
     setResults([]);
@@ -243,6 +267,20 @@ export function ApiTestComponent() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter name for testing"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Firebase ID Token (optional)</label>
+            <textarea
+              value={firebaseIdToken}
+              onChange={(e) => setFirebaseIdToken(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Paste Firebase ID token here, or click 'Load Firebase Token'"
+            />
+            <p className="mt-2 text-xs text-gray-600">
+              Firebase config ready: {isFirebaseConfigReady() ? 'yes' : 'no'}
+            </p>
           </div>
 
           {/* Buttons Section */}
@@ -323,6 +361,20 @@ export function ApiTestComponent() {
               className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 disabled:bg-gray-400"
             >
               gRPC Bidirectional
+            </button>
+            <button
+              onClick={handleLoadFirebaseToken}
+              disabled={isRunning}
+              className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:bg-gray-400"
+            >
+              Load Firebase Token
+            </button>
+            <button
+              onClick={handleAuthMe}
+              disabled={isRunning}
+              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:bg-gray-400"
+            >
+              REST AUTH /me
             </button>
           </div>
 

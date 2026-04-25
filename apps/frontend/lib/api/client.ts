@@ -4,6 +4,7 @@
  */
 
 import {
+  AuthenticatedUserResponse,
   ApiError,
   HealthResponse,
   HelloBatchRequest,
@@ -151,5 +152,19 @@ export async function sayHelloGrpcBidirectional(
   return fetchWithErrorHandling<HelloStreamResponse>('/api/grpc/bidirectional', {
     method: 'POST',
     body: JSON.stringify(request),
+  });
+}
+
+/**
+ * Get currently authenticated user profile from backend using Firebase ID token.
+ */
+export async function getAuthenticatedUser(
+  firebaseIdToken: string,
+): Promise<AuthenticatedUserResponse> {
+  return fetchWithErrorHandling<AuthenticatedUserResponse>(`${BACKEND_URL}/api/v1/auth/me`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${firebaseIdToken}`,
+    },
   });
 }

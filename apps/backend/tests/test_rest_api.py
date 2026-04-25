@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from src import rest_server
 from src.rest_server import create_app
 
 
@@ -78,3 +79,40 @@ def test_say_hello_batch(client):
     response = client.post("/api/v1/hello/batch", json={"names": ["Alice", "Bob"]})
     assert response.status_code == 200
     assert response.json() == {"message": "Hello, Alice! | Hello, Bob!"}
+
+
+def test_auth_me_requires_bearer_token(client):
+    """Test the auth endpoint returns 401 when no bearer token is provided."""
+    response = client.get("/api/v1/auth/me")
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing bearer token"}
+
+
+def test_auth_me_with_valid_firebase_token(client, monkeypatch):
+    """Test the auth endpoint returns decoded user data for a valid token."""
+
+    def fake_verify(_token: str):
+        return {"uid": "user-123", "email": "user@example.com"}
+
+    monkeypatch.setattr(rest_server, "verify_firebase_id_token", fake_verify)
+
+    response = client.get(
+        "/api/v1/auth/me", headers={"Authorization": "Bearer fake-token"}
+    )
+    assert response.status_code == 200
+    assert response.json() == {"uid": "user-123", "email": "user@example.com"}
+
+
+def test_auth_me_with_invalid_firebase_token(client, monkeypatch):
+    """Test the auth endpoint returns 401 when Firebase token verification fails."""
+
+    def fake_verify(_token: str):
+        raise ValueError("Invalid token")
+
+    monkeypatch.setattr(rest_server, "verify_firebase_id_token", fake_verify)
+
+    response = client.get(
+        "/api/v1/auth/me", headers={"Authorization": "Bearer bad-token"}
+    )
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid token"}
