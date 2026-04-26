@@ -21,16 +21,41 @@ import grpc
 
 from protos import helloworld_pb2, helloworld_pb2_grpc
 
+from .services import GreeterService
+
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
+    def __init__(self, service: GreeterService):
+        self.service = service
+
     def SayHello(self, request, context):
-        return helloworld_pb2.HelloReply(message=f"Hello, {request.name}!")
+        message = self.service.say_hello(request.name)
+        return helloworld_pb2.HelloReply(message=message)
+
+    def SayHelloServerStream(self, request, context):
+        for i in range(1, 4):
+            message = self.service.say_hello_with_prefix(
+                request.name,
+                prefix=f"Hello #{i}",
+            )
+            yield helloworld_pb2.HelloReply(message=message)
+
+    def SayHelloClientStream(self, request_iterator, context):
+        names = [request.name for request in request_iterator]
+        message = self.service.aggregate_hellos(names)
+        return helloworld_pb2.HelloReply(message=message)
+
+    def SayHelloBidirectional(self, request_iterator, context):
+        for request in request_iterator:
+            message = self.service.say_hello(request.name)
+            yield helloworld_pb2.HelloReply(message=message)
 
 
 def serve():
     port = "50051"
+    service = GreeterService()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
+    helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(service), server)
     server.add_insecure_port("[::]:" + port)
     server.start()
     print("Server started, listening on " + port)
