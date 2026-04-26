@@ -4,6 +4,15 @@ syntax = "proto3";
 service Greeter {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
+
+  // Sends multiple greeting messages back for a single request
+  rpc SayHelloServerStream (HelloRequest) returns (stream HelloReply) {}
+
+  // Accepts a stream of requests and returns a single aggregated response
+  rpc SayHelloClientStream (stream HelloRequest) returns (HelloReply) {}
+
+  // Full duplex greeting stream
+  rpc SayHelloBidirectional (stream HelloRequest) returns (stream HelloReply) {}
 }
 
 // The request message containing the user's name.
@@ -14,4 +23,9 @@ message HelloRequest {
 // The response message containing the greetings
 message HelloReply {
   string message = 1;
+}
+
+// A list wrapper for REST methods that process multiple names
+message HelloRequestList {
+  repeated HelloRequest requests = 1;
 }
