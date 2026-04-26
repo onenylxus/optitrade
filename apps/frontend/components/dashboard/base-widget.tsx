@@ -33,7 +33,7 @@ export function BaseWidget({ title, summary, children, className, ...props }: Ba
 
       <Separator />
 
-      <CardFooter className="mt-1 flex items-center justify-between gap-2 border-0 bg-transparent px-0 py-1.5">
+      <CardFooter className="flex items-center justify-between gap-2 border-0 bg-transparent px-0 py-1.5">
         <Button
           type="button"
           variant="default"

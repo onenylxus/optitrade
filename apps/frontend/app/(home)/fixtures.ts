@@ -52,6 +52,7 @@ export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }
   { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '5x5' },
   { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '6x7' },
   { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '8x8' },
+  { id: 'news', label: 'News Widget', sizeLabel: '8x8' },
 ];
 
 export const initialPlacements: WidgetPlacement[] = [
@@ -80,6 +81,14 @@ export const initialPlacements: WidgetPlacement[] = [
     id: 'widget-portfolio-large-1',
     widgetType: 'portfolio-large',
     col: 5,
+    row: 12,
+    colSpan: 8,
+    rowSpan: 8,
+  },
+  {
+    id: 'widget-news-1',
+    widgetType: 'news',
+    col: 13,
     row: 12,
     colSpan: 8,
     rowSpan: 8,

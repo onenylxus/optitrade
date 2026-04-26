@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { WidgetType } from '@/app/(home)/fixtures';
 import { ChatPanel } from '@/components/home/chat-panel';
 import { EditWidgetDrawer } from '@/components/home/edit-widget-drawer';
 import { HomeHeader } from '@/components/home/home-header';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 export default function HomePage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(true);
+  const [draggedSidebarWidgetType, setDraggedSidebarWidgetType] = useState<WidgetType | null>(null);
 
   return (
     <div className="bg-background text-foreground relative flex h-screen w-full flex-col overflow-hidden">
@@ -23,14 +25,13 @@ export default function HomePage() {
         <div
           className={cn(
             'h-full min-h-0 transition-[padding-left,padding-right] duration-300 ease-out',
-            isEditMode
-              ? 'lg:pl-[360px] lg:pr-0'
-              : isChatOpen
-                ? 'lg:pr-[360px] lg:pl-0'
-                : '',
+            isEditMode ? 'lg:pl-[360px] lg:pr-0' : isChatOpen ? 'lg:pr-[360px] lg:pl-0' : '',
           )}
         >
-          <WidgetCanvas isEditMode={isEditMode} />
+          <WidgetCanvas
+            isEditMode={isEditMode}
+            externalDraggedWidgetType={draggedSidebarWidgetType}
+          />
         </div>
 
         <div
@@ -40,7 +41,13 @@ export default function HomePage() {
           )}
           aria-hidden={!isEditMode}
         >
-          <EditWidgetDrawer open={isEditMode} mode="inline" className="h-full" />
+          <EditWidgetDrawer
+            open={isEditMode}
+            mode="inline"
+            className="h-full"
+            onWidgetDragStart={setDraggedSidebarWidgetType}
+            onWidgetDragEnd={() => setDraggedSidebarWidgetType(null)}
+          />
         </div>
 
         <div
@@ -55,7 +62,12 @@ export default function HomePage() {
           <ChatPanel />
         </div>
 
-        <EditWidgetDrawer open={isEditMode} className="lg:hidden" />
+        <EditWidgetDrawer
+          open={isEditMode}
+          className="lg:hidden"
+          onWidgetDragStart={setDraggedSidebarWidgetType}
+          onWidgetDragEnd={() => setDraggedSidebarWidgetType(null)}
+        />
       </main>
     </div>
   );

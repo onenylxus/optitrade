@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 
 interface WidgetCanvasProps {
   isEditMode: boolean;
+  externalDraggedWidgetType?: WidgetType | null;
 }
 
 interface DragPreviewPlacement {
@@ -205,7 +206,7 @@ const getInitialNormalizationColumns = (items: WidgetPlacement[]) => {
   return maxPlacementColumns;
 };
 
-export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
+export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: WidgetCanvasProps) {
   const canvasWidthRef = useRef<HTMLDivElement | null>(null);
   const [gridColumns, setGridColumns] = useState(1);
   const [placements, setPlacements] = useState<WidgetPlacement[]>(() =>
@@ -369,6 +370,7 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
   const updateDragPreview = (event: DragEvent<HTMLElement>) => {
     const draggedWidgetType =
       draggedWidget?.widgetType ??
+      externalDraggedWidgetType ??
       (event.dataTransfer.getData(DRAWER_WIDGET_MIME) as WidgetType) ??
       (event.dataTransfer.getData('text/plain') as WidgetType);
     const sourceWidgetIdFromEvent = event.dataTransfer.getData(SOURCE_WIDGET_MIME);
@@ -446,6 +448,7 @@ export function WidgetCanvas({ isEditMode }: WidgetCanvasProps) {
 
     const draggedWidgetType =
       draggedWidget?.widgetType ??
+      externalDraggedWidgetType ??
       (event.dataTransfer.getData(DRAWER_WIDGET_MIME) as WidgetType) ??
       (event.dataTransfer.getData('text/plain') as WidgetType);
     const sourceWidgetIdFromEvent = event.dataTransfer.getData(SOURCE_WIDGET_MIME);
