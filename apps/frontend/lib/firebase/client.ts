@@ -1,11 +1,11 @@
 'use client';
 
-import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
 import { firebaseConfig, isFirebaseConfigReady } from './config';
 
-export function getFirebaseApp(): FirebaseApp {
+export function getFirebaseApp() {
   if (!isFirebaseConfigReady()) {
     throw new Error(
       'Firebase config is missing. Set NEXT_PUBLIC_FIREBASE_* in apps/frontend/.env.local or fill directConfigOverride in lib/firebase/config.ts.',
