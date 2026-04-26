@@ -1,20 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { 
-  Loader2, 
-  Settings, 
-  ArrowLeft, 
-  TrendingUp, 
-  TrendingDown,
-  Lock 
-} from 'lucide-react';
-import {
-  Area,
-  AreaChart,
-  YAxis,
-  XAxis,
-} from 'recharts';
+import { Loader2, Settings, ArrowLeft, Lock } from 'lucide-react';
+import { Area, AreaChart, YAxis, XAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
@@ -51,6 +39,8 @@ interface PortfolioDerivedData {
   history: Array<{ time: string; value: number }>;
 }
 
+type PortfolioHistoryPoint = PortfolioDerivedData['history'][number];
+
 interface PortfolioVariantProps {
   stocks: Stock[];
   data: PortfolioDerivedData;
@@ -60,12 +50,47 @@ interface PortfolioVariantProps {
 // --- Mock Data ---
 
 const DEFAULT_STOCKS: Stock[] = [
-  { id: '1', symbol: 'NVDA', quantity: 200, avgPrice: 120, currentPrice: 145.75, sector: 'Technology' },
-  { id: '2', symbol: 'AAPL', quantity: 100, avgPrice: 175, currentPrice: 189.5, sector: 'Technology' },
-  { id: '4', symbol: 'MSFT', quantity: 40, avgPrice: 380, currentPrice: 420.15, sector: 'Technology' },
-  { id: '5', symbol: 'AMZN', quantity: 120, avgPrice: 145, currentPrice: 178.22, sector: 'Consumer' },
-  { id: '9', symbol: 'JPM', quantity: 60, avgPrice: 140, currentPrice: 195.30, sector: 'Financial' },
-  { id: '12', symbol: 'NFLX', quantity: 20, avgPrice: 450, currentPrice: 610.05, sector: 'Communication' },
+  {
+    id: '1',
+    symbol: 'NVDA',
+    quantity: 200,
+    avgPrice: 120,
+    currentPrice: 145.75,
+    sector: 'Technology',
+  },
+  {
+    id: '2',
+    symbol: 'AAPL',
+    quantity: 100,
+    avgPrice: 175,
+    currentPrice: 189.5,
+    sector: 'Technology',
+  },
+  {
+    id: '4',
+    symbol: 'MSFT',
+    quantity: 40,
+    avgPrice: 380,
+    currentPrice: 420.15,
+    sector: 'Technology',
+  },
+  {
+    id: '5',
+    symbol: 'AMZN',
+    quantity: 120,
+    avgPrice: 145,
+    currentPrice: 178.22,
+    sector: 'Consumer',
+  },
+  { id: '9', symbol: 'JPM', quantity: 60, avgPrice: 140, currentPrice: 195.3, sector: 'Financial' },
+  {
+    id: '12',
+    symbol: 'NFLX',
+    quantity: 20,
+    avgPrice: 450,
+    currentPrice: 610.05,
+    sector: 'Communication',
+  },
 ];
 
 // --- Utilities ---
@@ -85,7 +110,7 @@ function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
   const pnl = totalValue - totalCost;
   const pnlPercent = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
 
-  const dailyPnl = totalValue * 0.012; 
+  const dailyPnl = totalValue * 0.012;
   const dailyPnlPercent = 1.2;
   const marginUsage = totalValue * 0.25;
 
@@ -113,20 +138,41 @@ function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
     }))
     .sort((a, b) => b.value - a.value);
 
-  return { totalValue, pnl, pnlPercent, dailyPnl, dailyPnlPercent, marginUsage, sectorValues, history };
+  return {
+    totalValue,
+    pnl,
+    pnlPercent,
+    dailyPnl,
+    dailyPnlPercent,
+    marginUsage,
+    sectorValues,
+    history,
+  };
 }
 
-function PerformanceChart({ data, height = 100, showAxis = false }: { data: any[], height?: number, showAxis?: boolean }) {
+function PerformanceChart({
+  data,
+  height = 100,
+  showAxis = false,
+}: {
+  data: PortfolioHistoryPoint[];
+  height?: number;
+  showAxis?: boolean;
+}) {
   const isPositive = data[data.length - 1].value >= data[0].value;
   const chartColor = isPositive ? 'var(--emerald-500)' : 'var(--rose-500)';
-  
+
   return (
-    <ChartContainer config={{ value: { label: "Value", color: chartColor } }} className="w-full" style={{ height }}>
+    <ChartContainer
+      config={{ value: { label: 'Value', color: chartColor } }}
+      className="w-full"
+      style={{ height }}
+    >
       <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
         <defs>
           <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={chartColor} stopOpacity={0.3}/>
-            <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
+            <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
           </linearGradient>
         </defs>
         {showAxis && <XAxis dataKey="time" hide />}
@@ -151,7 +197,10 @@ function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
   const [connecting, setConnecting] = useState(false);
   const handleConnect = () => {
     setConnecting(true);
-    setTimeout(() => { setConnecting(false); onBack(); }, 1500);
+    setTimeout(() => {
+      setConnecting(false);
+      onBack();
+    }, 1500);
   };
 
   return (
@@ -160,21 +209,31 @@ function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
         <button onClick={onBack} className="text-slate-400 hover:text-slate-900 transition-colors">
           <ArrowLeft size={16} />
         </button>
-        <div className="text-[11px] font-medium uppercase tracking-tight text-slate-500">IBKR Bridge</div>
+        <div className="text-[11px] font-medium uppercase tracking-tight text-slate-500">
+          IBKR Bridge
+        </div>
       </div>
       <div className="flex-1 py-5 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <div className="text-[10px] text-slate-400 uppercase">Host</div>
-            <input type="text" defaultValue="127.0.0.1" className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900" />
+            <input
+              type="text"
+              defaultValue="127.0.0.1"
+              className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+            />
           </div>
           <div className="space-y-1">
             <div className="text-[10px] text-slate-400 uppercase">Port</div>
-            <input type="text" placeholder="7497" className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900" />
+            <input
+              type="text"
+              placeholder="7497"
+              className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+            />
           </div>
         </div>
-        <button 
-          onClick={handleConnect} 
+        <button
+          onClick={handleConnect}
           disabled={connecting}
           className="w-full bg-slate-900 py-2.5 text-xs text-white hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2"
         >
@@ -189,11 +248,15 @@ function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
 function PortfolioWidgetSmall({ data, onOpenSettings }: PortfolioVariantProps) {
   return (
     <div className="relative flex h-full flex-col items-center justify-center bg-white">
-      <button onClick={onOpenSettings} className="absolute right-0 top-0 text-slate-200 hover:text-slate-400">
+      <button
+        onClick={onOpenSettings}
+        className="absolute right-0 top-0 text-slate-200 hover:text-slate-400"
+      >
         <Settings size={12} />
       </button>
       <div className={`text-xl font-medium tracking-tight ${percentClass(data.pnlPercent)}`}>
-        {data.pnlPercent >= 0 ? '+' : ''}{data.pnlPercent.toFixed(1)}%
+        {data.pnlPercent >= 0 ? '+' : ''}
+        {data.pnlPercent.toFixed(1)}%
       </div>
       <div className="text-[10px] text-slate-400 mt-0.5">{formatCurrency(data.pnl)}</div>
     </div>
@@ -204,14 +267,20 @@ function PortfolioWidgetMedium({ stocks, data, onOpenSettings }: PortfolioVarian
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <div className="flex items-center justify-between border-b border-slate-50 py-2.5">
-        <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 font-mono">PNL_SNAPSHOT</div>
-        <button onClick={onOpenSettings} className="text-slate-300 hover:text-slate-500"><Settings size={14} /></button>
+        <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 font-mono">
+          PNL_SNAPSHOT
+        </div>
+        <button onClick={onOpenSettings} className="text-slate-300 hover:text-slate-500">
+          <Settings size={14} />
+        </button>
       </div>
 
       <div className="py-3 border-b border-slate-50 flex items-center justify-between">
         <div>
           <div className="text-[9px] uppercase text-slate-400 mb-0.5">Total Value</div>
-          <div className="text-lg font-medium text-slate-900">{formatCurrency(data.totalValue)}</div>
+          <div className="text-lg font-medium text-slate-900">
+            {formatCurrency(data.totalValue)}
+          </div>
         </div>
         <div className="w-24">
           <PerformanceChart data={data.history} height={32} />
@@ -220,13 +289,20 @@ function PortfolioWidgetMedium({ stocks, data, onOpenSettings }: PortfolioVarian
 
       <div className="flex-1 overflow-y-auto">
         {stocks.map((stock) => (
-          <div key={stock.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors px-1">
+          <div
+            key={stock.id}
+            className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors px-1"
+          >
             <div className="flex flex-col">
               <div className="text-xs font-bold text-slate-800">{stock.symbol}</div>
-              <div className="text-[8px] text-slate-400 uppercase tracking-tighter">{stock.quantity} shs</div>
+              <div className="text-[8px] text-slate-400 uppercase tracking-tighter">
+                {stock.quantity} shs
+              </div>
             </div>
             <div className="flex flex-col items-end">
-              <div className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}>
+              <div
+                className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}
+              >
                 {formatCurrency(stock.currentPrice, 1)}
               </div>
               <div className="text-[8px] text-slate-400 font-mono">
@@ -245,10 +321,17 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-3 border-b border-slate-50">
         <div className="flex items-center gap-2">
-          <div className="text-xs font-medium uppercase tracking-tight text-slate-500">Executive Summary</div>
-          <span className="bg-emerald-50 text-emerald-600 text-[9px] px-1.5 py-0.5 rounded font-bold italic uppercase">Live</span>
+          <div className="text-xs font-medium uppercase tracking-tight text-slate-500">
+            Executive Summary
+          </div>
+          <span className="bg-emerald-50 text-emerald-600 text-[9px] px-1.5 py-0.5 rounded font-bold italic uppercase">
+            Live
+          </span>
         </div>
-        <button onClick={onOpenSettings} className="text-slate-300 hover:text-slate-600 transition-colors">
+        <button
+          onClick={onOpenSettings}
+          className="text-slate-300 hover:text-slate-600 transition-colors"
+        >
           <Settings size={14} />
         </button>
       </div>
@@ -256,12 +339,22 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
       <div className="grid grid-cols-4 gap-4 py-4 bg-slate-50/40 border-b border-slate-50 px-1">
         {[
           { label: 'Net Liq', val: formatCurrency(data.totalValue) },
-          { label: 'Daily P/L', val: formatCurrency(data.dailyPnl), class: percentClass(data.dailyPnl) },
-          { label: 'Unrealized', val: `${data.pnlPercent.toFixed(2)}%`, class: percentClass(data.pnl) },
-          { label: 'Buying Power', val: formatCurrency(data.totalValue * 0.15) }
-        ].map(m => (
+          {
+            label: 'Daily P/L',
+            val: formatCurrency(data.dailyPnl),
+            class: percentClass(data.dailyPnl),
+          },
+          {
+            label: 'Unrealized',
+            val: `${data.pnlPercent.toFixed(2)}%`,
+            class: percentClass(data.pnl),
+          },
+          { label: 'Buying Power', val: formatCurrency(data.totalValue * 0.15) },
+        ].map((m) => (
           <div key={m.label}>
-            <div className="text-[9px] uppercase text-slate-400 mb-0.5 tracking-wide">{m.label}</div>
+            <div className="text-[9px] uppercase text-slate-400 mb-0.5 tracking-wide">
+              {m.label}
+            </div>
             <div className={`text-xs font-semibold ${m.class || ''}`}>{m.val}</div>
           </div>
         ))}
@@ -299,8 +392,11 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
                     <td className="py-2 text-right font-bold text-slate-800 text-[9px]">
                       {formatCurrency(stock.currentPrice, 0)}
                     </td>
-                    <td className={`py-2 text-right font-bold last:pr-0 text-[9px] ${percentClass(stockPnl)}`}>
-                      {stockPnl >= 0 ? '+' : ''}{stockPnl.toFixed(1)}%
+                    <td
+                      className={`py-2 text-right font-bold last:pr-0 text-[9px] ${percentClass(stockPnl)}`}
+                    >
+                      {stockPnl >= 0 ? '+' : ''}
+                      {stockPnl.toFixed(1)}%
                     </td>
                   </tr>
                 );
@@ -323,9 +419,9 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
                   <span className="font-mono">{sector.percent.toFixed(0)}%</span>
                 </div>
                 <div className="h-1 w-full bg-slate-200/60 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-slate-400 group-hover:bg-slate-700 transition-all" 
-                    style={{ width: `${sector.percent}%` }} 
+                  <div
+                    className="h-full bg-slate-400 group-hover:bg-slate-700 transition-all"
+                    style={{ width: `${sector.percent}%` }}
                   />
                 </div>
               </div>
@@ -362,10 +458,10 @@ const PortfolioWidgetRoot = ({
   }, []);
 
   const portfolioData = useMemo(() => buildPortfolioData(stocks), [stocks]);
-  const variantProps: PortfolioVariantProps = { 
-    stocks, 
+  const variantProps: PortfolioVariantProps = {
+    stocks,
     data: portfolioData,
-    onOpenSettings: () => setShowBrokerPanel(true)
+    onOpenSettings: () => setShowBrokerPanel(true),
   };
 
   return (
