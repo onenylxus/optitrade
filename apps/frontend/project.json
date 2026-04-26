@@ -8,8 +8,7 @@
       "command": "next dev -H 127.0.0.1",
       "options": {
         "cwd": "apps/frontend"
-      },
-      "continuous": true
+      }
     },
     "build": {
       "command": "next build",
