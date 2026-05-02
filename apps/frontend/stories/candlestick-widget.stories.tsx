@@ -57,6 +57,7 @@ type Story = StoryObj<typeof CandlestickWidget>;
 export const Default: Story = {
   args: {
     title: 'AAPL Candlesticks',
+    useStockApi: false,
     defaultTimeframe: '1M',
     defaultInterval: '1d',
     variant: 'default',
@@ -67,6 +68,7 @@ export const Default: Story = {
 export const WithAiInsight: Story = {
   args: {
     title: 'AAPL Candlesticks',
+    useStockApi: false,
     defaultTimeframe: '1M',
     defaultInterval: '1d',
     variant: 'medium',
@@ -76,6 +78,7 @@ export const WithAiInsight: Story = {
 export const BordersAndPriceLine: Story = {
   args: {
     title: 'Candlestick Detail',
+    useStockApi: false,
     defaultTimeframe: '5D',
     defaultInterval: '1h',
     borderVisible: true,
@@ -88,6 +91,7 @@ export const BordersAndPriceLine: Story = {
 export const StaticData: Story = {
   args: {
     title: 'Static OHLC',
+    useStockApi: false,
     data: ohlcData,
     showControls: false,
     showIndicatorToggles: true,
@@ -99,6 +103,7 @@ export const StaticData: Story = {
 export const VariantMedium: Story = {
   args: {
     title: 'Medium layout',
+    useStockApi: false,
     variant: 'medium',
     defaultTimeframe: '3M',
     defaultInterval: '1d',
@@ -110,6 +115,7 @@ export const VariantMedium: Story = {
 export const VariantLarge: Story = {
   args: {
     title: 'Large layout',
+    useStockApi: false,
     variant: 'large',
     defaultTimeframe: '6M',
     defaultInterval: '1d',
@@ -140,7 +146,34 @@ export const ControlledFromParent: Story = {
   render: (args) => <ControlledDemo {...args} />,
   args: {
     title: 'Controlled (parent-owned data)',
+    useStockApi: false,
     defaultTimeframe: '3M',
+    defaultInterval: '1d',
+    variant: 'large',
+  },
+};
+
+/** Hits ``GET /api/stock/chart`` (needs backend + ``FMP_API_KEY``). AI call disabled for Storybook. */
+export const LiveBackend: Story = {
+  args: {
+    title: 'Live (API)',
+    useStockApi: true,
+    useAiAnalysis: false,
+    defaultSymbols: ['AAPL', 'MSFT'],
+    defaultTimeframe: '3M',
+    defaultInterval: '1d',
+    variant: 'large',
+  },
+};
+
+/** Same as Live (API) plus ``GET /api/ai/widget/stock-chart`` (needs ``OPENROUTER_API_KEY`` on server). */
+export const LiveBackendWithAi: Story = {
+  args: {
+    title: 'Live (API + AI)',
+    useStockApi: true,
+    useAiAnalysis: true,
+    defaultSymbols: ['IBM'],
+    defaultTimeframe: '1M',
     defaultInterval: '1d',
     variant: 'large',
   },

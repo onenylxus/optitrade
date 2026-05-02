@@ -5,7 +5,7 @@ import { PortfolioWidget } from '@/components/dashboard/portfolio-widget';
 import { TableWidget } from '@/components/dashboard/table-widget';
 import { TextWidget } from '@/components/dashboard/text-widget';
 import { NewsWidget } from '@/components/dashboard/news-widget';
-import { candleData, lineConfig, lineData } from '@/app/(home)/fixtures';
+import { lineConfig, lineData } from '@/app/(home)/fixtures';
 import type { WidgetType } from '@/app/(home)/fixtures';
 
 interface WidgetRendererProps {
@@ -46,7 +46,16 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
   }
 
   if (widgetType === 'candlestick') {
-    return <CandlestickWidget title="QQQ 5D" data={candleData} />;
+    return (
+      <CandlestickWidget
+        title="Stock chart"
+        useStockApi
+        defaultSymbols={['QQQ', 'SPY', 'AAPL']}
+        defaultTimeframe="3M"
+        defaultInterval="1d"
+        variant="large"
+      />
+    );
   }
 
   if (widgetType === 'portfolio-small') {
