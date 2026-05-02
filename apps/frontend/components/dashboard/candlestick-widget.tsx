@@ -18,6 +18,14 @@ import {
   type ChartInterval,
   type ChartTimeframe,
 } from '@/lib/candlestick-timeframes';
+import { getStockChart, getStockChartAnalysis } from '@/lib/api/client';
+import {
+  chartIntervalToApi,
+  chartTimeframeToApiQuery,
+  normalizeSymbolList,
+  normalizeTicker,
+  stockApiCandlesToChartData,
+} from '@/lib/stock-chart-bridge';
 import {
   computeBollingerSeries,
   computeMASeries,
@@ -25,7 +33,9 @@ import {
 } from '@/lib/technical-indicators';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 import { BaseWidget } from './base-widget';
+import { CollapsibleStockAnalysis } from './collapsible-stock-analysis';
 
 export type { ChartInterval, ChartTimeframe };
 
@@ -317,6 +327,18 @@ export interface CandlestickWidgetProps extends Omit<
    * `large` (taller and wider chart area).
    */
   variant?: CandlestickWidgetVariant;
+  /**
+   * When true (and `data` is not passed), load candles from ``GET /api/stock/chart``.
+   * Requires ``NEXT_PUBLIC_BACKEND_URL`` and server ``FMP_API_KEY``.
+   */
+  useStockApi?: boolean;
+  /**
+   * When ``useStockApi`` is true, also call ``GET /api/ai/widget/stock-chart`` and render
+   * the returned markdown in the summary (GFM: headings, lists, tables). Default: true.
+   */
+  useAiAnalysis?: boolean;
+  /** Watchlist symbols (max 3) when ``useStockApi`` is enabled. */
+  defaultSymbols?: string[];
 }
 
 export function CandlestickWidget({
@@ -333,11 +355,18 @@ export function CandlestickWidget({
   showControls: showControlsProp,
   showIndicatorToggles = true,
   variant = 'default',
+  useStockApi = false,
+  useAiAnalysis = true,
+  defaultSymbols = ['AAPL'],
   className,
   ...props
 }: CandlestickWidgetProps) {
   const chartContainerRef = React.useRef<HTMLDivElement | null>(null);
   const seriesRefs = React.useRef<SeriesRefs>(emptySeriesRefs());
+  const chartCacheRef = React.useRef<Map<string, CandlestickData<Time>[]>>(new Map());
+  const aiCacheRef = React.useRef<Map<string, { analysis: string; modelId: string }>>(
+    new Map(),
+  );
 
   const [internalTf, setInternalTf] = React.useState<ChartTimeframe>(defaultTimeframe);
   const [internalIv, setInternalIv] = React.useState<ChartInterval>(() =>
@@ -351,20 +380,194 @@ export function CandlestickWidget({
   const [showBB, setShowBB] = React.useState(false);
   const [showRSI, setShowRSI] = React.useState(false);
 
+  const [symbols, setSymbols] = React.useState<string[]>(() =>
+    normalizeSymbolList(defaultSymbols, 3),
+  );
+  const [activeSymbolIndex, setActiveSymbolIndex] = React.useState(0);
+  const [symbolDraft, setSymbolDraft] = React.useState('');
+  const [apiCandles, setApiCandles] = React.useState<CandlestickData<Time>[]>([]);
+  const [apiError, setApiError] = React.useState<string | null>(null);
+  const [apiLoading, setApiLoading] = React.useState(false);
+
+  const [apiAiAnalysis, setApiAiAnalysis] = React.useState<string | null>(null);
+  const [apiAiModel, setApiAiModel] = React.useState<string | null>(null);
+  const [apiAiLoading, setApiAiLoading] = React.useState(false);
+  const [apiAiError, setApiAiError] = React.useState<string | null>(null);
+
   const timeframe = timeframeProp ?? internalTf;
   const interval = intervalProp ?? internalIv;
 
-  const useGeneratedData = dataProp === undefined;
+  const activeSymbol = symbols[activeSymbolIndex] ?? '';
+
+  const useGeneratedData = dataProp === undefined && !useStockApi;
+  const showSymbolTabs = useStockApi && dataProp === undefined;
   const showControls =
     showControlsProp ??
-    (useGeneratedData || onTimeframeChange !== undefined || onIntervalChange !== undefined);
+    (useGeneratedData || useStockApi || onTimeframeChange !== undefined || onIntervalChange !== undefined);
+
+  React.useEffect(() => {
+    setActiveSymbolIndex((i) => (symbols.length === 0 ? 0 : Math.min(i, symbols.length - 1)));
+  }, [symbols.length]);
+
+  React.useEffect(() => {
+    if (!useStockApi || dataProp !== undefined) {
+      return;
+    }
+    if (!activeSymbol) {
+      setApiCandles([]);
+      setApiError(null);
+      setApiLoading(false);
+      return;
+    }
+
+    const apiInterval = chartIntervalToApi(interval);
+    const q = chartTimeframeToApiQuery(timeframe);
+    const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+    const cached = chartCacheRef.current.get(cacheKey);
+    if (cached && cached.length > 0) {
+      setApiCandles(cached);
+    }
+
+    const ac = new AbortController();
+    setApiLoading(true);
+    setApiError(null);
+
+    void (async () => {
+      try {
+        const res = await getStockChart({
+          symbol: activeSymbol,
+          interval: apiInterval,
+          range: q.range,
+          from: q.from,
+          to: q.to,
+          signal: ac.signal,
+        });
+        const mapped = stockApiCandlesToChartData(res.candles);
+        if (!ac.signal.aborted) {
+          chartCacheRef.current.set(cacheKey, mapped);
+          setApiCandles(mapped);
+        }
+      } catch (e: unknown) {
+        if (ac.signal.aborted) {
+          return;
+        }
+        const msg =
+          e && typeof e === 'object' && 'message' in e
+            ? String((e as { message: string }).message)
+            : 'Could not load chart';
+        setApiError(msg);
+        if (!cached?.length) {
+          setApiCandles([]);
+        }
+      } finally {
+        if (!ac.signal.aborted) {
+          setApiLoading(false);
+        }
+      }
+    })();
+
+    return () => ac.abort();
+  }, [useStockApi, dataProp, activeSymbol, timeframe, interval]);
+
+  React.useEffect(() => {
+    if (!useStockApi || dataProp !== undefined || !useAiAnalysis) {
+      setApiAiAnalysis(null);
+      setApiAiModel(null);
+      setApiAiLoading(false);
+      setApiAiError(null);
+      return undefined;
+    }
+    if (!activeSymbol) {
+      setApiAiAnalysis(null);
+      setApiAiModel(null);
+      setApiAiLoading(false);
+      setApiAiError(null);
+      return undefined;
+    }
+
+    const apiInterval = chartIntervalToApi(interval);
+    const q = chartTimeframeToApiQuery(timeframe);
+    const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+    const cached = aiCacheRef.current.get(cacheKey);
+    if (cached) {
+      setApiAiAnalysis(cached.analysis);
+      setApiAiModel(cached.modelId);
+      setApiAiError(null);
+      setApiAiLoading(false);
+      return undefined;
+    }
+
+    setApiAiAnalysis(null);
+    setApiAiModel(null);
+    setApiAiError(null);
+    const ac = new AbortController();
+    setApiAiLoading(true);
+
+    void (async () => {
+      try {
+        const res = await getStockChartAnalysis({
+          symbol: activeSymbol,
+          interval: apiInterval,
+          range: q.range,
+          from: q.from,
+          to: q.to,
+          signal: ac.signal,
+        });
+        if (ac.signal.aborted) {
+          return;
+        }
+        aiCacheRef.current.set(cacheKey, {
+          analysis: res.analysis,
+          modelId: res.model_id,
+        });
+        setApiAiAnalysis(res.analysis);
+        setApiAiModel(res.model_id);
+      } catch (e: unknown) {
+        if (ac.signal.aborted) {
+          return;
+        }
+        const msg =
+          e && typeof e === 'object' && 'message' in e
+            ? String((e as { message: string }).message)
+            : 'Could not load AI analysis';
+        setApiAiError(msg);
+        setApiAiAnalysis(null);
+        setApiAiModel(null);
+      } finally {
+        if (!ac.signal.aborted) {
+          setApiAiLoading(false);
+        }
+      }
+    })();
+
+    return () => ac.abort();
+  }, [useStockApi, dataProp, useAiAnalysis, activeSymbol, timeframe, interval]);
 
   const resolvedData = React.useMemo(() => {
     if (dataProp !== undefined) {
       return dataProp;
     }
+    if (useStockApi) {
+      return apiCandles;
+    }
     return generateMockCandles(timeframe, interval);
-  }, [dataProp, timeframe, interval]);
+  }, [dataProp, useStockApi, apiCandles, timeframe, interval]);
+
+  const addSymbol = React.useCallback(() => {
+    setSymbols((s) => {
+      const t = normalizeTicker(symbolDraft);
+      if (!t || s.includes(t) || s.length >= 3) {
+        return s;
+      }
+      setActiveSymbolIndex(s.length);
+      setSymbolDraft('');
+      return [...s, t];
+    });
+  }, [symbolDraft]);
+
+  const removeSymbol = React.useCallback((index: number) => {
+    setSymbols((s) => s.filter((_, i) => i !== index));
+  }, []);
 
   const indicatorLines = React.useMemo(
     () => ({
@@ -686,7 +889,7 @@ export function CandlestickWidget({
     return { lastBar, maPoint, bbLast, rsiPoint };
   }, [resolvedData, indicatorLines, showMA, showBB, showRSI]);
 
-  const aiInsightText = React.useMemo(
+  const ruleBasedInsight = React.useMemo(
     () =>
       buildCandlestickInsight(
         resolvedData,
@@ -698,11 +901,125 @@ export function CandlestickWidget({
     [resolvedData, timeframe, interval, showMA, showBB, showRSI, indicatorLines],
   );
 
+  const loadAiSummary = useStockApi && dataProp === undefined && useAiAnalysis;
+
+  const summaryContent = React.useMemo(() => {
+    if (!loadAiSummary) {
+      return (
+        <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
+          {ruleBasedInsight}
+        </span>
+      );
+    }
+    if (apiAiAnalysis) {
+      return <CollapsibleStockAnalysis markdown={apiAiAnalysis} modelId={apiAiModel} />;
+    }
+    if (apiAiLoading) {
+      return (
+        <div className="space-y-1.5">
+          <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
+            {ruleBasedInsight}
+          </span>
+          <p className="text-[10px] text-muted-foreground">Generating AI summary…</p>
+        </div>
+      );
+    }
+    if (apiAiError) {
+      return (
+        <div className="space-y-1.5">
+          <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
+            {ruleBasedInsight}
+          </span>
+          <p className="text-[10px] text-destructive">{apiAiError}</p>
+        </div>
+      );
+    }
+    return (
+      <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
+        {ruleBasedInsight}
+      </span>
+    );
+  }, [
+    loadAiSummary,
+    ruleBasedInsight,
+    apiAiAnalysis,
+    apiAiModel,
+    apiAiLoading,
+    apiAiError,
+  ]);
+
   const showToolbar = showControls || showIndicatorToggles;
   const variantClasses = candlestickVariantClassNames(variant);
 
   return (
-    <BaseWidget {...props} summary={aiInsightText} className={cn(variantClasses.root, className)}>
+    <BaseWidget {...props} summary={summaryContent} className={cn(variantClasses.root, className)}>
+      {showSymbolTabs ? (
+        <div className="mb-2 flex flex-col gap-2">
+          <div
+            className="flex flex-wrap items-center gap-1 border-b border-border pb-1.5"
+            role="tablist"
+            aria-label="Stock symbols"
+          >
+            {symbols.map((sym, idx) => (
+              <div key={`${sym}-${idx}`} className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={idx === activeSymbolIndex}
+                  className={cn(
+                    'inline-flex items-center rounded-t-md px-2.5 py-1 text-xs font-medium transition-colors',
+                    idx === activeSymbolIndex
+                      ? 'border border-b-0 border-border bg-muted/90 text-foreground shadow-sm'
+                      : 'border border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                  )}
+                  onClick={() => setActiveSymbolIndex(idx)}
+                >
+                  {sym}
+                </button>
+                <button
+                  type="button"
+                  className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label={`Remove ${sym}`}
+                  onClick={() => removeSymbol(idx)}
+                >
+                  <X className="size-3.5 shrink-0" />
+                </button>
+              </div>
+            ))}
+            {symbols.length < 3 ? (
+              <div className="ml-1 flex items-center gap-1">
+                <input
+                  className={cn(selectClass, 'h-7 w-[5.5rem]')}
+                  placeholder="Ticker"
+                  value={symbolDraft}
+                  maxLength={12}
+                  aria-label="Ticker to add"
+                  onChange={(e) => setSymbolDraft(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addSymbol();
+                    }
+                  }}
+                />
+                <Button type="button" size="xs" variant="secondary" onClick={addSymbol}>
+                  Add
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          {symbols.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Add up to 3 tickers to load OHLCV from the backend.
+            </p>
+          ) : null}
+          {apiError ? (
+            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1 text-xs text-destructive">
+              {apiError}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       {showToolbar ? (
         <div className="mb-3 flex flex-col gap-2">
           {showControls ? (
@@ -796,6 +1113,11 @@ export function CandlestickWidget({
         </div>
       ) : null}
       <div className={cn('relative w-full', variantClasses.chart)}>
+        {useStockApi && dataProp === undefined && apiLoading ? (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-background/55 text-xs text-muted-foreground backdrop-blur-[1px]">
+            Loading chart…
+          </div>
+        ) : null}
         <div className="h-full w-full" ref={chartContainerRef} />
         <CandlestickStudyLegend
           lastBar={studyLegendProps.lastBar}

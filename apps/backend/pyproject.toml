@@ -27,6 +27,9 @@ dependencies = [
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.0.0",
     "firebase-admin>=7.1.0",
+    "httpx>=0.27.0",
+    "langchain-core>=0.3.45",
+    "langchain-openai>=0.2.14",
 ]
 
 [tool.hatch.build.targets.wheel]

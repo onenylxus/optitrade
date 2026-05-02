@@ -3,6 +3,7 @@
  * Handles communication with FastAPI backend
  */
 
+import type { StockChartAnalysisResponse, StockChartResponse } from '@/lib/stock-chart-bridge';
 import {
   AuthenticatedUserResponse,
   ApiError,
@@ -16,24 +17,44 @@ import {
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
+function detailMessage(detail: unknown): string {
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    return detail
+      .map((e) => {
+        if (typeof e === 'object' && e && 'msg' in e) {
+          return String((e as { msg: unknown }).msg);
+        }
+        return String(e);
+      })
+      .join('; ');
+  }
+  return 'Request failed';
+}
+
 /**
  * Make a fetch request with error handling
  */
 async function fetchWithErrorHandling<T>(url: string, options?: RequestInit): Promise<T> {
+  const method = options?.method ?? 'GET';
+  const sendJsonBody = options?.body != null && method !== 'GET' && method !== 'HEAD';
+
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(sendJsonBody ? { 'Content-Type': 'application/json' } : {}),
         ...(options?.headers || {}),
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as { detail?: unknown };
       throw {
         code: `HTTP_${response.status}`,
-        message: errorData.detail || response.statusText,
+        message: errorData.detail != null ? detailMessage(errorData.detail) : response.statusText,
       } as ApiError;
     }
 
@@ -167,4 +188,56 @@ export async function getAuthenticatedUser(
       Authorization: `Bearer ${firebaseIdToken}`,
     },
   });
+}
+
+export interface GetStockChartParams {
+  symbol: string;
+  interval: string;
+  range?: string;
+  from?: string;
+  to?: string;
+  signal?: AbortSignal;
+}
+
+/**
+ * OHLCV chart series from the FastAPI ``GET /api/stock/chart`` endpoint (FMP-backed).
+ */
+function stockChartQueryString(params: GetStockChartParams): string {
+  const sp = new URLSearchParams();
+  sp.set('symbol', params.symbol);
+  sp.set('interval', params.interval);
+  if (params.range) {
+    sp.set('range', params.range);
+  }
+  if (params.from) {
+    sp.set('from', params.from);
+  }
+  if (params.to) {
+    sp.set('to', params.to);
+  }
+  return sp.toString();
+}
+
+export async function getStockChart(params: GetStockChartParams): Promise<StockChartResponse> {
+  const q = stockChartQueryString(params);
+  return fetchWithErrorHandling<StockChartResponse>(`${BACKEND_URL}/api/stock/chart?${q}`, {
+    method: 'GET',
+    signal: params.signal,
+  });
+}
+
+/**
+ * AI chart commentary from ``GET /api/ai/widget/stock-chart`` (same query shape as stock chart).
+ */
+export async function getStockChartAnalysis(
+  params: GetStockChartParams,
+): Promise<StockChartAnalysisResponse> {
+  const q = stockChartQueryString(params);
+  return fetchWithErrorHandling<StockChartAnalysisResponse>(
+    `${BACKEND_URL}/api/ai/widget/stock-chart?${q}`,
+    {
+      method: 'GET',
+      signal: params.signal,
+    },
+  );
 }

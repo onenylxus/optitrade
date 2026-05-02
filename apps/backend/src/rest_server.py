@@ -7,6 +7,8 @@ from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from .api.routes.ai_routes import router as ai_router
+from .api.routes.stock_routes import router as stock_router
 from .firebase_auth import verify_firebase_id_token
 from .services import GreeterService
 
@@ -94,6 +96,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
+    app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
 
     service = GreeterService()
 
