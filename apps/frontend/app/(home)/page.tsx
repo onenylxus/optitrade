@@ -26,7 +26,7 @@ export default function HomePage() {
             isEditMode
               ? 'lg:pl-[360px] lg:pr-0'
               : isChatOpen
-                ? 'lg:pr-[360px] lg:pl-0'
+                ? 'lg:pr-[720px] lg:pl-0'
                 : '',
           )}
         >
@@ -35,7 +35,7 @@ export default function HomePage() {
 
         <div
           className={cn(
-            'pointer-events-none absolute inset-y-0 left-0 hidden w-[360px] transition-all duration-300 ease-out lg:block',
+            'pointer-events-none absolute inset-y-0 left-0 hidden w-[720px] transition-all duration-300 ease-out lg:block',
             isEditMode ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
           )}
           aria-hidden={!isEditMode}
@@ -45,7 +45,7 @@ export default function HomePage() {
 
         <div
           className={cn(
-            'absolute inset-y-0 right-0 hidden w-[360px] transition-all duration-300 ease-out lg:block',
+            'absolute inset-y-0 right-0 hidden w-[720px] transition-all duration-300 ease-out lg:block',
             isEditMode || !isChatOpen
               ? 'pointer-events-none translate-x-full opacity-0'
               : 'pointer-events-auto translate-x-0 opacity-100',

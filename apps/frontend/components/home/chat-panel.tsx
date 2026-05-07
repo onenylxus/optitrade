@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, Send, Wifi, WifiOff } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Renderer } from '@openuidev/react-lang';
+import { openuiLibrary } from '@openuidev/react-ui/genui-lib';
 import { useNanobot } from '@/lib/use-nanobot';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +61,17 @@ const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
   ),
 };
 
+function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
+  if (text.trimStart().startsWith('root =')) {
+    return <Renderer library={openuiLibrary} response={text} isStreaming={isStreaming} />;
+  }
+  return (
+    <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+      {text}
+    </Markdown>
+  );
+}
+
 function MessageBubble({ role, text, isStreaming }: { role: string; text: string; isStreaming?: boolean }) {
   const isUser = role === 'user';
   return (
@@ -73,9 +86,7 @@ function MessageBubble({ role, text, isStreaming }: { role: string; text: string
         {isUser ? (
           text
         ) : (
-          <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-            {text}
-          </Markdown>
+          <SmartRenderer text={text} isStreaming={isStreaming} />
         )}
         {isStreaming && (
           <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse rounded-sm bg-current opacity-60" />
@@ -86,13 +97,13 @@ function MessageBubble({ role, text, isStreaming }: { role: string; text: string
 }
 
 export function ChatPanel() {
-  const { messages, status, send, reconnect } = useNanobot();
+  const { messages, status, isProcessing, send, reconnect } = useNanobot();
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isProcessing]);
 
   function handleSend() {
     if (!input.trim()) return;
@@ -140,6 +151,17 @@ export function ChatPanel() {
                   isStreaming={message.isStreaming}
                 />
               ))}
+              {isProcessing && (
+                <div className="flex justify-start">
+                  <div className="bg-card text-card-foreground border-border rounded-2xl rounded-bl-sm border px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <span className="bg-muted-foreground/60 size-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+                      <span className="bg-muted-foreground/60 size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+                      <span className="bg-muted-foreground/60 size-1.5 animate-bounce rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={bottomRef} />
             </div>
           </ScrollArea>
