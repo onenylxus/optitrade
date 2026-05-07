@@ -1,0 +1,183 @@
+"""News Processing Pipeline - Integration of Fetching, Filtering, Deduplication, and AI Analysis"""
+import time
+import json
+import re
+import os
+from datetime import datetime
+from typing import List, Dict
+
+from .fetcher import YahooNewsFetcher, EconomicTimesFetcher, NewsItem
+from .analyzer import CloudAnalyzer
+from .config import OUTPUT_FILE
+
+
+class Deduplicator:
+    """News deduplicator - based on title similarity"""
+
+    @staticmethod
+    def normalize_title(title: str) -> str:
+        """Normalize title for comparison"""
+        normalized = title.lower()
+        normalized = re.sub(r'[^\w\s]', '', normalized)
+        normalized = re.sub(r'\s+', ' ', normalized).strip()
+        return normalized
+
+    @staticmethod
+    def deduplicate(news_list: List[NewsItem]) -> List[NewsItem]:
+        """Deduplicate and return unique news list"""
+        seen = set()
+        unique = []
+        for news in news_list:
+            key = Deduplicator.normalize_title(news.headline)
+            if key not in seen:
+                seen.add(key)
+                unique.append(news)
+        return unique
+
+
+class FinanceNewsFilter:
+    """Financial news filter"""
+
+    KEYWORDS = [
+        'stock', 'share', 'market', 'trading', 'investor', 'investment',
+        'crypto', 'cryptocurrency', 'bitcoin', 'ethereum', 'blockchain',
+        'defi', 'aave', 'lending', 'liquidity', 'withdraw',
+        'earnings', 'revenue', 'profit', 'loss', 'quarter', 'fiscal',
+        'acquisition', 'merger', 'buyout', 'partnership', 'contract',
+        'upgrade', 'downgrade', 'target', 'analyst', 'rating',
+        'fed', 'inflation', 'interest', 'economy', 'gdp',
+        'surge', 'plunge', 'rally', 'crash', 'boom', 'ipo', 'dividend',
+        'stock', 'market', 'fund', 'investment', 'crypto', 'earnings',
+        'revenue', 'acquisition'
+    ]
+
+    @classmethod
+    def is_finance_news(cls, title: str) -> bool:
+        if not title:
+            return False
+        title_lower = title.lower()
+        return any(kw.lower() in title_lower for kw in cls.KEYWORDS)
+
+    @classmethod
+    def filter_list(cls, news_list: List[NewsItem]) -> List[NewsItem]:
+        return [n for n in news_list if cls.is_finance_news(n.headline)]
+
+
+class NewsAnalysisPipeline:
+    """News analysis pipeline - integrates fetching and AI analysis"""
+
+    def __init__(self, limit_per_source: int = 10):
+        self.limit_per_source = limit_per_source
+        self.analyzer = CloudAnalyzer()
+
+    def run(self) -> List[Dict]:
+        """Run the complete pipeline"""
+        print("\n" + "="*70)
+        print("🚀 OptiTrade News Analysis System (Fetching + Cloud AI Analysis)")
+        print(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"🤖 AI Model: openrouter/free")
+        print(f"📊 Fetch limit per source: {self.limit_per_source}")
+        print("="*70)
+
+        # Step 1: Fetch news
+        print("\n📡 Step 1: Fetching News")
+        print("-"*50)
+
+        all_news = []
+
+        yahoo_news = YahooNewsFetcher.fetch(limit=self.limit_per_source)
+        all_news.extend(yahoo_news)
+
+        et_news = EconomicTimesFetcher.fetch(limit=self.limit_per_source)
+        all_news.extend(et_news)
+
+        print(f"\n📊 Fetch completed: {len(all_news)} raw news items")
+        print(f"   - Yahoo: {len(yahoo_news)} items")
+        print(f"   - Economic Times: {len(et_news)} items")
+
+        # Step 2: Filter financial news
+        print("\n🔍 Step 2: Filtering Financial News")
+        print("-"*50)
+
+        filtered_news = FinanceNewsFilter.filter_list(all_news)
+        print(f"   Before filter: {len(all_news)} items")
+        print(f"   After filter: {len(filtered_news)} items (non-financial news removed)")
+
+        # Step 3: Deduplication
+        print("\n🔄 Step 3: Deduplication")
+        print("-"*50)
+
+        unique_news = Deduplicator.deduplicate(filtered_news)
+        print(f"   Before dedup: {len(filtered_news)} items")
+        print(f"   After dedup: {len(unique_news)} items")
+
+        # Step 4: AI Analysis
+        print("\n🤖 Step 4: AI Sentiment Analysis")
+        print("-"*50)
+
+        results = []
+
+        for i, news in enumerate(unique_news, 1):
+            print(f"\n   [{i}/{len(unique_news)}] Analyzing: {news.headline[:50]}...")
+
+            analysis = self.analyzer.analyze(news.headline, news.summary)
+
+            result = {
+                "id": news.id,
+                "source": news.source,
+                "headline": news.headline,
+                "link": news.link,
+                "published_at": news.published_at,
+                "summary": news.summary[:200],
+                "highlights": analysis.get("highlights", []),
+                "sentiment": analysis.get("sentiment", 0),
+                "risk_tag": analysis.get("risk_tag", "Low Risk"),
+                "reasoning": analysis.get("reasoning", ""),
+                "analyzed_at": datetime.now().isoformat()
+            }
+
+            results.append(result)
+
+            # Display real-time results
+            emoji = "🟢" if result['sentiment'] > 0.2 else "🔴" if result['sentiment'] < -0.2 else "🟡"
+            print(f"       {emoji} Sentiment: {result['sentiment']:.2f} | Risk: {result['risk_tag']}")
+
+            time.sleep(0.5)  # Avoid too many requests
+
+        # Step 5: Save results
+        print("\n💾 Step 5: Saving Results")
+        print("-"*50)
+
+        output = {
+            "metadata": {
+                "total_news": len(results),
+                "yahoo_count": len([r for r in results if r['source'] == 'yahoo']),
+                "et_count": len([r for r in results if r['source'] == 'economic_times']),
+                "analyzed_at": datetime.now().isoformat(),
+                "model": "openrouter/free"
+            },
+            "news": results
+        }
+
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+
+        with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+            json.dump(output, f, indent=2, ensure_ascii=False)
+
+        print(f"   ✅ Results saved to: {OUTPUT_FILE}")
+
+        # Step 6: Display summary
+        print("\n" + "="*70)
+        print("📊 Analysis Summary")
+        print("="*70)
+
+        positive = [r for r in results if r['sentiment'] > 0.2]
+        neutral = [r for r in results if -0.2 <= r['sentiment'] <= 0.2]
+        negative = [r for r in results if r['sentiment'] < -0.2]
+
+        print(f"   🟢 Positive news: {len(positive)} items")
+        print(f"   🟡 Neutral news: {len(neutral)} items")
+        print(f"   🔴 Negative news: {len(negative)} items")
+
+        return results

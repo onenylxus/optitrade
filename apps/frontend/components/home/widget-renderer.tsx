@@ -62,7 +62,7 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
   }
 
   if (widgetType === 'news') {
-    return <NewsWidget />;
+   return <NewsWidget title="Financial News" summary="AI-powered sentiment analysis" variant="medium" />;
   }
   return (
     <TextWidget
