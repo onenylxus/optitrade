@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@openuidev/react-lang": "^0.2.4",
+    "@openuidev/react-ui": "^0.11.6",
     "@tailwindcss/postcss": "^4.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
