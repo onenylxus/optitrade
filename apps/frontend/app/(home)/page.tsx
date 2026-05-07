@@ -35,7 +35,7 @@ export default function HomePage() {
 
         <div
           className={cn(
-            'pointer-events-none absolute inset-y-0 left-0 hidden w-[720px] transition-all duration-300 ease-out lg:block',
+            'pointer-events-none absolute inset-y-0 left-0 hidden w-[360px] transition-all duration-300 ease-out lg:block',
             isEditMode ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
           )}
           aria-hidden={!isEditMode}

@@ -75,12 +75,12 @@ function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: bool
 function MessageBubble({ role, text, isStreaming }: { role: string; text: string; isStreaming?: boolean }) {
   const isUser = role === 'user';
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start w-full'}`}>
       <div
-        className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-5 ${
+        className={`rounded-2xl px-3 py-2 text-sm leading-5 ${
           isUser
-            ? 'bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap break-words'
-            : 'bg-card text-card-foreground border border-border rounded-bl-sm'
+            ? 'max-w-[80%] bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap break-words'
+            : 'w-full bg-card text-card-foreground border border-border rounded-bl-sm break-words overflow-hidden'
         }`}
       >
         {isUser ? (
