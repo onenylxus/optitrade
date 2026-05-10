@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 from src.portfolio import (
     build_portfolio_snapshot,
     create_paper_portfolio,
+    get_ibkr_connection_status,
     validate_connection_request,
 )
 
@@ -33,6 +34,22 @@ class PortfolioRequestHandler(BaseHTTPRequestHandler):
             self._send_json(build_portfolio_snapshot())
             return
 
+        if path == "/api/portfolio/connection":
+            connection = get_ibkr_connection_status()
+            self._send_json(
+                {
+                    "status": connection.status,
+                    "broker": connection.broker,
+                    "host": connection.host,
+                    "port": connection.port,
+                    "clientId": connection.client_id,
+                    "accountId": connection.account_id,
+                    "syncedAt": connection.synced_at,
+                    "lastError": connection.last_error,
+                }
+            )
+            return
+
         self._send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def do_POST(self) -> None:
@@ -49,7 +66,7 @@ class PortfolioRequestHandler(BaseHTTPRequestHandler):
                 payload = self._read_json_body()
                 self._send_json(validate_connection_request(payload))
                 return
-        except (json.JSONDecodeError, ValueError) as error:
+        except (json.JSONDecodeError, ValueError, RuntimeError) as error:
             self._send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
             return
 

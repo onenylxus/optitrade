@@ -8,6 +8,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.ibkr_client import (
+    IbkrConnectionSettings,
+    fetch_ibkr_portfolio_snapshot,
+    validate_ibkr_connection,
+)
+
 
 @dataclass(frozen=True)
 class Position:
@@ -48,6 +54,19 @@ DEFAULT_POSITIONS: tuple[Position, ...] = (
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 PAPER_PORTFOLIOS_PATH = DATA_DIR / "paper_portfolios.json"
+IBKR_CONNECTION_PATH = DATA_DIR / "ibkr_connection.json"
+
+
+@dataclass(frozen=True)
+class BrokerConnection:
+    status: str
+    broker: str
+    host: str | None = None
+    port: int | None = None
+    client_id: int | None = None
+    account_id: str | None = None
+    synced_at: str | None = None
+    last_error: str | None = None
 
 
 def _round_money(value: float) -> float:
@@ -111,6 +130,30 @@ def _build_sector_values(positions: tuple[Position, ...]) -> list[dict[str, Any]
 def build_portfolio_snapshot(
     positions: tuple[Position, ...] = DEFAULT_POSITIONS,
 ) -> dict[str, Any]:
+    connection = get_ibkr_connection_status()
+    if connection.status == "connected" and connection.host and connection.port:
+        try:
+            return fetch_ibkr_portfolio_snapshot(
+                IbkrConnectionSettings(
+                    host=connection.host,
+                    port=connection.port,
+                    client_id=connection.client_id or 1,
+                )
+            )
+        except RuntimeError as error:
+            disconnected = BrokerConnection(
+                status="disconnected",
+                broker="IBKR",
+                host=connection.host,
+                port=connection.port,
+                client_id=connection.client_id,
+                account_id=connection.account_id,
+                synced_at=connection.synced_at,
+                last_error=str(error),
+            )
+            _write_ibkr_connection(disconnected)
+            connection = disconnected
+
     total_value = sum(position.market_value for position in positions)
     total_cost = sum(position.cost_basis for position in positions)
     pnl = total_value - total_cost
@@ -122,6 +165,17 @@ def build_portfolio_snapshot(
     return {
         "asOf": datetime.now(UTC).isoformat(),
         "baseCurrency": "USD",
+        "source": "backend",
+        "broker": {
+            "status": connection.status,
+            "name": connection.broker,
+            "host": connection.host,
+            "port": connection.port,
+            "clientId": connection.client_id,
+            "accountId": connection.account_id,
+            "syncedAt": connection.synced_at,
+            "lastError": connection.last_error,
+        },
         "positions": [_position_payload(position) for position in positions],
         "summary": {
             "totalValue": _round_money(total_value),
@@ -141,18 +195,47 @@ def build_portfolio_snapshot(
 def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
     host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
     port = int(payload.get("port", 7497))
+    client_id = int(payload.get("clientId", 1))
 
     if not 1 <= port <= 65535:
         raise ValueError("port must be between 1 and 65535")
+    if client_id < 0:
+        raise ValueError("clientId must be zero or greater")
 
-    return {
-        "status": "connected",
-        "broker": "IBKR",
-        "host": host,
-        "port": port,
-        "accountId": "DU1234567",
-        "syncedAt": datetime.now(UTC).isoformat(),
-    }
+    payload = validate_ibkr_connection(
+        IbkrConnectionSettings(host=host, port=port, client_id=client_id)
+    )
+    connection = BrokerConnection(
+        status=str(payload["status"]),
+        broker=str(payload["broker"]),
+        host=payload.get("host"),
+        port=payload.get("port"),
+        client_id=payload.get("clientId"),
+        account_id=payload.get("accountId"),
+        synced_at=payload.get("syncedAt"),
+        last_error=payload.get("lastError"),
+    )
+    _write_ibkr_connection(connection)
+    return _broker_connection_payload(connection)
+
+
+def get_ibkr_connection_status() -> BrokerConnection:
+    if not IBKR_CONNECTION_PATH.exists():
+        return BrokerConnection(status="disconnected", broker="IBKR")
+
+    with IBKR_CONNECTION_PATH.open("r", encoding="utf-8") as file:
+        payload = json.load(file)
+
+    return BrokerConnection(
+        status=str(payload.get("status", "disconnected")),
+        broker=str(payload.get("broker", "IBKR")),
+        host=payload.get("host"),
+        port=payload.get("port"),
+        client_id=payload.get("clientId"),
+        account_id=payload.get("accountId"),
+        synced_at=payload.get("syncedAt"),
+        last_error=payload.get("lastError"),
+    )
 
 
 def create_paper_portfolio(payload: dict[str, Any]) -> dict[str, Any]:
@@ -190,4 +273,24 @@ def _write_paper_portfolios(records: list[dict[str, Any]]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with PAPER_PORTFOLIOS_PATH.open("w", encoding="utf-8") as file:
         json.dump(records, file, indent=2)
+        file.write("\n")
+
+
+def _broker_connection_payload(connection: BrokerConnection) -> dict[str, Any]:
+    return {
+        "status": connection.status,
+        "broker": connection.broker,
+        "host": connection.host,
+        "port": connection.port,
+        "clientId": connection.client_id,
+        "accountId": connection.account_id,
+        "syncedAt": connection.synced_at,
+        "lastError": connection.last_error,
+    }
+
+
+def _write_ibkr_connection(connection: BrokerConnection) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with IBKR_CONNECTION_PATH.open("w", encoding="utf-8") as file:
+        json.dump(_broker_connection_payload(connection), file, indent=2)
         file.write("\n")

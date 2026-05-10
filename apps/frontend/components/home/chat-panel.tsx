@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 function StatusDot({ status }: { status: ReturnType<typeof useNanobot>['status'] }) {
   if (status === 'connected')
@@ -97,7 +98,10 @@ function MessageBubble({ role, text, isStreaming }: { role: string; text: string
 }
 
 export function ChatPanel() {
-  const { messages, status, isProcessing, send, reconnect } = useNanobot();
+  const { portfolio, includeInChatContext } = usePortfolioContext();
+  const { messages, status, isProcessing, send, reconnect } = useNanobot(
+    includeInChatContext ? portfolio : null,
+  );
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -125,14 +129,23 @@ export function ChatPanel() {
       <Card className="flex h-full min-h-0 flex-col">
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Chat</CardTitle>
-          <button
-            onClick={status === 'disconnected' || status === 'error' ? reconnect : undefined}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-            title={status}
-          >
-            <StatusDot status={status} />
-            <span className="capitalize">{status}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="text-[11px] text-muted-foreground">
+              {includeInChatContext
+                ? portfolio
+                  ? `Context: ${portfolio.source === 'backend' ? portfolio.broker.status === 'connected' ? 'IBKR portfolio' : 'portfolio loaded' : 'demo portfolio'}`
+                  : 'Context: unavailable'
+                : 'Context: off'}
+            </div>
+            <button
+              onClick={status === 'disconnected' || status === 'error' ? reconnect : undefined}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              title={status}
+            >
+              <StatusDot status={status} />
+              <span className="capitalize">{status}</span>
+            </button>
+          </div>
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4">

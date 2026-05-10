@@ -5,6 +5,8 @@ import { Check, Loader2, Settings, ArrowLeft, Lock, Save } from 'lucide-react';
 import { Area, AreaChart, YAxis, XAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import type { PortfolioChatContextValue } from '@/contexts/portfolio-context';
+import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 // --- Interfaces ---
 
@@ -56,6 +58,19 @@ interface PortfolioApiPosition extends Stock {
 }
 
 interface PortfolioApiSnapshot {
+  asOf?: string;
+  baseCurrency?: string;
+  source?: 'backend' | 'demo';
+  broker?: {
+    status: 'connected' | 'disconnected';
+    name: string;
+    host?: string;
+    port?: number;
+    clientId?: number;
+    accountId?: string;
+    syncedAt?: string;
+    lastError?: string;
+  };
   positions: PortfolioApiPosition[];
   summary: {
     totalValue: number;
@@ -67,6 +82,12 @@ interface PortfolioApiSnapshot {
   };
   sectorValues: PortfolioDerivedData['sectorValues'];
   history: PortfolioDerivedData['history'];
+}
+
+interface PortfolioMappedSnapshot {
+  stocks: Stock[];
+  data: PortfolioDerivedData;
+  chatContext: PortfolioChatContextValue;
 }
 
 const PORTFOLIO_API_BASE_URL =
@@ -136,10 +157,7 @@ const portfolioApiUrl = (path: string) => {
   return `${baseUrl}${path}`;
 };
 
-function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): {
-  stocks: Stock[];
-  data: PortfolioDerivedData;
-} {
+function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSnapshot {
   return {
     stocks: snapshot.positions.map((position) => ({
       id: position.id,
@@ -159,6 +177,65 @@ function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): {
       sectorValues: snapshot.sectorValues,
       history: snapshot.history,
     },
+    chatContext: {
+      asOf: snapshot.asOf ?? new Date().toISOString(),
+      baseCurrency: snapshot.baseCurrency ?? 'USD',
+      source: snapshot.source ?? 'backend',
+      broker: snapshot.broker ?? {
+        status: 'disconnected',
+        name: 'IBKR',
+      },
+      summary: snapshot.summary,
+      positions: snapshot.positions.map((position) => ({
+        symbol: position.symbol,
+        quantity: position.quantity,
+        avgPrice: position.avgPrice,
+        currentPrice: position.currentPrice,
+        sector: position.sector,
+        marketValue: position.marketValue ?? position.currentPrice * position.quantity,
+        unrealizedPnl:
+          position.unrealizedPnl ?? (position.currentPrice - position.avgPrice) * position.quantity,
+        unrealizedPnlPercent:
+          position.unrealizedPnlPercent ??
+          (position.avgPrice === 0
+            ? 0
+            : ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100),
+      })),
+      sectorValues: snapshot.sectorValues,
+    },
+  };
+}
+
+function buildDemoChatContext(stocks: Stock[]): PortfolioChatContextValue {
+  const data = buildPortfolioData(stocks);
+  return {
+    asOf: new Date().toISOString(),
+    baseCurrency: 'USD',
+    source: 'demo',
+    broker: {
+      status: 'disconnected',
+      name: 'IBKR',
+    },
+    summary: {
+      totalValue: data.totalValue,
+      pnl: data.pnl,
+      pnlPercent: data.pnlPercent,
+      dailyPnl: data.dailyPnl,
+      dailyPnlPercent: data.dailyPnlPercent,
+      marginUsage: data.marginUsage,
+    },
+    positions: stocks.map((stock) => ({
+      symbol: stock.symbol,
+      quantity: stock.quantity,
+      avgPrice: stock.avgPrice,
+      currentPrice: stock.currentPrice,
+      sector: stock.sector,
+      marketValue: stock.currentPrice * stock.quantity,
+      unrealizedPnl: (stock.currentPrice - stock.avgPrice) * stock.quantity,
+      unrealizedPnlPercent:
+        stock.avgPrice === 0 ? 0 : ((stock.currentPrice - stock.avgPrice) / stock.avgPrice) * 100,
+    })),
+    sectorValues: data.sectorValues,
   };
 }
 
@@ -249,21 +326,52 @@ function PerformanceChart({
   );
 }
 
+function PortfolioSourceBadge({ source }: { source: 'backend' | 'demo' }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium tracking-wide ${
+        source === 'backend' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+      }`}
+      title={source === 'backend' ? 'Live IBKR portfolio' : 'Mock portfolio data'}
+    >
+      {source === 'backend' ? 'IBKR' : 'Mock'}
+    </span>
+  );
+}
+
 // --- Sub-Components ---
 
-function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
+function IBKRConnectionPanel({
+  onBack,
+  onConnected,
+  onUseMockData,
+}: {
+  onBack: () => void;
+  onConnected: () => Promise<void>;
+  onUseMockData: () => void;
+}) {
   const [connecting, setConnecting] = useState(false);
   const [host, setHost] = useState('127.0.0.1');
   const [port, setPort] = useState('7497');
+  const [clientId, setClientId] = useState('1');
+  const [error, setError] = useState<string | null>(null);
   const handleConnect = async () => {
     setConnecting(true);
+    setError(null);
     try {
-      await fetch(portfolioApiUrl('/api/portfolio/connect'), {
+      const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ host, port: Number(port) }),
+        body: JSON.stringify({ host, port: Number(port), clientId: Number(clientId) }),
       });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error ?? `IBKR connection API returned ${response.status}`);
+      }
+      await onConnected();
       onBack();
+    } catch (connectError) {
+      setError(connectError instanceof Error ? connectError.message : 'Unable to connect to IBKR');
     } finally {
       setConnecting(false);
     }
@@ -280,7 +388,7 @@ function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
         </div>
       </div>
       <div className="flex-1 py-5 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1">
             <div className="text-[10px] text-slate-400 uppercase">Host</div>
             <input
@@ -299,7 +407,17 @@ function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
               className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
             />
           </div>
+          <div className="space-y-1">
+            <div className="text-[10px] text-slate-400 uppercase">Client ID</div>
+            <input
+              type="text"
+              value={clientId}
+              onChange={(event) => setClientId(event.target.value)}
+              className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+            />
+          </div>
         </div>
+        {error && <div className="text-[11px] text-rose-600 leading-4">{error}</div>}
         <button
           onClick={handleConnect}
           disabled={connecting}
@@ -307,6 +425,16 @@ function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
         >
           {connecting ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
           {connecting ? 'Syncing...' : 'Initialize Connection'}
+        </button>
+        <button
+          onClick={() => {
+            onUseMockData();
+            onBack();
+          }}
+          disabled={connecting}
+          className="w-full border border-slate-200 bg-white py-2.5 text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        >
+          Use Mock Portfolio Data
         </button>
       </div>
     </div>
@@ -322,12 +450,9 @@ function PortfolioWidgetSmall({ data, source, onOpenSettings }: PortfolioVariant
       >
         <Settings size={12} />
       </button>
-      <div
-        className={`absolute left-0 top-0 h-1.5 w-1.5 rounded-full ${
-          source === 'backend' ? 'bg-emerald-500' : 'bg-amber-400'
-        }`}
-        title={source === 'backend' ? 'Backend data' : 'Demo fallback data'}
-      />
+      <div className="absolute left-0 top-0">
+        <PortfolioSourceBadge source={source} />
+      </div>
       <div className={`text-xl font-medium tracking-tight ${percentClass(data.pnlPercent)}`}>
         {data.pnlPercent >= 0 ? '+' : ''}
         {data.pnlPercent.toFixed(1)}%
@@ -347,17 +472,9 @@ function PortfolioWidgetMedium({
 }: PortfolioVariantProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
-      <div className="flex items-center justify-between border-b border-slate-50 py-2.5">
+      <div className="flex items-center justify-between py-2.5">
         <div className="flex items-center gap-2">
-          <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 font-mono">
-            PNL_SNAPSHOT
-          </div>
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              source === 'backend' ? 'bg-emerald-500' : 'bg-amber-400'
-            }`}
-            title={source === 'backend' ? 'Backend data' : 'Demo fallback data'}
-          />
+          <PortfolioSourceBadge source={source} />
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -427,12 +544,7 @@ function PortfolioWidgetLarge({
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-3 border-b border-slate-50">
         <div className="flex items-center gap-2">
-          <div className="text-xs font-medium uppercase tracking-tight text-slate-500">
-            Executive Summary
-          </div>
-          <span className="bg-emerald-50 text-emerald-600 text-[9px] px-1.5 py-0.5 rounded font-bold italic uppercase">
-            {source === 'backend' ? 'Live' : 'Demo'}
-          </span>
+          <PortfolioSourceBadge source={source} />
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -555,6 +667,7 @@ const PortfolioWidgetRoot = ({
   size,
   ...props
 }: PortfolioWidgetProps) => {
+  const { includeInChatContext, setPortfolio, setIncludeInChatContext } = usePortfolioContext();
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -564,33 +677,41 @@ const PortfolioWidgetRoot = ({
 
   const resolvedVariant = variant ?? size ?? 'medium';
 
-  useEffect(() => {
-    const loadPortfolio = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(portfolioApiUrl('/api/portfolio'), {
-          headers: { Accept: 'application/json' },
-        });
+  const useMockData = () => {
+    setStocks(DEFAULT_STOCKS);
+    setBackendData(null);
+    setPortfolio(buildDemoChatContext(DEFAULT_STOCKS));
+    setSource('demo');
+    setLoading(false);
+  };
 
-        if (!response.ok) {
-          throw new Error(`Portfolio API returned ${response.status}`);
-        }
+  const loadPortfolio = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(portfolioApiUrl('/api/portfolio'), {
+        headers: { Accept: 'application/json' },
+      });
 
-        const snapshot = (await response.json()) as PortfolioApiSnapshot;
-        const mappedSnapshot = mapPortfolioSnapshot(snapshot);
-        setStocks(mappedSnapshot.stocks);
-        setBackendData(mappedSnapshot.data);
-        setSource('backend');
-      } catch {
-        setStocks(DEFAULT_STOCKS);
-        setBackendData(null);
-        setSource('demo');
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(`Portfolio API returned ${response.status}`);
       }
-    };
-    loadPortfolio();
-  }, []);
+
+      const snapshot = (await response.json()) as PortfolioApiSnapshot;
+      const mappedSnapshot = mapPortfolioSnapshot(snapshot);
+      setStocks(mappedSnapshot.stocks);
+      setBackendData(mappedSnapshot.data);
+      setPortfolio(mappedSnapshot.chatContext);
+      setSource(mappedSnapshot.chatContext.broker.status === 'connected' ? 'backend' : 'demo');
+    } catch {
+      useMockData();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPortfolio();
+  }, [setPortfolio]);
 
   const portfolioData = useMemo(
     () => backendData ?? buildPortfolioData(stocks),
@@ -631,14 +752,24 @@ const PortfolioWidgetRoot = ({
   };
 
   return (
-    <BaseWidget title={title} {...props} className="overflow-hidden">
+    <BaseWidget
+      title={title}
+      {...props}
+      className="overflow-hidden"
+      contextButtonActive={includeInChatContext}
+      onContextButtonClick={() => setIncludeInChatContext(!includeInChatContext)}
+    >
       {loading ? (
         <div className="flex h-full items-center justify-center space-x-2 text-slate-300">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="text-[10px] font-medium uppercase tracking-widest">Synchronizing</span>
         </div>
       ) : showBrokerPanel ? (
-        <IBKRConnectionPanel onBack={() => setShowBrokerPanel(false)} />
+        <IBKRConnectionPanel
+          onBack={() => setShowBrokerPanel(false)}
+          onConnected={loadPortfolio}
+          onUseMockData={useMockData}
+        />
       ) : (
         <>
           {resolvedVariant === 'small' && <PortfolioWidgetSmall {...variantProps} />}

@@ -3,6 +3,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from urllib import request
 from urllib.error import HTTPError
 
@@ -36,6 +37,9 @@ class PortfolioTests(unittest.TestCase):
         portfolio_module.PAPER_PORTFOLIOS_PATH = (
             portfolio_module.DATA_DIR / "paper_portfolios.json"
         )
+        portfolio_module.IBKR_CONNECTION_PATH = (
+            portfolio_module.DATA_DIR / "ibkr_connection.json"
+        )
         cls.server = create_server(port=0)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
@@ -52,6 +56,8 @@ class PortfolioTests(unittest.TestCase):
         snapshot = build_portfolio_snapshot(DEFAULT_POSITIONS)
 
         self.assertEqual(snapshot["baseCurrency"], "USD")
+        self.assertEqual(snapshot["source"], "backend")
+        self.assertEqual(snapshot["broker"]["status"], "disconnected")
         self.assertEqual(len(snapshot["positions"]), len(DEFAULT_POSITIONS))
         self.assertEqual(snapshot["summary"]["totalValue"], 110211.4)
         self.assertEqual(snapshot["summary"]["pnl"], 18711.4)
@@ -96,11 +102,49 @@ class PortfolioTests(unittest.TestCase):
         self.assertTrue(portfolio_module.PAPER_PORTFOLIOS_PATH.exists())
 
     def test_connection_endpoint_validates_and_returns_status(self):
-        _, payload = post_json(
-            f"{self.api_url}/api/portfolio/connect",
-            {"host": "127.0.0.1", "port": 7497},
-        )
+        with patch(
+            "src.portfolio.validate_ibkr_connection",
+            return_value={
+                "status": "connected",
+                "broker": "IBKR",
+                "host": "127.0.0.1",
+                "port": 7497,
+                "clientId": 1,
+                "accountId": "DU1234567",
+                "syncedAt": "2026-05-10T00:00:00+00:00",
+            },
+        ):
+            _, payload = post_json(
+                f"{self.api_url}/api/portfolio/connect",
+                {"host": "127.0.0.1", "port": 7497},
+            )
 
         self.assertEqual(payload["status"], "connected")
         self.assertEqual(payload["broker"], "IBKR")
         self.assertEqual(payload["port"], 7497)
+        self.assertEqual(payload["clientId"], 1)
+
+    def test_connection_status_is_exposed_by_api(self):
+        with patch(
+            "src.portfolio.validate_ibkr_connection",
+            return_value={
+                "status": "connected",
+                "broker": "IBKR",
+                "host": "127.0.0.1",
+                "port": 4002,
+                "clientId": 7,
+                "accountId": "DU7654321",
+                "syncedAt": "2026-05-10T00:00:00+00:00",
+            },
+        ):
+            post_json(
+                f"{self.api_url}/api/portfolio/connect",
+                {"host": "127.0.0.1", "port": 4002, "accountId": "DU7654321", "clientId": 7},
+            )
+
+        payload = read_json(f"{self.api_url}/api/portfolio/connection")
+
+        self.assertEqual(payload["status"], "connected")
+        self.assertEqual(payload["port"], 4002)
+        self.assertEqual(payload["accountId"], "DU7654321")
+        self.assertEqual(payload["clientId"], 7)

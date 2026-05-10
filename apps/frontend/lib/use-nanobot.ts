@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { openuiChatLibrary, openuiChatPromptOptions } from '@openuidev/react-ui/genui-lib';
+import { buildPortfolioChatContextBlock } from '@/lib/portfolio-chat-context';
+import type { PortfolioChatContextValue } from '@/contexts/portfolio-context';
 
 export type MessageRole = 'user' | 'assistant';
 
@@ -18,7 +20,7 @@ const WS_URL = 'ws://178.128.213.162:8765/?client_id=OptiTrade';
 
 const OPENUI_SYSTEM_PROMPT = openuiChatLibrary.prompt(openuiChatPromptOptions);
 
-export function useNanobot() {
+export function useNanobot(portfolioContext: PortfolioChatContextValue | null = null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -101,15 +103,18 @@ export function useNanobot() {
 
     setMessages((prev) => [...prev, { id: `msg-${Date.now()}-user`, role: 'user', text: trimmed }]);
 
+    const portfolioBlock = buildPortfolioChatContextBlock(portfolioContext);
     let payload = trimmed;
     if (isFirstMessageRef.current) {
-      payload = `${OPENUI_SYSTEM_PROMPT}\n\nUser: ${trimmed}`;
+      payload = `${OPENUI_SYSTEM_PROMPT}${portfolioBlock ? `\n\n${portfolioBlock}` : ''}\n\nUser: ${trimmed}`;
       isFirstMessageRef.current = false;
+    } else if (portfolioBlock) {
+      payload = `${portfolioBlock}\n\nUser: ${trimmed}`;
     }
 
     setIsProcessing(true);
     wsRef.current?.send(payload);
-  }, []);
+  }, [portfolioContext]);
 
   const reconnect = useCallback(() => {
     setStatus('connecting');

@@ -11,9 +11,23 @@ interface BaseWidgetProps extends ComponentProps<typeof Card> {
   title: string;
   summary?: string;
   children: ReactNode;
+  contextButtonLabel?: string;
+  contextButtonActiveLabel?: string;
+  contextButtonActive?: boolean;
+  onContextButtonClick?: () => void;
 }
 
-export function BaseWidget({ title, summary, children, className, ...props }: BaseWidgetProps) {
+export function BaseWidget({
+  title,
+  summary,
+  children,
+  className,
+  contextButtonLabel = 'Add to Context',
+  contextButtonActiveLabel = 'Added to Context',
+  contextButtonActive = false,
+  onContextButtonClick,
+  ...props
+}: BaseWidgetProps) {
   const { isEditMode, onDelete } = useWidgetContext();
 
   return (
@@ -34,15 +48,18 @@ export function BaseWidget({ title, summary, children, className, ...props }: Ba
       <Separator />
 
       <CardFooter className="mt-1 flex items-center justify-between gap-2 border-0 bg-transparent px-0 py-1.5">
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          className="shadow-sm shadow-primary/20 ring-1 ring-primary/25"
-        >
-          <Plus className="size-3.5" />
-          Add to Context
-        </Button>
+        {onContextButtonClick ? (
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={onContextButtonClick}
+            className="shadow-sm shadow-primary/20 ring-1 ring-primary/25"
+          >
+            <Plus className="size-3.5" />
+            {contextButtonActive ? contextButtonActiveLabel : contextButtonLabel}
+          </Button>
+        ) : null}
         {isEditMode && onDelete ? (
           <Button
             type="button"
