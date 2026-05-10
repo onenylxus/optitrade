@@ -44,12 +44,12 @@ npx nx run @optitrade/backend:build
 
 ## Portfolio API
 
-The portfolio widget API is available as a small stdlib HTTP service. Routes use
-`/api/...` directly, without a `/v1` prefix.
+The portfolio widget API now runs on `FastAPI`. Routes use `/api/...` directly,
+without a `/v1` prefix.
 
 ```bash
 cd apps/backend
-python -m src.portfolio_api --host 127.0.0.1 --port 8000
+uv run python -m src.portfolio_api --host 127.0.0.1 --port 8000
 ```
 
 Endpoints:

@@ -1,32 +1,12 @@
-import json
 import tempfile
-import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from urllib import request
-from urllib.error import HTTPError
 
+from fastapi.testclient import TestClient
 from src import portfolio as portfolio_module
 from src.portfolio import DEFAULT_POSITIONS, build_portfolio_snapshot
-from src.portfolio_api import create_server
-
-
-def read_json(url: str):
-    with request.urlopen(url, timeout=5) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
-def post_json(url: str, payload: dict):
-    body = json.dumps(payload).encode("utf-8")
-    req = request.Request(
-        url,
-        data=body,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    with request.urlopen(req, timeout=5) as response:
-        return response.status, json.loads(response.read().decode("utf-8"))
+from src.portfolio_api import app
 
 
 class PortfolioTests(unittest.TestCase):
@@ -40,16 +20,10 @@ class PortfolioTests(unittest.TestCase):
         portfolio_module.IBKR_CONNECTION_PATH = (
             portfolio_module.DATA_DIR / "ibkr_connection.json"
         )
-        cls.server = create_server(port=0)
-        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
-        cls.thread.start()
-        cls.api_url = f"http://127.0.0.1:{cls.server.server_port}"
+        cls.client = TestClient(app)
 
     @classmethod
     def tearDownClass(cls):
-        cls.server.shutdown()
-        cls.server.server_close()
-        cls.thread.join(timeout=2)
         cls.temp_dir.cleanup()
 
     def test_build_portfolio_snapshot_returns_widget_contract(self):
@@ -73,30 +47,27 @@ class PortfolioTests(unittest.TestCase):
         )
 
     def test_portfolio_endpoint_returns_snapshot(self):
-        payload = read_json(f"{self.api_url}/api/portfolio")
+        payload = self.client.get("/api/portfolio").json()
 
         self.assertEqual(payload["summary"]["totalValue"], 110211.4)
         self.assertEqual(payload["positions"][1]["symbol"], "AAPL")
 
     def test_routes_do_not_use_v1_prefix(self):
-        with self.assertRaises(HTTPError) as context:
-            read_json(f"{self.api_url}/v1/api/portfolio")
-
-        self.assertEqual(context.exception.code, 404)
+        response = self.client.get("/v1/api/portfolio")
+        self.assertEqual(response.status_code, 404)
 
     def test_non_portfolio_example_routes_are_not_owned_here(self):
-        with self.assertRaises(HTTPError) as context:
-            read_json(f"{self.api_url}/api/stock?symbol=aapl")
-
-        self.assertEqual(context.exception.code, 404)
+        response = self.client.get("/api/stock?symbol=aapl")
+        self.assertEqual(response.status_code, 404)
 
     def test_paper_portfolio_route_creates_record(self):
-        paper_status, paper = post_json(
-            f"{self.api_url}/api/paper-portfolio",
-            {"name": "Timmy Paper Portfolio"},
+        response = self.client.post(
+            "/api/paper-portfolio",
+            json={"name": "Timmy Paper Portfolio"},
         )
+        paper = response.json()
 
-        self.assertEqual(paper_status, 201)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(paper["status"], "created")
         self.assertEqual(paper["name"], "Timmy Paper Portfolio")
         self.assertTrue(portfolio_module.PAPER_PORTFOLIOS_PATH.exists())
@@ -114,11 +85,13 @@ class PortfolioTests(unittest.TestCase):
                 "syncedAt": "2026-05-10T00:00:00+00:00",
             },
         ):
-            _, payload = post_json(
-                f"{self.api_url}/api/portfolio/connect",
-                {"host": "127.0.0.1", "port": 7497},
+            response = self.client.post(
+                "/api/portfolio/connect",
+                json={"host": "127.0.0.1", "port": 7497},
             )
+            payload = response.json()
 
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["status"], "connected")
         self.assertEqual(payload["broker"], "IBKR")
         self.assertEqual(payload["port"], 7497)
@@ -137,12 +110,12 @@ class PortfolioTests(unittest.TestCase):
                 "syncedAt": "2026-05-10T00:00:00+00:00",
             },
         ):
-            post_json(
-                f"{self.api_url}/api/portfolio/connect",
-                {"host": "127.0.0.1", "port": 4002, "accountId": "DU7654321", "clientId": 7},
+            self.client.post(
+                "/api/portfolio/connect",
+                json={"host": "127.0.0.1", "port": 4002, "accountId": "DU7654321", "clientId": 7},
             )
 
-        payload = read_json(f"{self.api_url}/api/portfolio/connection")
+        payload = self.client.get("/api/portfolio/connection").json()
 
         self.assertEqual(payload["status"], "connected")
         self.assertEqual(payload["port"], 4002)
