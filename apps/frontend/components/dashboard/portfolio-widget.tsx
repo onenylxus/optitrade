@@ -5,7 +5,7 @@ import { Check, Loader2, Settings, ArrowLeft, Lock, Save } from 'lucide-react';
 import { Area, AreaChart, YAxis, XAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import type { PortfolioChatContextValue } from '@/contexts/portfolio-context';
+import type { PortfolioBrokerOption, PortfolioChatContextValue } from '@/contexts/portfolio-context';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 // --- Interfaces ---
@@ -326,29 +326,47 @@ function PerformanceChart({
   );
 }
 
-function PortfolioSourceBadge({ source }: { source: 'backend' | 'demo' }) {
+function PortfolioSourceBadge({
+  source,
+  brokerName,
+}: {
+  source: 'backend' | 'demo';
+  brokerName?: string;
+}) {
+  const label = source === 'backend' ? brokerName ?? 'Live' : 'Mock';
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium tracking-wide ${
         source === 'backend' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
       }`}
-      title={source === 'backend' ? 'Live IBKR portfolio' : 'Mock portfolio data'}
+      title={source === 'backend' ? `Live ${label} portfolio` : 'Mock portfolio data'}
     >
-      {source === 'backend' ? 'IBKR' : 'Mock'}
+      {label}
     </span>
   );
 }
 
 // --- Sub-Components ---
 
-function IBKRConnectionPanel({
+const BROKER_OPTIONS: Array<{ id: PortfolioBrokerOption; label: string }> = [
+  { id: 'ibkr', label: 'IBKR' },
+  { id: 'futu', label: 'Futu' },
+  { id: 'binance', label: 'Binance' },
+  { id: 'mock', label: 'Mock Data' },
+];
+
+function BrokerConnectionPanel({
   onBack,
   onConnected,
   onUseMockData,
+  selectedBroker,
+  onBrokerChange,
 }: {
   onBack: () => void;
   onConnected: () => Promise<void>;
   onUseMockData: () => void;
+  selectedBroker: PortfolioBrokerOption;
+  onBrokerChange: (broker: PortfolioBrokerOption) => void;
 }) {
   const [connecting, setConnecting] = useState(false);
   const [host, setHost] = useState('127.0.0.1');
@@ -356,6 +374,17 @@ function IBKRConnectionPanel({
   const [clientId, setClientId] = useState('1');
   const [error, setError] = useState<string | null>(null);
   const handleConnect = async () => {
+    if (selectedBroker === 'mock') {
+      onUseMockData();
+      onBack();
+      return;
+    }
+
+    if (selectedBroker !== 'ibkr') {
+      setError(`${BROKER_OPTIONS.find((option) => option.id === selectedBroker)?.label ?? 'This broker'} integration is not live yet. Use Mock Data for now.`);
+      return;
+    }
+
     setConnecting(true);
     setError(null);
     try {
@@ -365,8 +394,10 @@ function IBKRConnectionPanel({
         body: JSON.stringify({ host, port: Number(port), clientId: Number(clientId) }),
       });
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error ?? `IBKR connection API returned ${response.status}`);
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string; detail?: string }
+          | null;
+        throw new Error(payload?.detail ?? payload?.error ?? `IBKR connection API returned ${response.status}`);
       }
       await onConnected();
       onBack();
@@ -384,10 +415,29 @@ function IBKRConnectionPanel({
           <ArrowLeft size={16} />
         </button>
         <div className="text-[11px] font-medium uppercase tracking-tight text-slate-500">
-          IBKR Bridge
+          Broker Connection
         </div>
       </div>
       <div className="flex-1 py-5 space-y-4">
+        <div className="grid grid-cols-2 gap-2">
+          {BROKER_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => {
+                onBrokerChange(option.id);
+                setError(null);
+              }}
+              className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
+                selectedBroker === option.id
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1">
             <div className="text-[10px] text-slate-400 uppercase">Host</div>
@@ -417,6 +467,11 @@ function IBKRConnectionPanel({
             />
           </div>
         </div>
+        {selectedBroker !== 'ibkr' && selectedBroker !== 'mock' && (
+          <div className="text-[11px] text-slate-500 leading-4">
+            {BROKER_OPTIONS.find((option) => option.id === selectedBroker)?.label} is listed as an option, but only IBKR has a live backend connection right now.
+          </div>
+        )}
         {error && <div className="text-[11px] text-rose-600 leading-4">{error}</div>}
         <button
           onClick={handleConnect}
@@ -424,7 +479,11 @@ function IBKRConnectionPanel({
           className="w-full bg-slate-900 py-2.5 text-xs text-white hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {connecting ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
-          {connecting ? 'Syncing...' : 'Initialize Connection'}
+          {selectedBroker === 'mock'
+            ? 'Use Mock Portfolio Data'
+            : connecting
+              ? 'Syncing...'
+              : `Connect ${BROKER_OPTIONS.find((option) => option.id === selectedBroker)?.label ?? 'Broker'}`}
         </button>
         <button
           onClick={() => {
@@ -451,7 +510,7 @@ function PortfolioWidgetSmall({ data, source, onOpenSettings }: PortfolioVariant
         <Settings size={12} />
       </button>
       <div className="absolute left-0 top-0">
-        <PortfolioSourceBadge source={source} />
+        <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? 'IBKR' : undefined} />
       </div>
       <div className={`text-xl font-medium tracking-tight ${percentClass(data.pnlPercent)}`}>
         {data.pnlPercent >= 0 ? '+' : ''}
@@ -474,7 +533,7 @@ function PortfolioWidgetMedium({
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <div className="flex items-center justify-between py-2.5">
         <div className="flex items-center gap-2">
-          <PortfolioSourceBadge source={source} />
+          <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? 'IBKR' : undefined} />
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -544,7 +603,7 @@ function PortfolioWidgetLarge({
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-3 border-b border-slate-50">
         <div className="flex items-center gap-2">
-          <PortfolioSourceBadge source={source} />
+          <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? 'IBKR' : undefined} />
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -672,6 +731,7 @@ const PortfolioWidgetRoot = ({
   const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showBrokerPanel, setShowBrokerPanel] = useState(false);
+  const [selectedBroker, setSelectedBroker] = useState<PortfolioBrokerOption>('mock');
   const [source, setSource] = useState<'backend' | 'demo'>('demo');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
@@ -701,7 +761,12 @@ const PortfolioWidgetRoot = ({
       setStocks(mappedSnapshot.stocks);
       setBackendData(mappedSnapshot.data);
       setPortfolio(mappedSnapshot.chatContext);
-      setSource(mappedSnapshot.chatContext.broker.status === 'connected' ? 'backend' : 'demo');
+      if (mappedSnapshot.chatContext.broker.status === 'connected') {
+        setSelectedBroker('ibkr');
+        setSource('backend');
+      } else {
+        setSource('demo');
+      }
     } catch {
       useMockData();
     } finally {
@@ -765,10 +830,12 @@ const PortfolioWidgetRoot = ({
           <span className="text-[10px] font-medium uppercase tracking-widest">Synchronizing</span>
         </div>
       ) : showBrokerPanel ? (
-        <IBKRConnectionPanel
+        <BrokerConnectionPanel
           onBack={() => setShowBrokerPanel(false)}
           onConnected={loadPortfolio}
           onUseMockData={useMockData}
+          selectedBroker={selectedBroker}
+          onBrokerChange={setSelectedBroker}
         />
       ) : (
         <>

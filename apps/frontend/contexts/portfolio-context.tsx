@@ -42,6 +42,8 @@ export interface PortfolioChatContextValue {
   sectorValues: Array<{ sector: string; value: number; percent: number }>;
 }
 
+export type PortfolioBrokerOption = 'ibkr' | 'futu' | 'binance' | 'mock';
+
 interface PortfolioContextState {
   portfolio: PortfolioChatContextValue | null;
   includeInChatContext: boolean;
