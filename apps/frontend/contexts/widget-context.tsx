@@ -5,6 +5,7 @@ import { createContext, useContext } from 'react';
 
 interface WidgetContextValue {
   isEditMode: boolean;
+  widgetId?: string;
   onDelete?: () => void;
 }
 
@@ -16,9 +17,9 @@ interface WidgetProviderProps extends WidgetContextValue {
   children: ReactNode;
 }
 
-export function WidgetProvider({ isEditMode, onDelete, children }: WidgetProviderProps) {
+export function WidgetProvider({ isEditMode, widgetId, onDelete, children }: WidgetProviderProps) {
   return (
-    <WidgetContext.Provider value={{ isEditMode, onDelete }}>{children}</WidgetContext.Provider>
+    <WidgetContext.Provider value={{ isEditMode, widgetId, onDelete }}>{children}</WidgetContext.Provider>
   );
 }
 

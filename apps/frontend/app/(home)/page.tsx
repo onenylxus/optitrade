@@ -6,6 +6,7 @@ import { EditWidgetDrawer } from '@/components/home/edit-widget-drawer';
 import { HomeHeader } from '@/components/home/home-header';
 import { WidgetCanvas } from '@/components/home/widget-canvas';
 import { PortfolioProvider } from '@/contexts/portfolio-context';
+import { ChatContextStoreProvider } from '@/contexts/chat-context-store';
 import { cn } from '@/lib/utils';
 
 export default function HomePage() {
@@ -14,7 +15,8 @@ export default function HomePage() {
 
   return (
     <PortfolioProvider>
-      <div className="bg-background text-foreground relative flex h-screen w-full flex-col overflow-hidden">
+      <ChatContextStoreProvider>
+        <div className="bg-background text-foreground relative flex h-screen w-full flex-col overflow-hidden">
         <HomeHeader
           isEditMode={isEditMode}
           onEditModeChange={setIsEditMode}
@@ -60,6 +62,7 @@ export default function HomePage() {
           <EditWidgetDrawer open={isEditMode} className="lg:hidden" />
         </main>
       </div>
+      </ChatContextStoreProvider>
     </PortfolioProvider>
-  );
+);
 }

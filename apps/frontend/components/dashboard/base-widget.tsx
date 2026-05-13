@@ -6,11 +6,13 @@ import type { ComponentProps, ReactNode } from 'react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useWidgetContext } from '@/contexts/widget-context';
+import { useChatContextStore } from '@/contexts/chat-context-store';
 
 interface BaseWidgetProps extends ComponentProps<typeof Card> {
   title: string;
   summary?: string;
   children: ReactNode;
+  contextData?: { label: string; text: string };
   contextButtonLabel?: string;
   contextButtonActiveLabel?: string;
   contextButtonActive?: boolean;
@@ -22,13 +24,31 @@ export function BaseWidget({
   summary,
   children,
   className,
+  contextData,
   contextButtonLabel = 'Add to Context',
   contextButtonActiveLabel = 'Added to Context',
   contextButtonActive = false,
   onContextButtonClick,
   ...props
 }: BaseWidgetProps) {
-  const { isEditMode, onDelete } = useWidgetContext();
+  const { isEditMode, onDelete, widgetId } = useWidgetContext();
+  const { contexts, addContext, removeContext } = useChatContextStore();
+
+  const isActive = widgetId ? contexts.some((c) => c.widgetId === widgetId) : false;
+
+  const handleContextButtonClick = () => {
+    if (onContextButtonClick) {
+      onContextButtonClick();
+      return;
+    }
+    if (!contextData || !widgetId) return;
+
+    if (isActive) {
+      removeContext(widgetId);
+    } else {
+      addContext({ widgetId, label: contextData.label, text: contextData.text });
+    }
+  };
 
   return (
     <Card className={cn('h-full min-h-0 w-full gap-1 px-4', className)} {...props}>
@@ -48,16 +68,18 @@ export function BaseWidget({
       <Separator />
 
       <CardFooter className="mt-1 flex items-center justify-between gap-2 border-0 bg-transparent px-0 py-1.5">
-        {onContextButtonClick ? (
+        {contextData || onContextButtonClick ? (
           <Button
             type="button"
-            variant="default"
+            variant={isActive ? 'default' : 'outline'}
             size="sm"
-            onClick={onContextButtonClick}
-            className="shadow-sm shadow-primary/20 ring-1 ring-primary/25"
+            onClick={handleContextButtonClick}
+            className={cn(
+              isActive && 'bg-primary text-primary-foreground shadow-sm shadow-primary/20 ring-1 ring-primary/25'
+            )}
           >
             <Plus className="size-3.5" />
-            {contextButtonActive ? contextButtonActiveLabel : contextButtonLabel}
+            {isActive ? contextButtonActiveLabel : contextButtonLabel}
           </Button>
         ) : null}
         {isEditMode && onDelete ? (

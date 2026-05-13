@@ -702,7 +702,7 @@ export function CandlestickWidget({
   const variantClasses = candlestickVariantClassNames(variant);
 
   return (
-    <BaseWidget {...props} summary={aiInsightText} className={cn(variantClasses.root, className)}>
+    <BaseWidget {...props} summary={aiInsightText} contextData={{ label: props.title ?? 'Candlestick Chart', text: `${props.title ?? 'Candlestick Chart'} — ${aiInsightText}` }} className={cn(variantClasses.root, className)}>
       {showToolbar ? (
         <div className="mb-3 flex flex-col gap-2">
           {showControls ? (

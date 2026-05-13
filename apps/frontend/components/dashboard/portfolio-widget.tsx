@@ -745,20 +745,20 @@ function PortfolioWidgetLarge({
 }
 
 const PortfolioWidgetRoot = ({
-  title = 'Portfolio Snapshot',
   variant,
   size,
+  title = "Portfolio",
   ...props
 }: PortfolioWidgetProps) => {
-  const { includeInChatContext, setPortfolio, setIncludeInChatContext } = usePortfolioContext();
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<'demo' | 'backend'>('demo');
+  const [liveBrokerLabel, setLiveBrokerLabel] = useState<string | undefined>('IBKR');
   const [showBrokerPanel, setShowBrokerPanel] = useState(false);
   const [selectedBroker, setSelectedBroker] = useState<PortfolioBrokerOption>('mock');
-  const [source, setSource] = useState<'backend' | 'demo'>('demo');
-  const [liveBrokerLabel, setLiveBrokerLabel] = useState('IBKR');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const { setPortfolio } = usePortfolioContext();
 
   const resolvedVariant = variant ?? size ?? 'medium';
 
@@ -842,20 +842,23 @@ const PortfolioWidgetRoot = ({
     stocks,
     data: portfolioData,
     source,
-    liveBrokerLabel,
+    liveBrokerLabel: liveBrokerLabel ?? 'IBKR',
     saveStatus,
     onOpenSettings: () => setShowBrokerPanel(true),
     onSavePaperPortfolio: savePaperPortfolio,
   };
 
+  const contextText = [
+    `Total Value: $${portfolioData.totalValue.toFixed(2)}`,
+    `Unrealized PnL: ${portfolioData.pnlPercent >= 0 ? '+' : ''}${portfolioData.pnlPercent.toFixed(2)}%`,
+    `Daily PnL: $${portfolioData.dailyPnl.toFixed(2)}`,
+    `Positions: ${stocks.map(s =>
+      `${s.symbol} ×${s.quantity} @ $${s.currentPrice.toFixed(2)}`
+    ).join(', ')}`,
+  ].join('. ');
+
   return (
-    <BaseWidget
-      title={title}
-      {...props}
-      className="overflow-hidden"
-      contextButtonActive={includeInChatContext}
-      onContextButtonClick={() => setIncludeInChatContext(!includeInChatContext)}
-    >
+    <BaseWidget title={title} {...props} contextData={{ label: title, text: `Portfolio Snapshot: ${contextText}` }} className="overflow-hidden">
       {loading ? (
         <div className="flex h-full items-center justify-center space-x-2 text-slate-300">
           <Loader2 className="h-4 w-4 animate-spin" />

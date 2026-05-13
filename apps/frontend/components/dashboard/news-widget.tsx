@@ -88,6 +88,12 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
   const pointerPos = ((avgSentiment + 1) / 2) * 100;
   const filteredNews = getFilteredNews();
 
+  const contextHeadlineList = newsData
+    .map(item => `• [${item.sentiment >= 0 ? '+' : ''}${item.sentiment.toFixed(2)}] ${item.headline} (${item.source})`)
+    .join('\n');
+  const contextAvgSentiment = newsData.length > 0 ? newsData.reduce((acc, curr) => acc + curr.sentiment, 0) / newsData.length : 0;
+  const contextText = `Market News (avg sentiment: ${contextAvgSentiment.toFixed(2)}):\n${contextHeadlineList}`;
+
   const formatSource = (source: string) => source === 'yahoo' ? 'Yahoo Finance' : 'Economic Times';
   const formatDate = (dateStr: string) => {
     try { return new Date(dateStr).toLocaleDateString(); } catch { return 'Recent'; }
@@ -123,7 +129,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
   const deselectAll = () => setTempSelectedWatchlist([]);
 
   return (
-    <BaseWidget title={title} summary={summary}>
+    <BaseWidget title={title} summary={summary} contextData={{ label: 'FinNews', text: contextText }}>
       {/* Filter Bar */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1">

@@ -8,10 +8,11 @@ import { Renderer } from '@openuidev/react-lang';
 import { openuiLibrary } from '@openuidev/react-ui/genui-lib';
 import { useNanobot } from '@/lib/use-nanobot';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { useChatContextStore } from '@/contexts/chat-context-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 function StatusDot({ status }: { status: ReturnType<typeof useNanobot>['status'] }) {
   if (status === 'connected')
@@ -98,10 +99,8 @@ function MessageBubble({ role, text, isStreaming }: { role: string; text: string
 }
 
 export function ChatPanel() {
-  const { portfolio, includeInChatContext } = usePortfolioContext();
-  const { messages, status, isProcessing, send, reconnect } = useNanobot(
-    includeInChatContext ? portfolio : null,
-  );
+  const { messages, status, isProcessing, send, reconnect } = useNanobot();
+  const { contexts, removeContext, clearAll } = useChatContextStore();
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -111,7 +110,13 @@ export function ChatPanel() {
 
   function handleSend() {
     if (!input.trim()) return;
-    send(input);
+    let messagePayload = input.trim();
+    if (contexts.length > 0) {
+      const contextBlock = contexts.map((c) => `${c.label}: ${c.text}`).join('\n');
+      messagePayload = `[Widget Context]\n${contextBlock}\n\nUser: ${messagePayload}`;
+      clearAll();
+    }
+    send(messagePayload);
     setInput('');
   }
 
@@ -130,13 +135,6 @@ export function ChatPanel() {
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Chat</CardTitle>
           <div className="flex items-center gap-3">
-            <div className="text-[11px] text-muted-foreground">
-              {includeInChatContext
-                ? portfolio
-                  ? `Context: ${portfolio.source === 'backend' ? portfolio.broker.status === 'connected' ? 'IBKR portfolio' : 'portfolio loaded' : 'demo portfolio'}`
-                  : 'Context: unavailable'
-                : 'Context: off'}
-            </div>
             <button
               onClick={status === 'disconnected' || status === 'error' ? reconnect : undefined}
               className="flex items-center gap-1.5 text-xs text-muted-foreground"
@@ -179,6 +177,26 @@ export function ChatPanel() {
             </div>
           </ScrollArea>
 
+          {contexts.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {contexts.map((ctx) => (
+                <div
+                  key={ctx.widgetId}
+                  className="bg-primary/10 border-primary/30 text-primary flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
+                >
+                  <span className="font-medium">{ctx.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeContext(ctx.widgetId)}
+                    className="hover:text-primary-foreground/80 text-primary-foreground/60 transition-colors"
+                    aria-label={`Remove ${ctx.label} from context`}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="bg-muted/20 border-input focus-within:border-ring focus-within:ring-ring/50 flex flex-col rounded-3xl border transition-colors focus-within:ring-2">
             <Textarea
               placeholder={isConnected ? 'Ask anything… (Enter to send)' : 'Connecting…'}
