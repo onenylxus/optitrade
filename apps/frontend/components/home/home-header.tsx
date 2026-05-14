@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { MessageSquare, PenLine, Search, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -13,7 +14,12 @@ interface HomeHeaderProps {
   onChatOpenChange: (nextValue: boolean) => void;
 }
 
-export function HomeHeader({ isEditMode, onEditModeChange, isChatOpen, onChatOpenChange }: HomeHeaderProps) {
+export function HomeHeader({
+  isEditMode,
+  onEditModeChange,
+  isChatOpen,
+  onChatOpenChange,
+}: HomeHeaderProps) {
   return (
     <header className="border-border/60 bg-card/70 grid h-16 grid-cols-[minmax(0,1fr)_minmax(0,40rem)_minmax(0,1fr)] items-center gap-4 border-b px-4 backdrop-blur sm:px-6">
       <div className="min-w-0">
@@ -50,6 +56,13 @@ export function HomeHeader({ isEditMode, onEditModeChange, isChatOpen, onChatOpe
         >
           <PenLine className="size-4" />
           {isEditMode ? 'Editing' : 'Edit Layout'}
+        </Button>
+
+        <Button asChild variant="outline" size="sm">
+          <Link href="/auth">
+            <UserRound className="size-4" />
+            Sign In
+          </Link>
         </Button>
 
         <Avatar size="default" aria-label="Anonymous avatar">
