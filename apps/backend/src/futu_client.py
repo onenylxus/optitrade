@@ -65,6 +65,7 @@ def fetch_futu_portfolio_snapshot(host: str, port: int, market: str) -> dict[str
             "broker": {
                 "id": "futu",
                 "status": "connected",
+                "broker": "Futu",
                 "name": "Futu",
                 "host": host,
                 "port": port,

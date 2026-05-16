@@ -76,6 +76,7 @@ def fetch_binance_portfolio_snapshot(
         "broker": {
             "id": "binance",
             "status": "connected",
+            "broker": "Binance",
             "name": "Binance",
             "testnet": testnet,
             "syncedAt": datetime.now(UTC).isoformat(),
