@@ -63,11 +63,15 @@ interface PortfolioApiSnapshot {
   baseCurrency?: string;
   source?: 'backend' | 'demo';
   broker?: {
-    status: 'connected' | 'disconnected';
+    id?: PortfolioBrokerOption;
+    status: 'connected' | 'configured' | 'disconnected';
     name: string;
+    settings?: Record<string, unknown>;
     host?: string;
     port?: number;
     clientId?: number;
+    market?: string;
+    testnet?: boolean;
     accountId?: string;
     syncedAt?: string;
     lastError?: string;
@@ -95,6 +99,7 @@ interface BrokerOptionConfig {
   id: PortfolioBrokerOption;
   label: string;
   supported: boolean;
+  description: string;
 }
 
 const PORTFOLIO_API_BASE_URL =
@@ -189,8 +194,9 @@ function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSn
       baseCurrency: snapshot.baseCurrency ?? 'USD',
       source: snapshot.source ?? 'backend',
       broker: snapshot.broker ?? {
+        id: 'mock',
         status: 'disconnected',
-        name: 'IBKR',
+        name: 'Mock Data',
       },
       summary: snapshot.summary,
       positions: snapshot.positions.map((position) => ({
@@ -220,8 +226,9 @@ function buildMockChatContext(stocks: Stock[]): PortfolioChatContextValue {
     baseCurrency: 'USD',
     source: 'demo',
     broker: {
+      id: 'mock',
       status: 'disconnected',
-      name: 'Mock',
+      name: 'Mock Data',
     },
     summary: {
       totalValue: data.totalValue,
@@ -356,10 +363,10 @@ function PortfolioSourceBadge({
 // --- Sub-Components ---
 
 const BROKER_OPTIONS: BrokerOptionConfig[] = [
-  { id: 'ibkr', label: 'IBKR', supported: true },
-  { id: 'futu', label: 'Futu', supported: false },
-  { id: 'binance', label: 'Binance', supported: false },
-  { id: 'mock', label: 'Mock Data', supported: true },
+  { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
+  { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
+  { id: 'binance', label: 'Binance', supported: true, description: 'API key + secret' },
+  { id: 'mock', label: 'Mock Data', supported: true, description: 'No connection required' },
 ];
 
 const getBrokerOption = (broker: PortfolioBrokerOption) =>
@@ -370,41 +377,74 @@ function BrokerConnectionPanel({
   onConnected,
   onUseMockData,
   selectedBroker,
+  initialConnection,
   onBrokerChange,
 }: {
   onBack: () => void;
   onConnected: () => Promise<void>;
   onUseMockData: () => void;
   selectedBroker: PortfolioBrokerOption;
+  initialConnection: PortfolioApiSnapshot['broker'];
   onBrokerChange: (broker: PortfolioBrokerOption) => void;
 }) {
   const [connecting, setConnecting] = useState(false);
+  const [selectedBrokerState, setSelectedBrokerState] = useState<PortfolioBrokerOption>(selectedBroker);
   const [host, setHost] = useState('127.0.0.1');
   const [port, setPort] = useState('7497');
   const [clientId, setClientId] = useState('1');
+  const [market, setMarket] = useState('US');
+  const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
+  const [testnet, setTestnet] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const selectedOption = getBrokerOption(selectedBroker);
+  const selectedOption = getBrokerOption(selectedBrokerState);
+
+  useEffect(() => {
+    const settings = initialConnection?.settings ?? {};
+    const brokerId = initialConnection?.id ?? selectedBroker;
+    setSelectedBrokerState(brokerId);
+    setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
+    setPort(
+      String(
+        initialConnection?.port ??
+          settings.port ??
+          (brokerId === 'futu' ? 11111 : 7497),
+      ),
+    );
+    setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
+    setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
+    setApiKey('');
+    setApiSecret('');
+    setTestnet(Boolean(initialConnection?.testnet ?? settings.testnet ?? true));
+    setError(initialConnection?.lastError ?? null);
+  }, []);
 
   const handleConnect = async () => {
     setError(null);
 
-    if (selectedBroker === 'mock') {
+    if (selectedBrokerState === 'mock') {
       onUseMockData();
       onBack();
       return;
     }
 
-    if (!selectedOption?.supported || selectedBroker !== 'ibkr') {
-      setError(`${selectedOption?.label ?? 'This broker'} integration is not live yet. Use Mock Data for now.`);
-      return;
-    }
-
     setConnecting(true);
     try {
+      const payload =
+        selectedBrokerState === 'ibkr'
+          ? { broker: selectedBrokerState, host, port: Number(port), clientId: Number(clientId) }
+          : selectedBrokerState === 'futu'
+            ? { broker: selectedBrokerState, host, port: Number(port), market }
+            : {
+                broker: selectedBrokerState,
+                apiKey,
+                apiSecret,
+                testnet,
+              };
       const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ host, port: Number(port), clientId: Number(clientId) }),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as
@@ -412,10 +452,11 @@ function BrokerConnectionPanel({
           | null;
         throw new Error(payload?.detail ?? payload?.error ?? `IBKR connection API returned ${response.status}`);
       }
+      onBrokerChange(selectedBrokerState);
       await onConnected();
       onBack();
     } catch (connectError) {
-      setError(connectError instanceof Error ? connectError.message : 'Unable to connect to IBKR');
+      setError(connectError instanceof Error ? connectError.message : 'Unable to connect to broker');
     } finally {
       setConnecting(false);
     }
@@ -438,23 +479,21 @@ function BrokerConnectionPanel({
                 key={option.id}
                 type="button"
                 onClick={() => {
-                  onBrokerChange(option.id);
+                  setSelectedBrokerState(option.id);
                   setError(null);
                 }}
                 className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
-                  selectedBroker === option.id
+                  selectedBrokerState === option.id
                     ? 'border-slate-900 bg-slate-900 text-white'
-                    : option.supported
-                      ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                      : 'border-slate-200 bg-slate-50 text-slate-400'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                {option.label}
-                {!option.supported && <span className="ml-1 opacity-70">Soon</span>}
+                <div>{option.label}</div>
+                <div className="text-[9px] opacity-70">{option.description}</div>
               </button>
             ))}
           </div>
-        {selectedBroker === 'ibkr' && (
+        {selectedBrokerState === 'ibkr' && (
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
               <div className="text-[10px] text-slate-400 uppercase">Host</div>
@@ -485,27 +524,86 @@ function BrokerConnectionPanel({
             </div>
           </div>
         )}
-        {selectedBroker !== 'ibkr' && selectedBroker !== 'mock' && (
+        {selectedBrokerState === 'futu' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Host</div>
+              <input
+                type="text"
+                value={host}
+                onChange={(event) => setHost(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Port</div>
+              <input
+                type="text"
+                value={port}
+                onChange={(event) => setPort(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Market</div>
+              <input
+                type="text"
+                value={market}
+                onChange={(event) => setMarket(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+          </div>
+        )}
+        {selectedBrokerState === 'binance' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1 col-span-2">
+              <div className="text-[10px] text-slate-400 uppercase">API Key</div>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1 col-span-2">
+              <div className="text-[10px] text-slate-400 uppercase">API Secret</div>
+              <input
+                type="password"
+                value={apiSecret}
+                onChange={(event) => setApiSecret(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <label className="col-span-2 flex items-center gap-2 text-[11px] text-slate-500">
+              <input
+                type="checkbox"
+                checked={testnet}
+                onChange={(event) => setTestnet(event.target.checked)}
+              />
+              Testnet
+            </label>
+          </div>
+        )}
+        {selectedBrokerState !== 'ibkr' && selectedBrokerState !== 'futu' && selectedBrokerState !== 'binance' && selectedBrokerState !== 'mock' && (
           <div className="text-[11px] text-slate-500 leading-4">
-            {selectedOption?.label} is listed as an option, but only IBKR has a live backend connection right now.
+            {selectedOption?.label} is not configured.
           </div>
         )}
         {error && <div className="text-[11px] text-rose-600 leading-4">{error}</div>}
         <button
           onClick={handleConnect}
-          disabled={connecting || (!selectedOption?.supported && selectedBroker !== 'mock')}
+          disabled={connecting}
           className="w-full bg-slate-900 py-2.5 text-xs text-white hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {connecting ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
-          {selectedBroker === 'mock'
+          {selectedBrokerState === 'mock'
             ? 'Use Mock Portfolio Data'
             : connecting
               ? 'Syncing...'
-              : selectedOption?.supported
-                ? `Connect ${selectedOption?.label ?? 'Broker'}`
-                : `${selectedOption?.label ?? 'Broker'} Coming Soon`}
+              : `Connect ${selectedOption?.label ?? 'Broker'}`}
         </button>
-        {selectedBroker !== 'mock' && (
+        {selectedBrokerState !== 'mock' && (
           <button
             onClick={() => {
               onUseMockData();
@@ -754,9 +852,14 @@ const PortfolioWidgetRoot = ({
   const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState<'demo' | 'backend'>('demo');
-  const [liveBrokerLabel, setLiveBrokerLabel] = useState<string | undefined>('IBKR');
+  const [liveBrokerLabel, setLiveBrokerLabel] = useState<string | undefined>('Mock');
   const [showBrokerPanel, setShowBrokerPanel] = useState(false);
   const [selectedBroker, setSelectedBroker] = useState<PortfolioBrokerOption>('mock');
+  const [brokerConnection, setBrokerConnection] = useState<PortfolioApiSnapshot['broker']>({
+    id: 'mock',
+    status: 'disconnected',
+    name: 'Mock Data',
+  });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const { setPortfolio } = usePortfolioContext();
 
@@ -767,8 +870,13 @@ const PortfolioWidgetRoot = ({
     setBackendData(null);
     setPortfolio(buildMockChatContext(DEFAULT_STOCKS));
     setSelectedBroker('mock');
+    setBrokerConnection({
+      id: 'mock',
+      status: 'disconnected',
+      name: 'Mock Data',
+    });
     setSource('demo');
-    setLiveBrokerLabel('IBKR');
+    setLiveBrokerLabel('Mock');
     setLoading(false);
   };
 
@@ -785,17 +893,26 @@ const PortfolioWidgetRoot = ({
 
       const snapshot = (await response.json()) as PortfolioApiSnapshot;
       const mappedSnapshot = mapPortfolioSnapshot(snapshot);
+      setBrokerConnection(mappedSnapshot.chatContext.broker);
       setStocks(mappedSnapshot.stocks);
-      const isLiveBroker = mappedSnapshot.chatContext.broker.status === 'connected';
+      const brokerStatus = mappedSnapshot.chatContext.broker.status;
+      const brokerId = mappedSnapshot.chatContext.broker.id ?? 'mock';
+      const isLiveBroker = brokerStatus === 'connected';
       setBackendData(isLiveBroker ? mappedSnapshot.data : null);
-      setPortfolio(isLiveBroker ? mappedSnapshot.chatContext : buildMockChatContext(mappedSnapshot.stocks));
-      if (mappedSnapshot.chatContext.broker.status === 'connected') {
-        setSelectedBroker('ibkr');
-        setLiveBrokerLabel(mappedSnapshot.chatContext.broker.name || 'IBKR');
-        setSource('backend');
+      if (isLiveBroker) {
+        setPortfolio(mappedSnapshot.chatContext);
+      } else {
+        const mockContext = buildMockChatContext(mappedSnapshot.stocks);
+        mockContext.broker = mappedSnapshot.chatContext.broker;
+        setPortfolio(mockContext);
+      }
+      if (brokerStatus === 'connected' || brokerStatus === 'configured') {
+        setSelectedBroker(brokerId);
+        setLiveBrokerLabel(mappedSnapshot.chatContext.broker.name || 'Configured');
+        setSource(isLiveBroker ? 'backend' : 'demo');
       } else {
         setSelectedBroker('mock');
-        setLiveBrokerLabel('IBKR');
+        setLiveBrokerLabel('Mock');
         setSource('demo');
       }
     } catch {
@@ -870,6 +987,7 @@ const PortfolioWidgetRoot = ({
           onConnected={loadPortfolio}
           onUseMockData={useMockData}
           selectedBroker={selectedBroker}
+          initialConnection={brokerConnection}
           onBrokerChange={setSelectedBroker}
         />
       ) : (

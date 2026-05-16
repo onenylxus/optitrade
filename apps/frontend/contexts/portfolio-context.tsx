@@ -28,11 +28,14 @@ export interface PortfolioChatContextValue {
   baseCurrency: string;
   source: 'backend' | 'demo';
   broker: {
-    status: 'connected' | 'disconnected';
+    id?: PortfolioBrokerOption;
+    status: 'connected' | 'configured' | 'disconnected';
     name: string;
     host?: string;
     port?: number;
     clientId?: number;
+    market?: string;
+    testnet?: boolean;
     accountId?: string;
     syncedAt?: string;
     lastError?: string;

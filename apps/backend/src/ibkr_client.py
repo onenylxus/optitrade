@@ -82,10 +82,13 @@ def fetch_ibkr_portfolio_snapshot(settings: IbkrConnectionSettings) -> dict[str,
         managed_accounts = list(ib.managedAccounts() or [])
         account_id = managed_accounts[0] if managed_accounts else None
         account_values = ib.accountSummary(account=account_id) if account_id else ib.accountSummary()
-        positions = ib.positions(account=account_id) if account_id else ib.positions()
+        portfolio_items = ib.portfolio(account=account_id) if account_id else ib.portfolio()
 
         account_summary = _account_summary_map(account_values)
-        position_payloads = [_position_payload(item, index) for index, item in enumerate(positions, start=1)]
+        position_payloads = [
+            _position_payload(item, index)
+            for index, item in enumerate(portfolio_items, start=1)
+        ]
         total_value = sum(position["marketValue"] for position in position_payloads)
         total_cost = sum(position["costBasis"] for position in position_payloads)
         pnl = total_value - total_cost
@@ -148,7 +151,7 @@ def _float_value(summary: dict[str, str], key: str, fallback: float = 0.0) -> fl
 
 def _position_payload(item: Any, index: int) -> dict[str, Any]:
     contract = getattr(item, "contract", None)
-    avg_cost = float(getattr(item, "avgCost", 0.0))
+    avg_cost = float(getattr(item, "avgCost", getattr(item, "averageCost", 0.0)))
     quantity = float(getattr(item, "position", 0.0))
     market_price = float(getattr(item, "marketPrice", 0.0))
     market_value = float(getattr(item, "marketValue", 0.0))
@@ -156,7 +159,9 @@ def _position_payload(item: Any, index: int) -> dict[str, Any]:
     symbol = str(getattr(contract, "symbol", f"POS-{index}"))
     sec_type = str(getattr(contract, "secType", "Unknown"))
     exchange = str(getattr(contract, "exchange", "Unknown"))
-    sector = f"{sec_type} @ {exchange}"
+    sector = _instrument_sector_label(sec_type, symbol, exchange)
+    if market_price == 0.0 and quantity != 0 and market_value != 0.0:
+        market_price = market_value / quantity
     cost_basis = abs(quantity) * avg_cost
     unrealized_pnl_percent = (unrealized_pnl / cost_basis) * 100 if cost_basis else 0.0
 
@@ -172,6 +177,21 @@ def _position_payload(item: Any, index: int) -> dict[str, Any]:
         "unrealizedPnl": round(unrealized_pnl, 2),
         "unrealizedPnlPercent": round(unrealized_pnl_percent, 4),
     }
+
+
+def _instrument_sector_label(sec_type: str, symbol: str, exchange: str) -> str:
+    normalized = sec_type.upper()
+    if normalized in {"STK", "ETF"}:
+        if symbol.upper() == "VOO" or normalized == "ETF":
+            return "ETF"
+        return "Stock"
+    if normalized in {"OPT", "FOP"}:
+        return "Options"
+    if normalized in {"CASH", "FOREX"}:
+        return "Cash / FX"
+    if normalized == "BOND":
+        return "Bonds"
+    return f"{normalized} ({exchange})" if exchange and exchange != "Unknown" else normalized
 
 
 def _sector_values(positions: list[dict[str, Any]], total_value: float) -> list[dict[str, Any]]:
