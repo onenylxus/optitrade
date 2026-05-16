@@ -5,8 +5,16 @@ import path from 'path';
 
 export async function GET() {
   try {
+    const backendJsonPath = path.join(
+      process.cwd(),
+      '..',
+      'backend',
+      'data',
+      'news_analysis_result.json',
+    );
+    const fallbackJsonPath = path.join(process.cwd(), 'public', 'news_data.json');
 
-    const jsonPath = path.join(process.cwd(), '..', 'backend', 'data', 'news_analysis_result.json');
+    const jsonPath = fs.existsSync(backendJsonPath) ? backendJsonPath : fallbackJsonPath;
 
     if (!fs.existsSync(jsonPath)) {
       return NextResponse.json({ error: 'News data not found' }, { status: 404 });

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BaseWidget } from './base-widget';
+import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 interface NewsItem {
   id: string;
@@ -42,6 +43,22 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
   const [showWatchlistModal, setShowWatchlistModal] = useState(false);
   const [selectedWatchlist, setSelectedWatchlist] = useState<string[]>(['NVDA', 'AAPL', 'TSLA']);
   const [tempSelectedWatchlist, setTempSelectedWatchlist] = useState<string[]>([]);
+  const { portfolio } = usePortfolioContext();
+
+  const portfolioSymbols = useMemo(
+    () => portfolio?.positions.map((position) => position.symbol.toUpperCase()) ?? [],
+    [portfolio],
+  );
+
+  const portfolioSectors = useMemo(
+    () => portfolio?.positions.map((position) => position.sector.toLowerCase()) ?? [],
+    [portfolio],
+  );
+
+  const portfolioAwareWatchlist = useMemo(
+    () => (portfolioSymbols.length > 0 ? portfolioSymbols : selectedWatchlist),
+    [portfolioSymbols, selectedWatchlist],
+  );
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -60,22 +77,31 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     fetchNews();
   }, []);
 
-  const matchesWatchlist = (headline: string): boolean => {
-    const titleLower = headline.toLowerCase();
-    return selectedWatchlist.some(symbol =>
-      titleLower.includes(symbol.toLowerCase())
-    );
+  const matchesWatchlist = (headline: string, summary?: string): boolean => {
+    const text = `${headline} ${summary ?? ''}`.toLowerCase();
+    return selectedWatchlist.some((symbol) => text.includes(symbol.toLowerCase()));
+  };
+
+  const matchesPortfolio = (item: NewsItem): boolean => {
+    if (portfolioSymbols.length === 0) {
+      return item.sentiment > 0;
+    }
+
+    const text = `${item.headline} ${item.summary} ${item.highlights.join(' ')}`.toLowerCase();
+    const symbolMatch = portfolioSymbols.some((symbol) => text.includes(symbol.toLowerCase()));
+    const sectorMatch = portfolioSectors.some((sector) => text.includes(sector));
+    return symbolMatch || sectorMatch;
   };
 
   const getFilteredNews = useCallback(() => {
     let filtered = [...newsData];
     if (currentFilter === 'watchlist') {
-      filtered = filtered.filter(item => matchesWatchlist(item.headline));
+      filtered = filtered.filter(item => matchesWatchlist(item.headline, item.summary));
     } else if (currentFilter === 'portfolio') {
-      filtered = filtered.filter(item => item.sentiment > 0);
+      filtered = filtered.filter(item => matchesPortfolio(item));
     }
     return filtered;
-  }, [newsData, currentFilter, selectedWatchlist]);
+  }, [newsData, currentFilter, selectedWatchlist, portfolioSymbols, portfolioSectors]);
 
   const getAverageSentiment = useCallback(() => {
     const items = getFilteredNews();
@@ -92,7 +118,13 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     .map(item => `• [${item.sentiment >= 0 ? '+' : ''}${item.sentiment.toFixed(2)}] ${item.headline} (${item.source})`)
     .join('\n');
   const contextAvgSentiment = newsData.length > 0 ? newsData.reduce((acc, curr) => acc + curr.sentiment, 0) / newsData.length : 0;
-  const contextText = `Market News (avg sentiment: ${contextAvgSentiment.toFixed(2)}):\n${contextHeadlineList}`;
+  const contextText = [
+    `Market News (avg sentiment: ${contextAvgSentiment.toFixed(2)})`,
+    portfolioSymbols.length > 0
+      ? `Portfolio-linked symbols: ${portfolioSymbols.join(', ')}`
+      : 'Portfolio-linked symbols: none',
+    contextHeadlineList,
+  ].join('\n');
 
   const formatSource = (source: string) => source === 'yahoo' ? 'Yahoo Finance' : 'Economic Times';
   const formatDate = (dateStr: string) => {
@@ -148,14 +180,15 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
           >
             ⭐ Watchlist
           </button>
-          <button
-            onClick={() => setCurrentFilter('portfolio')}
-            className={`rounded-md px-2 py-0.5 text-xs transition-colors ${
-              currentFilter === 'portfolio' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-secondary/50'
-            }`}
-          >
-            📁 Portfolio
-          </button>
+            <button
+              onClick={() => setCurrentFilter('portfolio')}
+              className={`rounded-md px-2 py-0.5 text-xs transition-colors ${
+                currentFilter === 'portfolio' ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-secondary/50'
+              }`}
+              title={portfolioSymbols.length > 0 ? `Portfolio symbols: ${portfolioAwareWatchlist.join(', ')}` : 'Uses positive sentiment when no portfolio is loaded'}
+            >
+              📁 Portfolio
+            </button>
           <button
             onClick={() => setCurrentFilter('all')}
             className={`rounded-md px-2 py-0.5 text-xs transition-colors ${
