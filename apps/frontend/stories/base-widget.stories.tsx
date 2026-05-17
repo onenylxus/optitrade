@@ -33,7 +33,7 @@ export const InEditMode: Story = {
       <WidgetProvider isEditMode>
         <BaseWidget {...args}>
           <div className="min-h-30 pt-1">
-            Delete appears in the footer when edit mode context is enabled.
+            Delete appears in the actions menu when edit mode context is enabled.
           </div>
         </BaseWidget>
       </WidgetProvider>

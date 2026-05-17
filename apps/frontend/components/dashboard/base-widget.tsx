@@ -1,7 +1,7 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
-import { Trash2 } from 'lucide-react';
+import { MoreVertical, Plus, Trash2 } from 'lucide-react';
+import { DropdownMenu } from 'radix-ui';
 import type { ComponentProps, ReactNode } from 'react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
@@ -14,8 +14,12 @@ interface BaseWidgetProps extends ComponentProps<typeof Card> {
   children: ReactNode;
 }
 
+const menuItemClass =
+  'flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground';
+
 export function BaseWidget({ title, summary, children, className, ...props }: BaseWidgetProps) {
   const { isEditMode, onDelete } = useWidgetContext();
+  const showDelete = Boolean(isEditMode && onDelete);
 
   return (
     <Card
@@ -26,44 +30,61 @@ export function BaseWidget({ title, summary, children, className, ...props }: Ba
       {...props}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-        <CardHeader className="shrink-0 space-y-0 px-0 pt-0 pb-0">
-          <CardTitle>{title}</CardTitle>
-          {summary ? (
-            <div className="mt-1 rounded-md bg-primary/10 px-2.5 py-1.5 text-primary/90">
-              {summary}
+        <CardHeader className="relative shrink-0 space-y-0 px-0 pt-0 pb-0">
+          <div className="flex gap-2 pr-10">
+            <div className="min-w-0 flex-1">
+              <CardTitle>{title}</CardTitle>
+              {summary ? (
+                <div className="mt-1 rounded-md bg-primary/10 px-2.5 py-1.5 text-primary/90">
+                  {summary}
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          </div>
+          <DropdownMenu.Root modal={false}>
+            <DropdownMenu.Trigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="absolute top-0 right-0 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground"
+                aria-label="Widget actions"
+              >
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                sideOffset={4}
+                align="end"
+                className={cn(
+                  'z-50 min-w-[10rem] overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
+                )}
+              >
+                <DropdownMenu.Item className={menuItemClass}>
+                  <Plus className="size-3.5" />
+                  Add to Context
+                </DropdownMenu.Item>
+                {showDelete ? (
+                  <>
+                    <DropdownMenu.Separator className="-mx-1 my-1 h-px bg-border" />
+                    <DropdownMenu.Item
+                      className={cn(menuItemClass, 'text-destructive data-highlighted:bg-destructive/15')}
+                      onSelect={() => onDelete?.()}
+                    >
+                      <Trash2 className="size-3.5" />
+                      Delete
+                    </DropdownMenu.Item>
+                  </>
+                ) : null}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </CardHeader>
 
         <Separator className="shrink-0" />
 
         <CardContent className="min-h-0 shrink-0 overflow-visible px-0 py-1">{children}</CardContent>
-
-        <Separator className="shrink-0" />
-
-        <CardFooter className="flex shrink-0 items-center justify-between gap-2 border-0 bg-transparent px-0 py-1.5">
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            className="shadow-sm shadow-primary/20 ring-1 ring-primary/25"
-          >
-            <Plus className="size-3.5" />
-            Add to Context
-          </Button>
-          {isEditMode && onDelete ? (
-            <Button
-              type="button"
-              size="sm"
-              aria-label="Remove widget"
-              onClick={onDelete}
-              className="ml-auto bg-destructive hover:bg-destructive/90 ring-1 ring-destructive/30"
-            >
-              <Trash2 className="size-3.5" />
-              Delete
-            </Button>
-          ) : null}
-        </CardFooter>
       </div>
     </Card>
   );

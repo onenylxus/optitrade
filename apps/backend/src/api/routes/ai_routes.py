@@ -6,12 +6,63 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from src.api.controllers.ai_recommendation_controller import AIRecommendationController
-from src.api.deps import get_stock_chart_analysis_service
-from src.api.schemas.ai_stock_chart import StockChartAnalysisResponse
+from src.api.controllers.stock_support_resistance_controller import (
+    StockChartSupportResistanceController,
+)
+from src.api.deps import (
+    get_stock_chart_analysis_service,
+    get_stock_support_resistance_controller,
+)
+from src.api.schemas.ai_stock_chart import (
+    StockChartAnalysisResponse,
+    StockChartSupportResistanceResponse,
+)
 from src.api.schemas.stock_chart import ChartInterval, ChartRange
 from src.services.stock_chart_analysis_service import StockChartAnalysisService
 
 router = APIRouter()
+
+
+@router.get(
+    "/widget/stock-chart/support-resistance",
+    response_model=StockChartSupportResistanceResponse,
+    response_model_by_alias=True,
+)
+async def ai_widget_stock_chart_support_resistance(
+    controller: Annotated[
+        StockChartSupportResistanceController,
+        Depends(get_stock_support_resistance_controller),
+    ],
+    symbol: Annotated[str, Query(min_length=1, max_length=32)],
+    interval: ChartInterval,
+    chart_range: Annotated[
+        ChartRange | None,
+        Query(
+            alias="range",
+            description="Lookback when ``from``/``to`` are not both set.",
+        ),
+    ] = None,
+    from_date: Annotated[
+        date | None,
+        Query(alias="from", description="Inclusive range start (ISO date)."),
+    ] = None,
+    to_date: Annotated[
+        date | None,
+        Query(alias="to", description="Inclusive range end (ISO date)."),
+    ] = None,
+) -> StockChartSupportResistanceResponse:
+    """
+    Support / resistance from the OHLC window (same query shape as chart + LLM widget).
+
+    Requires ``FMP_API_KEY`` only; uses pivot clustering rather than an LLM.
+    """
+    return await controller.support_resistance_levels(
+        symbol=symbol,
+        interval=interval,
+        chart_range=chart_range,
+        from_date=from_date,
+        to_date=to_date,
+    )
 
 
 def get_ai_recommendation_controller(
@@ -33,7 +84,15 @@ async def ai_index() -> dict:
                 "path": "/widget/stock-chart",
                 "method": "GET",
                 "description": "OHLC-driven momentum, indicators, and LLM commentary.",
-            }
+            },
+            {
+                "path": "/widget/stock-chart/support-resistance",
+                "method": "GET",
+                "description": (
+                    "OHLC-derived support/resistance for chart overlays "
+                    "(pivot clusters; deterministic, no LLM)."
+                ),
+            },
         ],
     }
 

@@ -1,8 +1,10 @@
 """FastAPI REST server for greeter service."""
 
 from collections.abc import Mapping
+from contextlib import asynccontextmanager
 from typing import Any
 
+import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -70,6 +72,19 @@ def get_current_user(
         ) from exc
 
 
+@asynccontextmanager
+async def _rest_lifespan(app: FastAPI):
+    """Shared HTTP client for OpenRouter (keep-alive)."""
+    app.state.http_openrouter = httpx.AsyncClient(
+        timeout=httpx.Timeout(90.0, connect=20.0),
+        limits=httpx.Limits(max_keepalive_connections=8, max_connections=16),
+    )
+    try:
+        yield
+    finally:
+        await app.state.http_openrouter.aclose()
+
+
 def create_app() -> FastAPI:
     """
     Create and configure the FastAPI application.
@@ -81,6 +96,7 @@ def create_app() -> FastAPI:
         title="OptiTrade API",
         description="RESTful API for OptiTrade services",
         version="0.1.0",
+        lifespan=_rest_lifespan,
     )
 
     # Allow frontend dev servers to call REST endpoints from the browser.
