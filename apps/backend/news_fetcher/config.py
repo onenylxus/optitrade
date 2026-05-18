@@ -11,7 +11,8 @@ load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-CLOUD_MODEL_NAME = os.getenv("CLOUD_MODEL_NAME", "openrouter/free")
+# CLOUD_MODEL_NAME = os.getenv("CLOUD_MODEL_NAME", "openrouter/free")
+CLOUD_MODEL_NAME = os.getenv("CLOUD_MODEL_NAME", "google/gemini-2.5-flash:free")
 
 # ============================================================
 # File Path Configuration

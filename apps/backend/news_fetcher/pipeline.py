@@ -116,11 +116,23 @@ class NewsAnalysisPipeline:
         print("-"*50)
 
         results = []
-
         for i, news in enumerate(unique_news, 1):
             print(f"\n   [{i}/{len(unique_news)}] Analyzing: {news.headline[:50]}...")
 
-            analysis = self.analyzer.analyze(news.headline, news.summary)
+            try:
+                analysis = self.analyzer.analyze(news.headline, news.summary)
+
+                if not analysis or 'choices' in str(analysis) and not isinstance(analysis, dict):
+                    raise ValueError("Invalid API response format")
+
+            except Exception as e:
+                print(f"       ❌ AI analysis failed ({e}), automatically assigning preset values ​​to continue...")
+                analysis = {
+                    "highlights": ["API evaluation skipped"],
+                    "sentiment": 0.0,
+                    "risk_tag": "Low Risk",
+                    "reasoning": f"Skipped due to API error: {str(e)}"
+                }
 
             result = {
                 "id": news.id,
@@ -142,7 +154,34 @@ class NewsAnalysisPipeline:
             emoji = "🟢" if result['sentiment'] > 0.2 else "🔴" if result['sentiment'] < -0.2 else "🟡"
             print(f"       {emoji} Sentiment: {result['sentiment']:.2f} | Risk: {result['risk_tag']}")
 
-            time.sleep(0.5)  # Avoid too many requests
+            time.sleep(2.5)
+
+        # for i, news in enumerate(unique_news, 1):
+        #     print(f"\n   [{i}/{len(unique_news)}] Analyzing: {news.headline[:50]}...")
+
+        #     analysis = self.analyzer.analyze(news.headline, news.summary)
+
+        #     result = {
+        #         "id": news.id,
+        #         "source": news.source,
+        #         "headline": news.headline,
+        #         "link": news.link,
+        #         "published_at": news.published_at,
+        #         "summary": news.summary[:200],
+        #         "highlights": analysis.get("highlights", []),
+        #         "sentiment": analysis.get("sentiment", 0),
+        #         "risk_tag": analysis.get("risk_tag", "Low Risk"),
+        #         "reasoning": analysis.get("reasoning", ""),
+        #         "analyzed_at": datetime.now().isoformat()
+        #     }
+
+        #     results.append(result)
+
+        #     # Display real-time results
+        #     emoji = "🟢" if result['sentiment'] > 0.2 else "🔴" if result['sentiment'] < -0.2 else "🟡"
+        #     print(f"       {emoji} Sentiment: {result['sentiment']:.2f} | Risk: {result['risk_tag']}")
+
+        #     time.sleep(0.5)  # Avoid too many requests
 
         # Step 5: Save results
         print("\n💾 Step 5: Saving Results")
