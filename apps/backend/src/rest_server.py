@@ -2,15 +2,23 @@
 
 from collections.abc import Mapping
 from typing import Any
+import os
+import json
+import threading
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 
 from .api.routes.ai_routes import router as ai_router
 from .api.routes.stock_routes import router as stock_router
 from .firebase_auth import verify_firebase_id_token
 from .services import GreeterService
+
+from news_fetcher.run_news_pipeline import start_analysis
+from news_fetcher import OUTPUT_FILE
 
 
 class HelloRequest(BaseModel):
@@ -77,10 +85,19 @@ def create_app() -> FastAPI:
     Returns:
         Configured FastAPI application.
     """
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        pipeline_thread = threading.Thread(target=start_analysis, daemon=True)
+        pipeline_thread.start()
+
+        yield
+
     app = FastAPI(
         title="OptiTrade API",
         description="RESTful API for OptiTrade services",
         version="0.1.0",
+        lifespan=lifespan,
     )
 
     # Allow frontend dev servers to call REST endpoints from the browser.
@@ -96,6 +113,21 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.get("/api/news")
+    async def get_news_data():
+        if os.path.exists(OUTPUT_FILE):
+            with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return JSONResponse(content=data)
+        else:
+
+            return JSONResponse(
+                status_code=status.HTTP_202_ACCEPTED,
+                content={
+                    "message": "AI News Pipeline is running for the first time. Please refresh in a few seconds."
+                },
+            )
 
     app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
     app.include_router(ai_router, prefix="/api/ai", tags=["ai"])

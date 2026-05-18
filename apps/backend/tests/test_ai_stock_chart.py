@@ -107,8 +107,8 @@ class _FakeAnalysisService(StockChartAnalysisService):
 @pytest.fixture
 def client_ai_override():
     app = create_app()
-    app.dependency_overrides[get_stock_chart_analysis_service] = (
-        lambda: _FakeAnalysisService()
+    app.dependency_overrides[get_stock_chart_analysis_service] = lambda: (
+        _FakeAnalysisService()
     )
     with TestClient(app) as c:
         yield c
