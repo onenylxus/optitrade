@@ -1,0 +1,232 @@
+{
+  "metadata": {
+    "total_news": 13,
+    "yahoo_count": 4,
+    "et_count": 9,
+    "analyzed_at": "2026-05-18T16:54:46.749072",
+    "model": "openrouter/free"
+  },
+  "news": [
+    {
+      "id": "yahoo_1779094298_1",
+      "source": "yahoo",
+      "headline": "Elizabeth Warren Slams New Fed Chair Kevin Warsh As Trump's 'Sock Puppet'",
+      "link": "https://finance.yahoo.com/economy/policy/articles/elizabeth-warren-slams-fed-chair-213239757.html",
+      "published_at": "2026-05-16T21:32:39Z",
+      "summary": "Elizabeth Warren Slams New Fed Chair Kevin Warsh As Trump's 'Sock Puppet'",
+      "highlights": [
+        "Elizabeth Warren publicly criticizes Fed Chair",
+        "Kevin Warsh named new Federal Reserve head",
+        "Warren calls Warsh Trump's 'sock puppet'"
+      ],
+      "sentiment": -0.55,
+      "risk_tag": "Medium Risk",
+      "reasoning": "Political criticism of Fed leadership creates market uncertainty and governance concerns.",
+      "analyzed_at": "2026-05-18T16:52:17.761586"
+    },
+    {
+      "id": "yahoo_1779094298_8",
+      "source": "yahoo",
+      "headline": "Best money market account rates today, May 16, 2026: Best account provides 4.01% APY",
+      "link": "https://finance.yahoo.com/personal-finance/banking/article/best-money-market-account-rates-today-saturday-may-16-2026-100000181.html",
+      "published_at": "2026-05-16T10:00:00Z",
+      "summary": "Best money market account rates today, May 16, 2026: Best account provides 4.01% APY",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-18T16:52:25.186047"
+    },
+    {
+      "id": "yahoo_1779094298_9",
+      "source": "yahoo",
+      "headline": "Best high-yield savings interest rates today, May 16, 2026: Earn up to 4.1% APY",
+      "link": "https://finance.yahoo.com/personal-finance/banking/article/best-high-yield-savings-interest-rates-today-saturday-may-16-2026-100000462.html",
+      "published_at": "2026-05-16T10:00:00Z",
+      "summary": "Best high-yield savings interest rates today, May 16, 2026: Earn up to 4.1% APY",
+      "highlights": [
+        "Interest rates reached 4.1% APY",
+        "Savings accounts remain competitive",
+        "No major risks reported"
+      ],
+      "sentiment": 0.85,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive news with strong interest rates and stable outlook.",
+      "analyzed_at": "2026-05-18T16:52:29.386789"
+    },
+    {
+      "id": "yahoo_1779094298_10",
+      "source": "yahoo",
+      "headline": "Mortgage and refinance interest rates today, May 16, 2026: Rates rise right along with Treasury yields",
+      "link": "https://finance.yahoo.com/personal-finance/mortgages/article/mortgage-refinance-interest-rates-today-saturday-may-16-2026-100000427.html",
+      "published_at": "2026-05-16T10:00:00Z",
+      "summary": "Mortgage and refinance interest rates today, May 16, 2026: Rates rise right along with Treasury yields",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-18T16:52:33.444611"
+    },
+    {
+      "id": "et_1779094299_1",
+      "source": "economic_times",
+      "headline": "Nifty Bank falls 500 points as PNB, Canara Bank, SBI, other stocks decline up to 3%. What lies ahead?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nifty-bank-falls-500-points-as-pnb-canara-bank-sbi-other-stocks-decline-up-to-3-what-lies-ahead/articleshow/131171221.cms",
+      "published_at": "Mon, 18 May 2026 14:05:03 +0530",
+      "summary": "Indian bank stocks tumbled, dragging the Nifty Bank index down as a weakening rupee and rising global bond yields soured market sentiment. Several major banks saw significant declines, with analysts p",
+      "highlights": [
+        "Nifty Bank drops ~500 points",
+        "Rupee hits all‑time low versus dollar",
+        "PNB, Canara, SBI fall up to 3%"
+      ],
+      "sentiment": -0.72,
+      "risk_tag": "High Risk",
+      "reasoning": "Bank stocks plunged, pulling the Nifty Bank index sharply lower, while a weakening rupee and rising global yields dampen sentiment. The broad decline across major banks signals heightened market volatility.",
+      "analyzed_at": "2026-05-18T16:52:53.467551"
+    },
+    {
+      "id": "et_1779094299_2",
+      "source": "economic_times",
+      "headline": "NSE EGR trading goes live. How can gold investors buy, sell and invest?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nse-egr-trading-goes-live-how-can-gold-investors-buy-sell-and-invest/articleshow/131171106.cms",
+      "published_at": "Mon, 18 May 2026 13:56:59 +0530",
+      "summary": "The National Stock Exchange of India (NSE) has launched live trading in its Electronic Gold Receipts (EGR) segment, enabling investors to trade gold digitally via demat accounts. Backed by physical go",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-18T16:52:57.547866"
+    },
+    {
+      "id": "et_1779094299_4",
+      "source": "economic_times",
+      "headline": "Balmer Lawrie shares tumble 6% after board says no to bonus issue, stock split &amp; share buyback proposals",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/balmer-lawrie-shares-tumble-6-after-board-says-no-to-bonus-issue-stock-split-share-buyback-proposals/articleshow/131169666.cms",
+      "published_at": "Mon, 18 May 2026 12:48:46 +0530",
+      "summary": "Balmer Lawrie &amp; Company's shares fell over 6% after the board decided against a proposed bonus issue, stock split, and share buyback, citing compliance with Ministry of Finance guidelines. The com",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "analyzed_at": "2026-05-18T16:53:01.919159"
+    },
+    {
+      "id": "et_1779094299_5",
+      "source": "economic_times",
+      "headline": "In volatile times: 5 stocks with score improvement and upside potential of up to 24%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/in-volatile-times-5-stocks-with-score-improvement-and-upside-potential-of-up-to-24/articleshow/131169481.cms",
+      "published_at": "Mon, 18 May 2026 12:39:42 +0530",
+      "summary": "There are reasons to expect more volatility in the short term. The Street will adjust to the likely decline of both the top and bottom lines of companies in some sectors, especially in the case of com",
+      "highlights": [
+        "5 stocks show score improvement",
+        "Upside potential up to 24%",
+        "Volatility expected in oil-related sectors"
+      ],
+      "sentiment": 0.45,
+      "risk_tag": "Medium Risk",
+      "reasoning": "Stock recommendations with upside potential offset volatility concerns. Mixed signals between opportunity and market uncertainty.",
+      "analyzed_at": "2026-05-18T16:53:41.318553"
+    },
+    {
+      "id": "et_1779094299_6",
+      "source": "economic_times",
+      "headline": "Why Samsung shares just surged 7% to save Kospi from a tragic market meltdown",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/why-samsung-shares-just-surged-7-to-save-kospi-from-a-tragic-market-meltdown/articleshow/131169318.cms",
+      "published_at": "Mon, 18 May 2026 12:28:30 +0530",
+      "summary": "Samsung Electronics shares surged sharply on Monday after the company resumed mediated wage negotiations with its largest labour union, easing fears of a disruptive strike. The rebound helped lift the",
+      "highlights": [
+        "Samsung shares up 7%",
+        "Resumed wage negotiations with union",
+        "KOSPI lifted by Samsung’s weight"
+      ],
+      "sentiment": 0.4,
+      "risk_tag": "Low Risk",
+      "reasoning": "Samsung’s share surge signals positive market sentiment and mitigates potential disruption risk.",
+      "analyzed_at": "2026-05-18T16:53:47.908430"
+    },
+    {
+      "id": "et_1779094299_7",
+      "source": "economic_times",
+      "headline": "Infosys, OFSS, TechM, other IT stocks gain up to 3% despite weak market sentiment. Here's why",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/infosys-ofss-techm-other-it-stocks-gain-up-to-3-despite-weak-market-sentiment-heres-why/articleshow/131169160.cms",
+      "published_at": "Mon, 18 May 2026 12:22:24 +0530",
+      "summary": "IT stocks such as Infosys and Oracle Financial Services Software gained, while LTIMindtree, Coforge, Tech Mahindra, Mphasis and Persistent Systems also posted strong gains. Meanwhile, the BSE Sensex a",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-18T16:54:06.595906"
+    },
+    {
+      "id": "et_1779094299_8",
+      "source": "economic_times",
+      "headline": "Hindustan Zinc shares crack 7% in two sessions. What’s behind the sharp slide?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hindustan-zinc-shares-crack-7-in-two-sessions-whats-behind-the-sharp-slide/articleshow/131168564.cms",
+      "published_at": "Mon, 18 May 2026 11:56:59 +0530",
+      "summary": "Hindustan Zinc shares fell as silver prices crashed sharply on Multi Commodity Exchange of India. MCX silver plunged over Rs 5,000 per kg in a day and has corrected nearly 13% from recent highs follow",
+      "highlights": [
+        "Silver prices dropped Rs 5,000/kg",
+        "Shares fell 7% in two sessions",
+        "Government import duty hike triggered decline"
+      ],
+      "sentiment": -0.6,
+      "risk_tag": "High Risk",
+      "reasoning": "Shares fell 7% after silver prices plunged, indicating significant downside risk.",
+      "analyzed_at": "2026-05-18T16:54:17.710456"
+    },
+    {
+      "id": "et_1779094299_9",
+      "source": "economic_times",
+      "headline": "Amber Enterprises shares crash 18% after Q4 results. What's spooking investors?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/amber-enterprises-shares-crash-18-after-q4-results-whats-spooking-investors/articleshow/131168021.cms",
+      "published_at": "Mon, 18 May 2026 11:22:36 +0530",
+      "summary": "Amber Enterprises shares plunged almost 18% on Monday. This followed the company's January-March quarter results. Net profit rose 15% year-on-year to Rs 134 crore. Revenue grew over 10% to Rs 4,148 cr",
+      "highlights": [
+        "Shares plunged 18% post-Q4 results",
+        "Net profit rose 15% YoY to Rs 134 crore",
+        "Adjusted PAT declined due to JV losses"
+      ],
+      "sentiment": -0.65,
+      "risk_tag": "High Risk",
+      "reasoning": "Significant decline in adjusted profit after tax due to JV losses creates uncertainty. Revenue growth and net profit increase may not offset investor concerns over partnership performance.",
+      "analyzed_at": "2026-05-18T16:54:33.033856"
+    },
+    {
+      "id": "et_1779094299_10",
+      "source": "economic_times",
+      "headline": "Kaynes Technology shares tumble 25% in 3 days after weak Q4; Elara cuts rating to ‘Accumulate’",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/kaynes-technology-shares-tumble-25-in-3-days-after-weak-q4-elara-cuts-rating-to-accumulate/articleshow/131167953.cms",
+      "published_at": "Mon, 18 May 2026 11:20:07 +0530",
+      "summary": "Kaynes Technology India shares tumbled nearly 25% in three days following a weaker-than-expected Q4 performance and a downgrade by Elara Securities. The company missed key FY26 guidance metrics, inclu",
+      "highlights": [
+        "Shares fell nearly 25% in three days",
+        "Missed FY26 revenue and operating cash flow targets",
+        "FY27 growth targets lowered; rating cut to Accumulate"
+      ],
+      "sentiment": -0.72,
+      "risk_tag": "High Risk",
+      "reasoning": "Shares plunged 25% after weak Q4 results and a downgrade, indicating heightened downside risk. Missed FY26 guidance and lowered FY27 targets further weaken outlook.",
+      "analyzed_at": "2026-05-18T16:54:46.248685"
+    }
+  ]
+}

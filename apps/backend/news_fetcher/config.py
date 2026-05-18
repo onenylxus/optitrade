@@ -18,10 +18,15 @@ CLOUD_MODEL_NAME = os.getenv("CLOUD_MODEL_NAME", "openrouter/free")
 # ============================================================
 
 # Get backend root directory
-BACKEND_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BACKEND_ROOT, "data")
-OUTPUT_FILE = os.path.join(DATA_DIR, "news_analysis_result.json")
+# BACKEND_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# DATA_DIR = os.path.join(BACKEND_ROOT, "data")
+# OUTPUT_FILE = os.path.join(DATA_DIR, "news_analysis_result.json")
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_DIR)))
+FRONTEND_PUBLIC_DIR = os.path.join(PROJECT_ROOT, "apps", "frontend", "public")
+OUTPUT_FILE = os.path.join(FRONTEND_PUBLIC_DIR, "news_data.json")
+os.makedirs(FRONTEND_PUBLIC_DIR, exist_ok=True)
 # ============================================================
 # News Source Configuration
 # ============================================================
