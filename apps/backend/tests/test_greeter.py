@@ -104,4 +104,3 @@ def test_say_hello_bidirectional_stream_returns_per_request_messages():
         ]
     finally:
         server.stop(0).wait()
-
