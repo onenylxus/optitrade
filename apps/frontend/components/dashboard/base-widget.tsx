@@ -6,19 +6,51 @@ import type { ComponentProps, ReactNode } from 'react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { useWidgetContext } from '@/contexts/widget-context';
+import { useChatContextStore } from '@/contexts/chat-context-store';
 
 interface BaseWidgetProps extends ComponentProps<typeof Card> {
   title: string;
-  /** Plain text, markdown-backed JSX, or any small summary block for the header. */
-  summary?: ReactNode;
+  summary?: string;
   children: ReactNode;
+  contextData?: { label: string; text: string };
+  contextButtonLabel?: string;
+  contextButtonActiveLabel?: string;
+  contextButtonActive?: boolean;
+  onContextButtonClick?: () => void;
 }
-
 const menuItemClass =
   'flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground';
 
-export function BaseWidget({ title, summary, children, className, ...props }: BaseWidgetProps) {
-  const { isEditMode, onDelete } = useWidgetContext();
+  export function BaseWidget({
+    title,
+    summary,
+    children,
+    className,
+    contextData,
+    contextButtonLabel = 'Add to Context',
+    contextButtonActiveLabel = 'Added to Context',
+    contextButtonActive = false,
+    onContextButtonClick,
+    ...props
+  }: BaseWidgetProps) {
+    const { isEditMode, onDelete, widgetId } = useWidgetContext();
+    const { contexts, addContext, removeContext } = useChatContextStore();
+  
+    const isActive = widgetId ? contexts.some((c) => c.widgetId === widgetId) : false;
+  
+    const handleContextButtonClick = () => {
+      if (onContextButtonClick) {
+        onContextButtonClick();
+        return;
+      }
+      if (!contextData || !widgetId) return;
+  
+      if (isActive) {
+        removeContext(widgetId);
+      } else {
+        addContext({ widgetId, label: contextData.label, text: contextData.text });
+      }
+    };
   const showDelete = Boolean(isEditMode && onDelete);
 
   return (
@@ -61,7 +93,7 @@ export function BaseWidget({ title, summary, children, className, ...props }: Ba
                   'z-50 min-w-[10rem] overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
                 )}
               >
-                <DropdownMenu.Item className={menuItemClass}>
+                <DropdownMenu.Item className={menuItemClass} onSelect={handleContextButtonClick}>
                   <Plus className="size-3.5" />
                   Add to Context
                 </DropdownMenu.Item>
