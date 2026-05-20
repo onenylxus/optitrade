@@ -1124,7 +1124,7 @@ export function CandlestickWidget({
   const variantClasses = candlestickVariantClassNames(variant);
 
   return (
-    <BaseWidget {...props} summary={summaryContent} className={cn(variantClasses.root, className)}>
+    <BaseWidget {...props} summary={summaryContent} contextData={{ label: props.title ?? 'Candlestick Chart', text: `${props.title ?? 'Candlestick Chart'} — ${summaryContent}` }} className={cn(variantClasses.root, className)}>
       {showSymbolTabs ? (
         <div className="mb-2 flex flex-col gap-2">
           <div

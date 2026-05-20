@@ -22,14 +22,21 @@ description = "OptiTrade Copilot: An AI-Driven Trading Portal with Interactive D
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi>=0.115.6",
     "grpcio>=1.78.0",
-    "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.0.0",
     "firebase-admin>=7.1.0",
     "httpx>=0.27.0",
     "langchain-core>=0.3.45",
     "langchain-openai>=0.2.14",
+    "uvicorn>=0.34.0",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "python-dotenv>=1.0.0",
+    "ib-insync>=0.9.86",
+    "futu-api>=9.4.5408",
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -14,8 +14,13 @@ export function NumberWidget({ value, prev, type = 'absolute', ...props }: Numbe
       : undefined;
   const displayChange = type === 'percent' ? changePercent : change;
 
+  const contextText = `${props.title}: ${value.toFixed(2)}` +
+    (change !== undefined
+      ? ` (${change >= 0 ? '+' : ''}${displayChange?.toFixed(2)}${type === 'percent' ? '%' : ''} change)`
+      : '');
+
   return (
-    <BaseWidget {...props}>
+    <BaseWidget {...props} contextData={{ label: props.title, text: contextText }}>
       <div className="flex items-center justify-between gap-3">
         <div className="text-2xl font-bold">{value.toFixed(2)}</div>
         {change !== undefined && displayChange !== undefined && (

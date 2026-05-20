@@ -1,0 +1,215 @@
+{
+  "metadata": {
+    "total_news": 12,
+    "yahoo_count": 3,
+    "et_count": 9,
+    "analyzed_at": "2026-05-07T13:32:07.159085",
+    "model": "openrouter/free"
+  },
+  "news": [
+    {
+      "id": "yahoo_1778131831_1",
+      "source": "yahoo",
+      "headline": "Coinbase CEO makes critical move before earnings",
+      "link": "https://finance.yahoo.com/markets/crypto/articles/coinbase-ceo-makes-critical-move-052101559.html",
+      "published_at": "2026-05-06T05:21:01Z",
+      "summary": "Coinbase CEO makes critical move before earnings",
+      "highlights": [
+        "CEO makes critical pre-earnings move",
+        "Strategic shift could affect stock price",
+        "Investors monitor upcoming earnings results"
+      ],
+      "sentiment": -0.15,
+      "risk_tag": "Medium Risk",
+      "reasoning": "The phrasing 'critical move' before earnings implies uncertainty and potential risk for investors.",
+      "analyzed_at": "2026-05-07T13:30:39.212380"
+    },
+    {
+      "id": "yahoo_1778131831_3",
+      "source": "yahoo",
+      "headline": "Why Entergy (ETR) Is Expanding Its Grid for Meta’s Data Center Boom",
+      "link": "https://finance.yahoo.com/sectors/energy/articles/why-entergy-etr-expanding-grid-173015049.html",
+      "published_at": "2026-05-05T17:30:15Z",
+      "summary": "Why Entergy (ETR) Is Expanding Its Grid for Meta’s Data Center Boom",
+      "highlights": [
+        "Entergy expands grid for Meta data centers",
+        "Supports Meta’s data center boom",
+        "Strategic infrastructure investment"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "The article reports a strategic grid expansion to support Meta’s data center growth, indicating a positive development but lacking concrete financial metrics or risks.",
+      "analyzed_at": "2026-05-07T13:30:44.953205"
+    },
+    {
+      "id": "yahoo_1778131831_5",
+      "source": "yahoo",
+      "headline": "Why Dominion Energy (D) Is Central to Virginia’s Data Center Power Surge",
+      "link": "https://finance.yahoo.com/sectors/energy/articles/why-dominion-energy-d-central-172956552.html",
+      "published_at": "2026-05-05T17:29:56Z",
+      "summary": "Why Dominion Energy (D) Is Central to Virginia’s Data Center Power Surge",
+      "highlights": [
+        "Dominion Energy central to Virginia data center power surge",
+        "Growing data center demand boosts utility revenue",
+        "Strategic position enhances long-term growth prospects"
+      ],
+      "sentiment": 0.4,
+      "risk_tag": "Low Risk",
+      "reasoning": "Title highlights a surge in data center power demand, indicating growth opportunities for Dominion Energy.",
+      "analyzed_at": "2026-05-07T13:30:50.010268"
+    },
+    {
+      "id": "et_1778131832_1",
+      "source": "economic_times",
+      "headline": "HFCL shares surge 37% in 5 sessions, nearly double in a month",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hfcl-shares-surge-37-in-5-sessions-nearly-double-in-a-month/articleshow/130880834.cms",
+      "published_at": "Thu, 07 May 2026 10:55:16 +0530",
+      "summary": "HFCL shares extended their sharp rally for a fifth straight session after strong Q4FY26 earnings and fresh telecom orders boosted investor sentiment. The stock has nearly doubled in a month amid impro",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "analyzed_at": "2026-05-07T13:31:07.766395"
+    },
+    {
+      "id": "et_1778131832_2",
+      "source": "economic_times",
+      "headline": "Bajaj Auto shares rise 3% after firm posts record Q4 profit. Here’s what Jefferies, Nomura and other brokerages are saying",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/bajaj-auto-shares-rise-3-after-firm-posts-record-q4-profit-heres-what-jefferies-nomura-and-other-brokerages-are-saying/articleshow/130879685.cms",
+      "published_at": "Thu, 07 May 2026 10:25:44 +0530",
+      "summary": "Bajaj Auto shares rose over 3% after the company posted its highest-ever quarterly profit of Rs 2,746 crore for Q4FY26, up 34% year-on-year, prompting bullish brokerage commentary. Revenue from operat",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-07T13:31:17.328064"
+    },
+    {
+      "id": "et_1778131832_3",
+      "source": "economic_times",
+      "headline": "Whirlpool stock crashes after weak outlook and price hike warning",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/whirlpool-stock-crashes-after-weak-outlook-and-price-hike-warning/slideshow/130879932.cms",
+      "published_at": "Thu, 07 May 2026 10:17:46 +0530",
+      "summary": "Whirlpool shares plunged nearly 17% after the appliance maker cut its 2026 outlook, suspended dividends, and warned of further price hikes. Weak consumer demand, rising inflationary pressures, tariff ",
+      "highlights": [
+        "Shares dropped nearly 17% intraday",
+        "2026 outlook cut and dividends suspended",
+        "Weak demand and inflation pressure earnings"
+      ],
+      "sentiment": -0.72,
+      "risk_tag": "High Risk",
+      "reasoning": "The stock fell sharply after a downgraded outlook and dividend suspension, indicating deteriorating fundamentals. Ongoing inflation, tariff uncertainty, and weak housing demand amplify downside risk.",
+      "analyzed_at": "2026-05-07T13:31:24.970623"
+    },
+    {
+      "id": "et_1778131832_4",
+      "source": "economic_times",
+      "headline": "Godrej Consumer shares tumble 6% despite Q4 show. Should you buy, sell or hold the stock?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/godrej-consumer-shares-tumble-6-despite-q4-show-should-you-buy-sell-or-hold-the-stock/articleshow/130879655.cms",
+      "published_at": "Thu, 07 May 2026 10:13:37 +0530",
+      "summary": "Godrej Consumer Products shares dropped nearly 6% on Thursday despite reporting a 9.7% YoY rise in Q4 net profit and double-digit revenue growth. Brokerages remained positive on the stock, citing stro",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-07T13:31:33.767944"
+    },
+    {
+      "id": "et_1778131832_6",
+      "source": "economic_times",
+      "headline": "SBI Q4 Preview: Can the largest PSB deliver good profits despite treasury pain?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/sbi-q4-preview-can-the-largest-psb-deliver-good-profits-despite-treasury-pain/articleshow/130879568.cms",
+      "published_at": "Thu, 07 May 2026 10:09:25 +0530",
+      "summary": "SBI is expected to report a subdued March quarter as treasury losses likely offset stable loan growth and resilient margins. Brokerages expect modest profit growth, steady asset quality and stable cre",
+      "highlights": [
+        "Treasury losses likely offset stable loan growth",
+        "Brokerages expect modest profit growth QoQ",
+        "Asset quality steady and credit costs stable outlook"
+      ],
+      "sentiment": -0.45,
+      "risk_tag": "Medium Risk",
+      "reasoning": "Title flags treasury pain and a subdued quarter, implying earnings headwinds despite stable loan trends. Management commentary on margins and deposits will be key to gauge downside risk.",
+      "analyzed_at": "2026-05-07T13:31:37.257938"
+    },
+    {
+      "id": "et_1778131832_7",
+      "source": "economic_times",
+      "headline": "Spicier than jhalmuri: The Rs 1.7 lakh crore fiscal bite hidden in state election results",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/spicier-than-jhalmuri-the-rs-1-7-lakh-crore-fiscal-bite-hidden-in-state-election-results/articleshow/130879521.cms",
+      "published_at": "Thu, 07 May 2026 10:07:18 +0530",
+      "summary": "What looked like a light-hearted campaign moment during PM Narendra Modi’s West Bengal trail has now turned into a major fiscal concern after election results triggered expensive welfare promises. Eco",
+      "highlights": [
+        "Fiscal bite estimated at Rs 1.69 lakh crore post-polls",
+        "West Bengal campaign pledges turn into costly commitments",
+        "Stretched state budgets face added pressure from promises"
+      ],
+      "sentiment": -0.75,
+      "risk_tag": "High Risk",
+      "reasoning": "Election-driven welfare pledges translate into a large fiscal bite, straining public finances. The sizable burden raises rollover and deficit risks for already stretched states.",
+      "analyzed_at": "2026-05-07T13:31:40.022396"
+    },
+    {
+      "id": "et_1778131832_8",
+      "source": "economic_times",
+      "headline": "KPIT Technologies shares slide 4% as Q4 profit falls 33% YoY to Rs 163 crore",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/kpit-technologies-shares-slide-4-as-q4-profit-falls-33-yoy-to-rs-163-crore/articleshow/130879389.cms",
+      "published_at": "Thu, 07 May 2026 10:03:57 +0530",
+      "summary": "KPIT Technologies shares fell sharply on Thursday. The automotive software firm reported a 33% year-on-year decline in net profit for the March quarter. This occurred despite a healthy 12% rise in rev",
+      "highlights": [
+        "Q4 net profit fell 33% YoY to Rs 163 crore",
+        "Revenue increased 12% YoY despite profit drop",
+        "Operating expenses rose significantly"
+      ],
+      "sentiment": -0.62,
+      "risk_tag": "High Risk",
+      "reasoning": "The 33% YoY profit decline despite revenue growth signals financial stress. Rising operating expenses and dividend recommendations may indicate liquidity pressures.",
+      "analyzed_at": "2026-05-07T13:31:56.507246"
+    },
+    {
+      "id": "et_1778131832_9",
+      "source": "economic_times",
+      "headline": "F&amp;O Radar: Bull Call Spread strategy for Crompton shares this week",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/fo-radar-bull-call-spread-strategy-for-crompton-shares-this-week/articleshow/130879334.cms",
+      "published_at": "Thu, 07 May 2026 10:01:43 +0530",
+      "summary": "Crompton Ltd shows signs of a bullish reversal, with a double bottom pattern and a strong daily candle above its 200-day EMA. Increased trading volumes and a daily RSI of 67.73 indicate positive momen",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-07T13:32:02.290411"
+    },
+    {
+      "id": "et_1778131832_10",
+      "source": "economic_times",
+      "headline": "Dividend alert! Last date to buy these 10 stocks before they go ex-record date. Do you own?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/dividend-alert-last-date-to-buy-these-10-stocks-before-they-go-ex-record-date-do-you-own/articleshow/130879204.cms",
+      "published_at": "Thu, 07 May 2026 10:01:28 +0530",
+      "summary": "Investors have a final opportunity today to purchase shares of 10 companies before they go ex-record date for dividends tomorrow, May 8. Notable companies include Central Bank of India, Laurus Labs, N",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-07T13:32:06.646959"
+    }
+  ]
+}

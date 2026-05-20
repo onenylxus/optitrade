@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from .api.routes.ai_routes import router as ai_router
 from .api.routes.stock_routes import router as stock_router
+from .api.routes.portfolio_routes import router as portfolio_router
 from .firebase_auth import verify_firebase_id_token
 from .services import GreeterService
 
@@ -115,6 +116,8 @@ def create_app() -> FastAPI:
 
     app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
     app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
+    app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
+
 
     service = GreeterService()
 
@@ -189,6 +192,12 @@ def create_app() -> FastAPI:
         email_value = user.get("email")
         email = str(email_value) if email_value is not None else None
         return AuthenticatedUserResponse(uid=uid, email=email)
+
+
+    @app.post("/api/paper-portfolio", status_code=201, tags=["portfolio"])
+    def paper_portfolio_compat(payload: dict) -> dict:
+        controller = PortfolioController(get_portfolio_service())
+        return controller.create_paper_portfolio(payload)
 
     return app
 

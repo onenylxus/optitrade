@@ -5,8 +5,10 @@ interface TextWidgetProps extends Omit<React.ComponentProps<typeof BaseWidget>, 
 }
 
 export function TextWidget({ text, ...props }: TextWidgetProps) {
+  const contextText = `${props.title}: ${typeof text === 'string' ? text : '[rich content]'}`;
+
   return (
-    <BaseWidget {...props}>
+    <BaseWidget {...props} contextData={{ label: props.title, text: contextText }}>
       <div className="text-sm leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_em]:italic [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-2 [&_p]:leading-5 [&_p:last-child]:mb-0 [&_strong]:font-semibold">
         {typeof text === 'string' ? <p>{text}</p> : text}
       </div>

@@ -15,8 +15,12 @@ interface TableWidgetProps extends Omit<ComponentProps<typeof BaseWidget>, 'chil
 }
 
 export function TableWidget({ headers, rows, ...props }: TableWidgetProps) {
+  const headerLine = headers.join(' | ');
+  const rowLines = rows.map(r => r.map(String).join(' | ')).join('; ');
+  const contextText = `${props.title}: [${headerLine}] ${rowLines}`;
+
   return (
-    <BaseWidget {...props}>
+    <BaseWidget {...props} contextData={{ label: props.title, text: contextText }}>
       <Table>
         <TableHeader>
           <TableRow>

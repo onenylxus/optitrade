@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Loader2, Settings, ArrowLeft, Lock } from 'lucide-react';
+import { Check, Loader2, Settings, ArrowLeft, Lock, Save } from 'lucide-react';
 import { Area, AreaChart, YAxis, XAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import type { PortfolioBrokerOption, PortfolioChatContextValue } from '@/contexts/portfolio-context';
+import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 // --- Interfaces ---
 
@@ -44,8 +46,66 @@ type PortfolioHistoryPoint = PortfolioDerivedData['history'][number];
 interface PortfolioVariantProps {
   stocks: Stock[];
   data: PortfolioDerivedData;
+  source: 'backend' | 'demo';
+  liveBrokerLabel: string;
+  saveStatus: 'idle' | 'saving' | 'saved' | 'error';
   onOpenSettings: () => void;
+  onSavePaperPortfolio: () => void;
 }
+
+interface PortfolioApiPosition extends Stock {
+  marketValue?: number;
+  costBasis?: number;
+  unrealizedPnl?: number;
+  unrealizedPnlPercent?: number;
+}
+
+interface PortfolioApiSnapshot {
+  asOf?: string;
+  baseCurrency?: string;
+  source?: 'backend' | 'demo';
+  broker?: {
+    id?: PortfolioBrokerOption;
+    status: 'connected' | 'configured' | 'disconnected';
+    name: string;
+    settings?: Record<string, unknown>;
+    host?: string;
+    port?: number;
+    clientId?: number;
+    market?: string;
+    testnet?: boolean;
+    accountId?: string;
+    syncedAt?: string;
+    lastError?: string;
+  };
+  positions: PortfolioApiPosition[];
+  summary: {
+    totalValue: number;
+    pnl: number;
+    pnlPercent: number;
+    dailyPnl: number;
+    dailyPnlPercent: number;
+    marginUsage: number;
+  };
+  sectorValues: PortfolioDerivedData['sectorValues'];
+  history: PortfolioDerivedData['history'];
+}
+
+interface PortfolioMappedSnapshot {
+  stocks: Stock[];
+  data: PortfolioDerivedData;
+  chatContext: PortfolioChatContextValue;
+}
+
+interface BrokerOptionConfig {
+  id: PortfolioBrokerOption;
+  label: string;
+  supported: boolean;
+  description: string;
+}
+
+const PORTFOLIO_API_BASE_URL =
+  process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
 // --- Mock Data ---
 
@@ -104,6 +164,97 @@ const formatCurrency = (value: number, maxDigits = 0) =>
 
 const percentClass = (value: number) => (value >= 0 ? 'text-emerald-600' : 'text-rose-600');
 
+const portfolioApiUrl = (path: string) => {
+  const baseUrl = PORTFOLIO_API_BASE_URL.endsWith('/')
+    ? PORTFOLIO_API_BASE_URL.slice(0, -1)
+    : PORTFOLIO_API_BASE_URL;
+  return `${baseUrl}${path}`;
+};
+
+function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSnapshot {
+  return {
+    stocks: snapshot.positions.map((position) => ({
+      id: position.id,
+      symbol: position.symbol,
+      quantity: position.quantity,
+      avgPrice: position.avgPrice,
+      currentPrice: position.currentPrice,
+      sector: position.sector,
+    })),
+    data: {
+      totalValue: snapshot.summary.totalValue,
+      pnl: snapshot.summary.pnl,
+      pnlPercent: snapshot.summary.pnlPercent,
+      dailyPnl: snapshot.summary.dailyPnl,
+      dailyPnlPercent: snapshot.summary.dailyPnlPercent,
+      marginUsage: snapshot.summary.marginUsage,
+      sectorValues: snapshot.sectorValues,
+      history: snapshot.history,
+    },
+    chatContext: {
+      asOf: snapshot.asOf ?? new Date().toISOString(),
+      baseCurrency: snapshot.baseCurrency ?? 'USD',
+      source: snapshot.source ?? 'backend',
+      broker: snapshot.broker ?? {
+        id: 'mock',
+        status: 'disconnected',
+        name: 'Mock Data',
+      },
+      summary: snapshot.summary,
+      positions: snapshot.positions.map((position) => ({
+        symbol: position.symbol,
+        quantity: position.quantity,
+        avgPrice: position.avgPrice,
+        currentPrice: position.currentPrice,
+        sector: position.sector,
+        marketValue: position.marketValue ?? position.currentPrice * position.quantity,
+        unrealizedPnl:
+          position.unrealizedPnl ?? (position.currentPrice - position.avgPrice) * position.quantity,
+        unrealizedPnlPercent:
+          position.unrealizedPnlPercent ??
+          (position.avgPrice === 0
+            ? 0
+            : ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100),
+      })),
+      sectorValues: snapshot.sectorValues,
+    },
+  };
+}
+
+function buildMockChatContext(stocks: Stock[]): PortfolioChatContextValue {
+  const data = buildPortfolioData(stocks);
+  return {
+    asOf: new Date().toISOString(),
+    baseCurrency: 'USD',
+    source: 'demo',
+    broker: {
+      id: 'mock',
+      status: 'disconnected',
+      name: 'Mock Data',
+    },
+    summary: {
+      totalValue: data.totalValue,
+      pnl: data.pnl,
+      pnlPercent: data.pnlPercent,
+      dailyPnl: data.dailyPnl,
+      dailyPnlPercent: data.dailyPnlPercent,
+      marginUsage: data.marginUsage,
+    },
+    positions: stocks.map((stock) => ({
+      symbol: stock.symbol,
+      quantity: stock.quantity,
+      avgPrice: stock.avgPrice,
+      currentPrice: stock.currentPrice,
+      sector: stock.sector,
+      marketValue: stock.currentPrice * stock.quantity,
+      unrealizedPnl: (stock.currentPrice - stock.avgPrice) * stock.quantity,
+      unrealizedPnlPercent:
+        stock.avgPrice === 0 ? 0 : ((stock.currentPrice - stock.avgPrice) / stock.avgPrice) * 100,
+    })),
+    sectorValues: data.sectorValues,
+  };
+}
+
 function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
   const totalValue = stocks.reduce((sum, stock) => sum + stock.currentPrice * stock.quantity, 0);
   const totalCost = stocks.reduce((sum, stock) => sum + stock.avgPrice * stock.quantity, 0);
@@ -155,7 +306,7 @@ function PerformanceChart({
   height = 100,
   showAxis = false,
 }: {
-  data: PortfolioHistoryPoint[];
+  data: PortfolioDerivedData['history'];
   height?: number;
   showAxis?: boolean;
 }) {
@@ -191,16 +342,126 @@ function PerformanceChart({
   );
 }
 
+function PortfolioSourceBadge({
+  source,
+  brokerName,
+}: {
+  source: 'backend' | 'demo';
+  brokerName?: string;
+}) {
+  const label = source === 'backend' ? brokerName ?? 'Live' : 'Mock';
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium tracking-wide ${
+        source === 'backend' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+      }`}
+      title={source === 'backend' ? `Live ${label} portfolio` : 'Mock portfolio data'}
+    >
+      {label}
+    </span>
+  );
+}
+
 // --- Sub-Components ---
 
-function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
+const BROKER_OPTIONS: BrokerOptionConfig[] = [
+  { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
+  { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
+  { id: 'binance', label: 'Binance', supported: true, description: 'API key + secret' },
+  { id: 'mock', label: 'Mock Data', supported: true, description: 'No connection required' },
+];
+
+const getBrokerOption = (broker: PortfolioBrokerOption) =>
+  BROKER_OPTIONS.find((option) => option.id === broker);
+
+function BrokerConnectionPanel({
+  onBack,
+  onConnected,
+  onUseMockData,
+  selectedBroker,
+  initialConnection,
+  onBrokerChange,
+}: {
+  onBack: () => void;
+  onConnected: () => Promise<void>;
+  onUseMockData: () => void;
+  selectedBroker: PortfolioBrokerOption;
+  initialConnection: PortfolioApiSnapshot['broker'];
+  onBrokerChange: (broker: PortfolioBrokerOption) => void;
+}) {
   const [connecting, setConnecting] = useState(false);
-  const handleConnect = () => {
-    setConnecting(true);
-    setTimeout(() => {
-      setConnecting(false);
+  const [selectedBrokerState, setSelectedBrokerState] = useState<PortfolioBrokerOption>(selectedBroker);
+  const [host, setHost] = useState('127.0.0.1');
+  const [port, setPort] = useState('7497');
+  const [clientId, setClientId] = useState('1');
+  const [market, setMarket] = useState('US');
+  const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
+  const [testnet, setTestnet] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const selectedOption = getBrokerOption(selectedBrokerState);
+
+  useEffect(() => {
+    const settings = initialConnection?.settings ?? {};
+    const brokerId = initialConnection?.id ?? selectedBroker;
+    setSelectedBrokerState(brokerId);
+    setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
+    setPort(
+      String(
+        initialConnection?.port ??
+          settings.port ??
+          (brokerId === 'futu' ? 11111 : 7497),
+      ),
+    );
+    setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
+    setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
+    setApiKey('');
+    setApiSecret('');
+    setTestnet(Boolean(initialConnection?.testnet ?? settings.testnet ?? true));
+    setError(initialConnection?.lastError ?? null);
+  }, []);
+
+  const handleConnect = async () => {
+    setError(null);
+
+    if (selectedBrokerState === 'mock') {
+      onUseMockData();
       onBack();
-    }, 1500);
+      return;
+    }
+
+    setConnecting(true);
+    try {
+      const payload =
+        selectedBrokerState === 'ibkr'
+          ? { broker: selectedBrokerState, host, port: Number(port), clientId: Number(clientId) }
+          : selectedBrokerState === 'futu'
+            ? { broker: selectedBrokerState, host, port: Number(port), market }
+            : {
+                broker: selectedBrokerState,
+                apiKey,
+                apiSecret,
+                testnet,
+              };
+      const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string; detail?: string }
+          | null;
+        throw new Error(payload?.detail ?? payload?.error ?? `IBKR connection API returned ${response.status}`);
+      }
+      onBrokerChange(selectedBrokerState);
+      await onConnected();
+      onBack();
+    } catch (connectError) {
+      setError(connectError instanceof Error ? connectError.message : 'Unable to connect to broker');
+    } finally {
+      setConnecting(false);
+    }
   };
 
   return (
@@ -210,42 +471,158 @@ function IBKRConnectionPanel({ onBack }: { onBack: () => void }) {
           <ArrowLeft size={16} />
         </button>
         <div className="text-[11px] font-medium uppercase tracking-tight text-slate-500">
-          IBKR Bridge
+          Broker Connection
         </div>
       </div>
-      <div className="flex-1 py-5 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <div className="text-[10px] text-slate-400 uppercase">Host</div>
-            <input
-              type="text"
-              defaultValue="127.0.0.1"
-              className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-            />
+        <div className="flex-1 py-5 space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            {BROKER_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setSelectedBrokerState(option.id);
+                  setError(null);
+                }}
+                className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
+                  selectedBrokerState === option.id
+                    ? 'border-slate-900 bg-slate-900 text-white'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <div>{option.label}</div>
+                <div className="text-[9px] opacity-70">{option.description}</div>
+              </button>
+            ))}
           </div>
-          <div className="space-y-1">
-            <div className="text-[10px] text-slate-400 uppercase">Port</div>
-            <input
-              type="text"
-              placeholder="7497"
-              className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-            />
+        {selectedBrokerState === 'ibkr' && (
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Host</div>
+              <input
+                type="text"
+                value={host}
+                onChange={(event) => setHost(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Port</div>
+              <input
+                type="text"
+                value={port}
+                onChange={(event) => setPort(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Client ID</div>
+              <input
+                type="text"
+                value={clientId}
+                onChange={(event) => setClientId(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
           </div>
-        </div>
+        )}
+        {selectedBrokerState === 'futu' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Host</div>
+              <input
+                type="text"
+                value={host}
+                onChange={(event) => setHost(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Port</div>
+              <input
+                type="text"
+                value={port}
+                onChange={(event) => setPort(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[10px] text-slate-400 uppercase">Market</div>
+              <input
+                type="text"
+                value={market}
+                onChange={(event) => setMarket(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+          </div>
+        )}
+        {selectedBrokerState === 'binance' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1 col-span-2">
+              <div className="text-[10px] text-slate-400 uppercase">API Key</div>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <div className="space-y-1 col-span-2">
+              <div className="text-[10px] text-slate-400 uppercase">API Secret</div>
+              <input
+                type="password"
+                value={apiSecret}
+                onChange={(event) => setApiSecret(event.target.value)}
+                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
+              />
+            </div>
+            <label className="col-span-2 flex items-center gap-2 text-[11px] text-slate-500">
+              <input
+                type="checkbox"
+                checked={testnet}
+                onChange={(event) => setTestnet(event.target.checked)}
+              />
+              Testnet
+            </label>
+          </div>
+        )}
+        {selectedBrokerState !== 'ibkr' && selectedBrokerState !== 'futu' && selectedBrokerState !== 'binance' && selectedBrokerState !== 'mock' && (
+          <div className="text-[11px] text-slate-500 leading-4">
+            {selectedOption?.label} is not configured.
+          </div>
+        )}
+        {error && <div className="text-[11px] text-rose-600 leading-4">{error}</div>}
         <button
           onClick={handleConnect}
           disabled={connecting}
           className="w-full bg-slate-900 py-2.5 text-xs text-white hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {connecting ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
-          {connecting ? 'Syncing...' : 'Initialize Connection'}
+          {selectedBrokerState === 'mock'
+            ? 'Use Mock Portfolio Data'
+            : connecting
+              ? 'Syncing...'
+              : `Connect ${selectedOption?.label ?? 'Broker'}`}
         </button>
+        {selectedBrokerState !== 'mock' && (
+          <button
+            onClick={() => {
+              onUseMockData();
+              onBack();
+            }}
+            disabled={connecting}
+            className="w-full border border-slate-200 bg-white py-2.5 text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Use Mock Portfolio Data
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function PortfolioWidgetSmall({ data, onOpenSettings }: PortfolioVariantProps) {
+function PortfolioWidgetSmall({ data, source, liveBrokerLabel, onOpenSettings }: PortfolioVariantProps) {
   return (
     <div className="relative flex h-full flex-col items-center justify-center bg-white">
       <button
@@ -254,6 +631,9 @@ function PortfolioWidgetSmall({ data, onOpenSettings }: PortfolioVariantProps) {
       >
         <Settings size={12} />
       </button>
+      <div className="absolute left-0 top-0">
+        <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? liveBrokerLabel : undefined} />
+      </div>
       <div className={`text-xl font-medium tracking-tight ${percentClass(data.pnlPercent)}`}>
         {data.pnlPercent >= 0 ? '+' : ''}
         {data.pnlPercent.toFixed(1)}%
@@ -263,16 +643,34 @@ function PortfolioWidgetSmall({ data, onOpenSettings }: PortfolioVariantProps) {
   );
 }
 
-function PortfolioWidgetMedium({ stocks, data, onOpenSettings }: PortfolioVariantProps) {
+function PortfolioWidgetMedium({
+  stocks,
+  data,
+  source,
+  liveBrokerLabel,
+  saveStatus,
+  onOpenSettings,
+  onSavePaperPortfolio,
+}: PortfolioVariantProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
-      <div className="flex items-center justify-between border-b border-slate-50 py-2.5">
-        <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 font-mono">
-          PNL_SNAPSHOT
+      <div className="flex items-center justify-between py-2.5">
+        <div className="flex items-center gap-2">
+          <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? liveBrokerLabel : undefined} />
         </div>
-        <button onClick={onOpenSettings} className="text-slate-300 hover:text-slate-500">
-          <Settings size={14} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onSavePaperPortfolio}
+            disabled={saveStatus === 'saving'}
+            className="text-slate-300 hover:text-slate-500 disabled:opacity-50"
+            title="Save paper portfolio"
+          >
+            {saveStatus === 'saved' ? <Check size={14} /> : <Save size={14} />}
+          </button>
+          <button onClick={onOpenSettings} className="text-slate-300 hover:text-slate-500">
+            <Settings size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="py-3 border-b border-slate-50 flex items-center justify-between">
@@ -316,24 +714,37 @@ function PortfolioWidgetMedium({ stocks, data, onOpenSettings }: PortfolioVarian
   );
 }
 
-function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariantProps) {
+function PortfolioWidgetLarge({
+  stocks,
+  data,
+  source,
+  liveBrokerLabel,
+  saveStatus,
+  onOpenSettings,
+  onSavePaperPortfolio,
+}: PortfolioVariantProps) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-3 border-b border-slate-50">
         <div className="flex items-center gap-2">
-          <div className="text-xs font-medium uppercase tracking-tight text-slate-500">
-            Executive Summary
-          </div>
-          <span className="bg-emerald-50 text-emerald-600 text-[9px] px-1.5 py-0.5 rounded font-bold italic uppercase">
-            Live
-          </span>
+          <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? liveBrokerLabel : undefined} />
         </div>
-        <button
-          onClick={onOpenSettings}
-          className="text-slate-300 hover:text-slate-600 transition-colors"
-        >
-          <Settings size={14} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onSavePaperPortfolio}
+            disabled={saveStatus === 'saving'}
+            className="text-slate-300 hover:text-slate-600 disabled:opacity-50 transition-colors"
+            title="Save paper portfolio"
+          >
+            {saveStatus === 'saved' ? <Check size={14} /> : <Save size={14} />}
+          </button>
+          <button
+            onClick={onOpenSettings}
+            className="text-slate-300 hover:text-slate-600 transition-colors"
+          >
+            <Settings size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 py-4 bg-slate-50/40 border-b border-slate-50 px-1">
@@ -434,45 +845,153 @@ function PortfolioWidgetLarge({ stocks, data, onOpenSettings }: PortfolioVariant
 }
 
 const PortfolioWidgetRoot = ({
-  title = 'Portfolio Snapshot',
   variant,
   size,
+  title = "Portfolio",
   ...props
 }: PortfolioWidgetProps) => {
   const [stocks, setStocks] = useState<Stock[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<'demo' | 'backend'>('demo');
+  const [liveBrokerLabel, setLiveBrokerLabel] = useState<string | undefined>('Mock');
   const [showBrokerPanel, setShowBrokerPanel] = useState(false);
+  const [selectedBroker, setSelectedBroker] = useState<PortfolioBrokerOption>('mock');
+  const [brokerConnection, setBrokerConnection] = useState<PortfolioApiSnapshot['broker']>({
+    id: 'mock',
+    status: 'disconnected',
+    name: 'Mock Data',
+  });
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const { setPortfolio } = usePortfolioContext();
 
   const resolvedVariant = variant ?? size ?? 'medium';
 
-  useEffect(() => {
-    const loadPortfolio = async () => {
-      try {
-        setLoading(true);
-        setStocks(DEFAULT_STOCKS);
-      } finally {
-        setTimeout(() => setLoading(false), 800);
-      }
-    };
-    loadPortfolio();
-  }, []);
+  const useMockData = () => {
+    setStocks(DEFAULT_STOCKS);
+    setBackendData(null);
+    setPortfolio(buildMockChatContext(DEFAULT_STOCKS));
+    setSelectedBroker('mock');
+    setBrokerConnection({
+      id: 'mock',
+      status: 'disconnected',
+      name: 'Mock Data',
+    });
+    setSource('demo');
+    setLiveBrokerLabel('Mock');
+    setLoading(false);
+  };
 
-  const portfolioData = useMemo(() => buildPortfolioData(stocks), [stocks]);
+  const loadPortfolio = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(portfolioApiUrl('/api/portfolio'), {
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Portfolio API returned ${response.status}`);
+      }
+
+      const snapshot = (await response.json()) as PortfolioApiSnapshot;
+      const mappedSnapshot = mapPortfolioSnapshot(snapshot);
+      setBrokerConnection(mappedSnapshot.chatContext.broker);
+      setStocks(mappedSnapshot.stocks);
+      const brokerStatus = mappedSnapshot.chatContext.broker.status;
+      const brokerId = mappedSnapshot.chatContext.broker.id ?? 'mock';
+      const isLiveBroker = brokerStatus === 'connected';
+      setBackendData(isLiveBroker ? mappedSnapshot.data : null);
+      if (isLiveBroker) {
+        setPortfolio(mappedSnapshot.chatContext);
+      } else {
+        const mockContext = buildMockChatContext(mappedSnapshot.stocks);
+        mockContext.broker = mappedSnapshot.chatContext.broker;
+        setPortfolio(mockContext);
+      }
+      if (brokerStatus === 'connected' || brokerStatus === 'configured') {
+        setSelectedBroker(brokerId);
+        setLiveBrokerLabel(mappedSnapshot.chatContext.broker.name || 'Configured');
+        setSource(isLiveBroker ? 'backend' : 'demo');
+      } else {
+        setSelectedBroker('mock');
+        setLiveBrokerLabel('Mock');
+        setSource('demo');
+      }
+    } catch {
+      useMockData();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPortfolio();
+  }, [setPortfolio]);
+
+  const portfolioData = useMemo(
+    () => backendData ?? buildPortfolioData(stocks),
+    [backendData, stocks],
+  );
+
+  const savePaperPortfolio = async () => {
+    setSaveStatus('saving');
+    try {
+      const response = await fetch(portfolioApiUrl('/api/paper-portfolio'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Portfolio Widget Paper Portfolio',
+          positions: stocks,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Paper portfolio API returned ${response.status}`);
+      }
+
+      setSaveStatus('saved');
+      window.setTimeout(() => setSaveStatus('idle'), 1600);
+    } catch {
+      setSaveStatus('error');
+      window.setTimeout(() => setSaveStatus('idle'), 1600);
+    }
+  };
+
   const variantProps: PortfolioVariantProps = {
     stocks,
     data: portfolioData,
+    source,
+    liveBrokerLabel: liveBrokerLabel ?? 'IBKR',
+    saveStatus,
     onOpenSettings: () => setShowBrokerPanel(true),
+    onSavePaperPortfolio: savePaperPortfolio,
   };
 
+  const contextText = [
+    `Total Value: $${portfolioData.totalValue.toFixed(2)}`,
+    `Unrealized PnL: ${portfolioData.pnlPercent >= 0 ? '+' : ''}${portfolioData.pnlPercent.toFixed(2)}%`,
+    `Daily PnL: $${portfolioData.dailyPnl.toFixed(2)}`,
+    `Positions: ${stocks.map(s =>
+      `${s.symbol} ×${s.quantity} @ $${s.currentPrice.toFixed(2)}`
+    ).join(', ')}`,
+  ].join('. ');
+
   return (
-    <BaseWidget title={title} {...props} className="overflow-hidden">
+    <BaseWidget title={title} {...props} contextData={{ label: title, text: `Portfolio Snapshot: ${contextText}` }} className="overflow-hidden">
       {loading ? (
         <div className="flex h-full items-center justify-center space-x-2 text-slate-300">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="text-[10px] font-medium uppercase tracking-widest">Synchronizing</span>
         </div>
       ) : showBrokerPanel ? (
-        <IBKRConnectionPanel onBack={() => setShowBrokerPanel(false)} />
+        <BrokerConnectionPanel
+          onBack={() => setShowBrokerPanel(false)}
+          onConnected={loadPortfolio}
+          onUseMockData={useMockData}
+          selectedBroker={selectedBroker}
+          initialConnection={brokerConnection}
+          onBrokerChange={setSelectedBroker}
+        />
       ) : (
         <>
           {resolvedVariant === 'small' && <PortfolioWidgetSmall {...variantProps} />}

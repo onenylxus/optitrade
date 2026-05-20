@@ -2,12 +2,19 @@
   "name": "@optitrade/frontend",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1",
+    "build": "next build",
+    "start": "next start"
+  },
   "dependencies": {
     "@firebase/app": "^0.14.11",
     "@firebase/auth": "^1.13.0",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.7.15",
     "@js-sdsl/ordered-map": "^4.4.2",
+    "@openuidev/react-lang": "^0.2.4",
+    "@openuidev/react-ui": "^0.11.6",
     "@tailwindcss/postcss": "^4.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

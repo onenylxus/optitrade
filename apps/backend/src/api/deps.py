@@ -10,6 +10,7 @@ from src.api.controllers.stock_support_resistance_controller import (
 )
 from src.services.stock_chart_analysis_service import StockChartAnalysisService
 from src.services.stock_chart_service import StockChartService
+from src.services.portfolio_service import PortfolioService
 
 
 def get_stock_chart_service() -> StockChartService:
@@ -50,3 +51,6 @@ def get_stock_chart_analysis_service(
         openrouter_api_key=or_key,
         http_async_client=http,
     )
+
+def get_portfolio_service() -> PortfolioService:
+    return PortfolioService()
