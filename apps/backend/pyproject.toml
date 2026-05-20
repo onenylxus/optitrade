@@ -32,11 +32,11 @@ dependencies = [
     "langchain-openai>=0.2.14",
     "uvicorn>=0.34.0",
     "requests>=2.31.0",
-    "beautifulsoup4>=4.12.0",
-    "lxml>=4.9.0",
     "python-dotenv>=1.0.0",
     "ib-insync>=0.9.86",
     "futu-api>=9.4.5408",
+    "beautifulsoup4>=4.14.3",
+    "lxml>=6.1.0"
 ]
 
 [tool.hatch.build.targets.wheel]
