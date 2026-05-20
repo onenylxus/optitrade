@@ -55,3 +55,18 @@ class StockChartAnalysisResponse(BaseModel):
         description="Model-generated commentary; educational, not advice.",
     )
     model_id: str = Field(description="OpenRouter model id used for generation.")
+
+
+class StockChartSupportResistanceResponse(BaseModel):
+    """Pivot-cluster support/resistance for the widget chart overlay."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbol: str
+    interval: ChartInterval
+    chart_range: ChartRange | None = Field(default=None, serialization_alias="range")
+    from_: date = Field(serialization_alias="from")
+    to: date
+    support: float | None = Field(default=None)
+    resistance: float | None = Field(default=None)
+    method: str = Field(default="pivot_clusters")

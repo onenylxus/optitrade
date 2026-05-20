@@ -227,3 +227,5 @@ protos/*_pb2.py
 
 # Firebase
 optitrade-hku-firebase-adminsdk.json
+# Local portfolio runtime store
+data/*.json

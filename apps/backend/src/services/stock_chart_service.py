@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import calendar
+import logging
 import os
+import time
 from datetime import date, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode
@@ -17,6 +19,9 @@ from src.api.schemas.stock_chart import (
     StockChartParams,
     StockChartResponse,
 )
+from src.observability.profile import stock_chart_profiling_enabled
+
+_log = logging.getLogger("optitrade.profile")
 
 FMP_STABLE_BASE = "https://financialmodelingprep.com/stable"
 
@@ -173,14 +178,28 @@ class StockChartService:
         if not self._api_key:
             raise RuntimeError("FMP_API_KEY is not configured")
 
+        profile = stock_chart_profiling_enabled()
+        t0 = time.perf_counter()
         segment = _interval_to_fmp_chart_path(params.interval)
         if segment is None:
             rows = await self._fetch_eod_full(params)
         else:
             rows = await self._fetch_historical_chart(segment, params)
+        t1 = time.perf_counter()
 
         rows = sorted(rows, key=_fmp_sort_key)
         candles = [ChartCandle.model_validate(r) for r in rows]
+        t2 = time.perf_counter()
+        if profile:
+            _log.info(
+                "stock_chart fmp symbol=%s interval=%s fmp_http=%.2fms "
+                "sort_validate=%.2fms rows=%d",
+                params.symbol,
+                params.interval.value,
+                (t1 - t0) * 1000,
+                (t2 - t1) * 1000,
+                len(candles),
+            )
 
         return StockChartResponse(
             symbol=params.symbol,

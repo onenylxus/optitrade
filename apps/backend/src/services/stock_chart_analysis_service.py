@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any
 
+import httpx
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
 
 from src.api.schemas.ai_stock_chart import (
@@ -16,6 +19,10 @@ from src.api.schemas.ai_stock_chart import (
     TechnicalSnapshot,
 )
 from src.api.schemas.stock_chart import StockChartParams
+from src.observability.profile import (
+    log_stock_chart_stages,
+    stock_chart_profiling_enabled,
+)
 from src.services.stock_analytics import (
     build_momentum_snapshot,
     build_technical_snapshot,
@@ -23,6 +30,55 @@ from src.services.stock_analytics import (
 from src.services.stock_chart_service import StockChartService
 
 OPENROUTER_BASE = "https://openrouter.ai/api/v1"
+
+
+def _parse_max_output_tokens() -> int | None:
+    """
+    Cap completion length for faster, widget-sized answers.
+
+    ``OPENROUTER_MAX_OUTPUT_TOKENS``: positive int (default 400, ~100 words + headings).
+    Set to ``0`` to omit ``max_tokens`` and use the model/provider default.
+    """
+    raw = os.environ.get("OPENROUTER_MAX_OUTPUT_TOKENS", "400").strip()
+    if not raw:
+        return 400
+    try:
+        v = int(raw)
+    except ValueError:
+        return 400
+    if v <= 0:
+        return None
+    return max(64, min(v, 8192))
+
+
+def _parse_request_timeout() -> float:
+    raw = os.environ.get("OPENROUTER_REQUEST_TIMEOUT", "90").strip()
+    try:
+        v = float(raw)
+        return max(5.0, min(v, 300.0))
+    except ValueError:
+        return 90.0
+
+
+def _parse_recent_bars_for_prompt() -> int:
+    """Prompt candle count from ``OPENROUTER_RECENT_BARS`` (8–120; default 48)."""
+    raw = os.environ.get("OPENROUTER_RECENT_BARS", "").strip()
+    if not raw:
+        return 48
+    try:
+        v = int(raw)
+        return max(8, min(v, 120))
+    except ValueError:
+        return 48
+
+
+def _parse_temperature() -> float:
+    raw = os.environ.get("OPENROUTER_TEMPERATURE", "0.35").strip()
+    try:
+        return max(0.0, min(float(raw), 2.0))
+    except ValueError:
+        return 0.35
+
 
 SYSTEM_PROMPT = """You are OptiTrade's technical market assistant. You receive \
 pre-computed metrics and a small recent OHLC sample. Rules:
@@ -61,7 +117,7 @@ def _recent_candles_json(candles: list[Any], max_bars: int) -> str:
         }
         for c in tail
     ]
-    return json.dumps(rows, indent=2)
+    return json.dumps(rows, separators=(",", ":"))
 
 
 def _metrics_payload(
@@ -73,7 +129,7 @@ def _metrics_payload(
             "momentum": momentum.model_dump(),
             "technical": technical.model_dump(),
         },
-        indent=2,
+        separators=(",", ":"),
     )
 
 
@@ -82,9 +138,12 @@ def build_stock_chart_analysis_chain(
     api_key: str,
     model: str,
     temperature: float = 0.35,
+    max_tokens: int | None = 400,
+    request_timeout: float = 90.0,
+    http_async_client: httpx.AsyncClient | None = None,
     referer: str | None = None,
     app_title: str = "OptiTrade",
-):
+) -> Runnable:
     """
     LCEL chain: prompt -> ChatOpenAI (OpenRouter-compatible) -> string output.
 
@@ -96,13 +155,21 @@ def build_stock_chart_analysis_chain(
     if referer:
         headers["HTTP-Referer"] = referer
 
-    llm = ChatOpenAI(
-        model=model,
-        temperature=temperature,
-        api_key=api_key,
-        base_url=OPENROUTER_BASE,
-        default_headers=headers,
-    )
+    llm_kwargs: dict[str, Any] = {
+        "model": model,
+        "temperature": temperature,
+        "api_key": api_key,
+        "base_url": OPENROUTER_BASE,
+        "default_headers": headers,
+        "request_timeout": request_timeout,
+        "max_retries": 1,
+    }
+    if max_tokens is not None:
+        llm_kwargs["max_tokens"] = max_tokens
+    if http_async_client is not None:
+        llm_kwargs["http_async_client"] = http_async_client
+
+    llm = ChatOpenAI(**llm_kwargs)
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", SYSTEM_PROMPT),
@@ -121,7 +188,8 @@ class StockChartAnalysisService:
         *,
         openrouter_api_key: str,
         openrouter_model: str | None = None,
-        recent_bars_for_prompt: int = 48,
+        recent_bars_for_prompt: int | None = None,
+        http_async_client: httpx.AsyncClient | None = None,
     ) -> None:
         self._charts = stock_chart_service
         self._api_key = openrouter_api_key
@@ -129,10 +197,27 @@ class StockChartAnalysisService:
         self._model = (openrouter_model or env_model).strip()
         if not self._model:
             self._model = "minimax/minimax-m2.7"
-        self._recent_bars = max(8, min(recent_bars_for_prompt, 120))
+        env_bars = _parse_recent_bars_for_prompt()
+        bars = (
+            recent_bars_for_prompt
+            if recent_bars_for_prompt is not None
+            else env_bars
+        )
+        self._recent_bars = max(8, min(bars, 120))
+        self._chain = build_stock_chart_analysis_chain(
+            api_key=self._api_key,
+            model=self._model,
+            temperature=_parse_temperature(),
+            max_tokens=_parse_max_output_tokens(),
+            request_timeout=_parse_request_timeout(),
+            http_async_client=http_async_client,
+        )
 
     async def analyze(self, params: StockChartParams) -> StockChartAnalysisResponse:
+        profile = stock_chart_profiling_enabled()
+        t0 = time.perf_counter()
         chart = await self._charts.fetch_chart(params)
+        t1 = time.perf_counter()
         candles = chart.candles
         momentum = build_momentum_snapshot(candles)
         technical = build_technical_snapshot(candles)
@@ -143,12 +228,10 @@ class StockChartAnalysisService:
             else "explicit from/to"
         )
         recent_json = _recent_candles_json(candles, self._recent_bars)
-        chain = build_stock_chart_analysis_chain(
-            api_key=self._api_key,
-            model=self._model,
-        )
+        t2 = time.perf_counter()
+        t3 = time.perf_counter()
         try:
-            analysis = await chain.ainvoke(
+            analysis = await self._chain.ainvoke(
                 {
                     "symbol": chart.symbol,
                     "interval": chart.interval.value,
@@ -162,6 +245,17 @@ class StockChartAnalysisService:
             )
         except Exception as exc:
             raise RuntimeError(f"OpenRouter analysis failed: {exc}") from exc
+        t4 = time.perf_counter()
+        if profile:
+            log_stock_chart_stages(
+                chart.symbol,
+                {
+                    "fmp_fetch": (t1 - t0) * 1000,
+                    "analytics_prompt_prep": (t2 - t1) * 1000,
+                    "openrouter_ainvoke": (t4 - t3) * 1000,
+                    "total": (t4 - t0) * 1000,
+                },
+            )
         return StockChartAnalysisResponse(
             symbol=chart.symbol,
             interval=chart.interval,

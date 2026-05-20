@@ -160,6 +160,22 @@ Firebase Admin.
 
 - Header: `Authorization: Bearer <firebase-id-token>`
 - Response: `{ "uid": "...", "email": "..." }`
+## Portfolio API
+
+The portfolio widget API is available as a FastAPI service. Routes use `/api/...`
+directly, without a `/v1` prefix.
+
+```bash
+cd apps/backend
+python -m src.portfolio_api --host 127.0.0.1 --port 8000
+```
+
+Endpoints:
+
+- `GET /health`: service health check.
+- `GET /api/portfolio`: portfolio positions, summary metrics, sector allocation, and intraday history.
+- `POST /api/paper-portfolio`: creates a paper portfolio record for later DB persistence.
+- `POST /api/portfolio/connect`: validates broker connection settings for the widget's IBKR panel.
 
 ## Paths
 

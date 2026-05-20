@@ -1,0 +1,14 @@
+{
+  "id": "ibkr",
+  "status": "connected",
+  "broker": "IBKR",
+  "name": "IBKR",
+  "settings": {
+    "host": "127.0.0.1",
+    "port": 7496,
+    "clientId": 1
+  },
+  "accountId": "U15952238",
+  "syncedAt": "2026-05-16T06:59:23.288995+00:00",
+  "lastError": null
+}

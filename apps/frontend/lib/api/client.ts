@@ -3,7 +3,11 @@
  * Handles communication with FastAPI backend
  */
 
-import type { StockChartAnalysisResponse, StockChartResponse } from '@/lib/stock-chart-bridge';
+import type {
+  StockChartAnalysisResponse,
+  StockChartResponse,
+  StockChartSupportResistanceResponse,
+} from '@/lib/stock-chart-bridge';
 import {
   AuthenticatedUserResponse,
   ApiError,
@@ -235,6 +239,23 @@ export async function getStockChartAnalysis(
   const q = stockChartQueryString(params);
   return fetchWithErrorHandling<StockChartAnalysisResponse>(
     `${BACKEND_URL}/api/ai/widget/stock-chart?${q}`,
+    {
+      method: 'GET',
+      signal: params.signal,
+    },
+  );
+}
+
+/**
+ * Support / resistance overlay levels from ``GET /api/ai/widget/stock-chart/support-resistance``
+ * (same query shape as stock chart; ``FMP_API_KEY`` only on the server).
+ */
+export async function getStockChartSupportResistance(
+  params: GetStockChartParams,
+): Promise<StockChartSupportResistanceResponse> {
+  const q = stockChartQueryString(params);
+  return fetchWithErrorHandling<StockChartSupportResistanceResponse>(
+    `${BACKEND_URL}/api/ai/widget/stock-chart/support-resistance?${q}`,
     {
       method: 'GET',
       signal: params.signal,

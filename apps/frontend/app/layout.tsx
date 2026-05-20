@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={fontGeist}>
-      <body>
+    <html lang="en" className={fontGeist} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         {children}
       </body>
     </html>

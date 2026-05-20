@@ -66,6 +66,18 @@ export interface StockChartAnalysisResponse {
   model_id: string;
 }
 
+/** ``GET /api/ai/widget/stock-chart/support-resistance`` — OHLC-derived levels for chart overlays. */
+export interface StockChartSupportResistanceResponse {
+  symbol: string;
+  interval: string;
+  range: string | null;
+  from: string;
+  to: string;
+  support: number | null;
+  resistance: number | null;
+  method: string;
+}
+
 export function chartIntervalToApi(interval: ChartInterval): StockChartApiInterval {
   switch (interval) {
     case '1m':

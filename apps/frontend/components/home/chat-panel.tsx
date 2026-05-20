@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, Send, Wifi, WifiOff } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { compactMarkdownComponents } from '@/lib/compact-markdown-components';
+import { Renderer } from '@openuidev/react-lang';
+import { openuiLibrary } from '@openuidev/react-ui/genui-lib';
 import { useNanobot } from '@/lib/use-nanobot';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { useChatContextStore } from '@/contexts/chat-context-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,23 +22,73 @@ function StatusDot({ status }: { status: ReturnType<typeof useNanobot>['status']
   return <WifiOff className="size-3.5 text-destructive" aria-label="Disconnected" />;
 }
 
+const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
+  p: ({ children }) => <p className="mb-1.5 last:mb-0">{children}</p>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  ul: ({ children }) => <ul className="my-1 ml-4 list-disc space-y-0.5">{children}</ul>,
+  ol: ({ children }) => <ol className="my-1 ml-4 list-decimal space-y-0.5">{children}</ol>,
+  li: ({ children }) => <li className="leading-5">{children}</li>,
+  h1: ({ children }) => <h1 className="mb-1 text-sm font-semibold">{children}</h1>,
+  h2: ({ children }) => <h2 className="mb-1 text-sm font-semibold">{children}</h2>,
+  h3: ({ children }) => <h3 className="mb-0.5 text-xs font-semibold">{children}</h3>,
+  pre: ({ children }) => (
+    <pre className="my-1.5 overflow-x-auto rounded bg-black/10 p-2 text-xs">{children}</pre>
+  ),
+  code: ({ children }) => (
+    <code className="rounded bg-black/10 px-1 font-mono text-xs">{children}</code>
+  ),
+  table: ({ children }) => (
+    <div className="my-2 overflow-x-auto rounded border border-border text-xs">
+      <table className="w-full border-collapse">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-muted/60">{children}</thead>,
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => <tr className="border-b border-border/50 last:border-0">{children}</tr>,
+  th: ({ children }) => (
+    <th className="px-2 py-1.5 text-left font-semibold">{children}</th>
+  ),
+  td: ({ children }) => <td className="px-2 py-1.5">{children}</td>,
+  blockquote: ({ children }) => (
+    <blockquote className="my-1.5 border-l-2 border-primary/50 pl-3 opacity-80 italic">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="my-2 border-border/50" />,
+  a: ({ children, href }) => (
+    <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">
+      {children}
+    </a>
+  ),
+};
+
+function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
+  if (text.trimStart().startsWith('root =')) {
+    return <Renderer library={openuiLibrary} response={text} isStreaming={isStreaming} />;
+  }
+  return (
+    <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+      {text}
+    </Markdown>
+  );
+}
+
 function MessageBubble({ role, text, isStreaming }: { role: string; text: string; isStreaming?: boolean }) {
   const isUser = role === 'user';
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start w-full'}`}>
       <div
-        className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-5 ${
+        className={`rounded-2xl px-3 py-2 text-sm leading-5 ${
           isUser
-            ? 'bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap break-words'
-            : 'bg-card text-card-foreground border border-border rounded-bl-sm'
+            ? 'max-w-[80%] bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap break-words'
+            : 'w-full bg-card text-card-foreground border border-border rounded-bl-sm break-words overflow-hidden'
         }`}
       >
         {isUser ? (
           text
         ) : (
-          <Markdown remarkPlugins={[remarkGfm]} components={compactMarkdownComponents}>
-            {text}
-          </Markdown>
+          <SmartRenderer text={text} isStreaming={isStreaming} />
         )}
         {isStreaming && (
           <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse rounded-sm bg-current opacity-60" />
@@ -46,17 +99,24 @@ function MessageBubble({ role, text, isStreaming }: { role: string; text: string
 }
 
 export function ChatPanel() {
-  const { messages, status, send, reconnect } = useNanobot();
+  const { messages, status, isProcessing, send, reconnect } = useNanobot();
+  const { contexts, removeContext, clearAll } = useChatContextStore();
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isProcessing]);
 
   function handleSend() {
     if (!input.trim()) return;
-    send(input);
+    let messagePayload = input.trim();
+    if (contexts.length > 0) {
+      const contextBlock = contexts.map((c) => `${c.label}: ${c.text}`).join('\n');
+      messagePayload = `[Widget Context]\n${contextBlock}\n\nUser: ${messagePayload}`;
+      clearAll();
+    }
+    send(messagePayload);
     setInput('');
   }
 
@@ -74,14 +134,16 @@ export function ChatPanel() {
       <Card className="flex h-full min-h-0 flex-col">
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Chat</CardTitle>
-          <button
-            onClick={status === 'disconnected' || status === 'error' ? reconnect : undefined}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-            title={status}
-          >
-            <StatusDot status={status} />
-            <span className="capitalize">{status}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={status === 'disconnected' || status === 'error' ? reconnect : undefined}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              title={status}
+            >
+              <StatusDot status={status} />
+              <span className="capitalize">{status}</span>
+            </button>
+          </div>
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 px-4">
@@ -100,10 +162,41 @@ export function ChatPanel() {
                   isStreaming={message.isStreaming}
                 />
               ))}
+              {isProcessing && (
+                <div className="flex justify-start">
+                  <div className="bg-card text-card-foreground border-border rounded-2xl rounded-bl-sm border px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <span className="bg-muted-foreground/60 size-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+                      <span className="bg-muted-foreground/60 size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+                      <span className="bg-muted-foreground/60 size-1.5 animate-bounce rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={bottomRef} />
             </div>
           </ScrollArea>
 
+          {contexts.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {contexts.map((ctx) => (
+                <div
+                  key={ctx.widgetId}
+                  className="bg-primary/10 border-primary/30 text-primary flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
+                >
+                  <span className="font-medium">{ctx.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeContext(ctx.widgetId)}
+                    className="hover:text-primary-foreground/80 text-primary-foreground/60 transition-colors"
+                    aria-label={`Remove ${ctx.label} from context`}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="bg-muted/20 border-input focus-within:border-ring focus-within:ring-ring/50 flex flex-col rounded-3xl border transition-colors focus-within:ring-2">
             <Textarea
               placeholder={isConnected ? 'Ask anything… (Enter to send)' : 'Connecting…'}
