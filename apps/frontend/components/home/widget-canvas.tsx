@@ -617,6 +617,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
                       >
                         <WidgetProvider
                           isEditMode={isEditMode}
+                          widgetId={placement.id}
                           onDelete={() => clearWidget(placement.id)}
                         >
                           <WidgetRenderer widgetType={placement.widgetType} />

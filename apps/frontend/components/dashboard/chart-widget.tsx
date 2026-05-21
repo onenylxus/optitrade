@@ -54,8 +54,12 @@ export function ChartWidget({
   const pieCategoryKey = categoryKey ?? xKey;
   const resolvedShowLegend = showLegend ?? (chartType === 'pie' || seriesKeys.length > 1);
 
+  const seriesKey = valueKey ?? valueKeys?.[0] ?? 'value';
+  const rows = data.map(d => `${d[xKey ?? 'label']}: ${d[seriesKey]}`).join(', ');
+  const contextText = `${props.title} (${chartType} chart): ${rows}`;
+
   return (
-    <BaseWidget {...props}>
+    <BaseWidget {...props} contextData={{ label: props.title, text: contextText }}>
       <ChartContainer config={config} className="h-56 w-full aspect-auto">
         {chartType === 'bar' ? (
           <BarChart data={data}>

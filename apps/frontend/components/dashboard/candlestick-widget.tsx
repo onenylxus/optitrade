@@ -1,6 +1,13 @@
 'use client';
 
-import type { CandlestickData, IChartApi, ISeriesApi, LineData, Time } from 'lightweight-charts';
+import type {
+  CandlestickData,
+  IChartApi,
+  IPriceLine,
+  ISeriesApi,
+  LineData,
+  Time,
+} from 'lightweight-charts';
 import {
   CandlestickSeries,
   ColorType,
@@ -18,7 +25,11 @@ import {
   type ChartInterval,
   type ChartTimeframe,
 } from '@/lib/candlestick-timeframes';
-import { getStockChart, getStockChartAnalysis } from '@/lib/api/client';
+import {
+  getStockChart,
+  getStockChartAnalysis,
+  getStockChartSupportResistance,
+} from '@/lib/api/client';
 import {
   chartIntervalToApi,
   chartTimeframeToApiQuery,
@@ -33,7 +44,7 @@ import {
 } from '@/lib/technical-indicators';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import { BaseWidget } from './base-widget';
 import { CollapsibleStockAnalysis } from './collapsible-stock-analysis';
 
@@ -77,6 +88,8 @@ const STUDY_COLORS = {
   bbMiddle: 'rgb(100, 116, 139)',
   bbLower: 'rgb(148, 163, 184)',
   rsi: '#a855f7',
+  aiSupport: '#0d9488',
+  aiResistance: '#ea580c',
 } as const;
 
 function fmt2(n: number) {
@@ -183,6 +196,9 @@ function CandlestickStudyLegend({
   showMA,
   showBB,
   showRSI,
+  showAiSr,
+  aiSupport,
+  aiResistance,
 }: {
   lastBar: CandlestickData<Time> | undefined;
   maPoint: LineData<Time> | undefined;
@@ -191,6 +207,9 @@ function CandlestickStudyLegend({
   showMA: boolean;
   showBB: boolean;
   showRSI: boolean;
+  showAiSr: boolean;
+  aiSupport: number | null;
+  aiResistance: number | null;
 }) {
   if (!lastBar) {
     return null;
@@ -274,6 +293,28 @@ function CandlestickStudyLegend({
           <span className="font-medium text-foreground">{fmt2(rsiPoint.value)}</span>
         </div>
       ) : null}
+      {showAiSr && aiSupport !== null && Number.isFinite(aiSupport) ? (
+        <div className="mt-1 flex items-center gap-1.5 border-t border-border/50 pt-1 tabular-nums">
+          <span
+            className="h-0.5 w-3 shrink-0 rounded-full"
+            style={{ backgroundColor: STUDY_COLORS.aiSupport }}
+            aria-hidden
+          />
+          <span className="text-muted-foreground">AI support</span>
+          <span className="font-medium text-foreground">{fmt2(aiSupport)}</span>
+        </div>
+      ) : null}
+      {showAiSr && aiResistance !== null && Number.isFinite(aiResistance) ? (
+        <div className="mt-1 flex items-center gap-1.5 border-t border-border/50 pt-1 tabular-nums">
+          <span
+            className="h-0.5 w-3 shrink-0 rounded-full"
+            style={{ backgroundColor: STUDY_COLORS.aiResistance }}
+            aria-hidden
+          />
+          <span className="text-muted-foreground">AI resistance</span>
+          <span className="font-medium text-foreground">{fmt2(aiResistance)}</span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -286,6 +327,8 @@ type SeriesRefs = {
   bbMiddle: ISeriesApi<'Line'> | null;
   bbLower: ISeriesApi<'Line'> | null;
   rsi: ISeriesApi<'Line'> | null;
+  aiSupport: IPriceLine | null;
+  aiResistance: IPriceLine | null;
 };
 
 const emptySeriesRefs = (): SeriesRefs => ({
@@ -296,6 +339,8 @@ const emptySeriesRefs = (): SeriesRefs => ({
   bbMiddle: null,
   bbLower: null,
   rsi: null,
+  aiSupport: null,
+  aiResistance: null,
 });
 
 export interface CandlestickWidgetProps extends Omit<
@@ -367,6 +412,9 @@ export function CandlestickWidget({
   const aiCacheRef = React.useRef<Map<string, { analysis: string; modelId: string }>>(
     new Map(),
   );
+  const srCacheRef = React.useRef<
+    Map<string, { support: number | null; resistance: number | null }>
+  >(new Map());
 
   const [internalTf, setInternalTf] = React.useState<ChartTimeframe>(defaultTimeframe);
   const [internalIv, setInternalIv] = React.useState<ChartInterval>(() =>
@@ -379,6 +427,8 @@ export function CandlestickWidget({
   const [showMA, setShowMA] = React.useState(false);
   const [showBB, setShowBB] = React.useState(false);
   const [showRSI, setShowRSI] = React.useState(false);
+  /** Horizontal AI support/resistance price lines (when ``useStockApi`` provides levels). */
+  const [showAiSr, setShowAiSr] = React.useState(true);
 
   const [symbols, setSymbols] = React.useState<string[]>(() =>
     normalizeSymbolList(defaultSymbols, 3),
@@ -393,6 +443,9 @@ export function CandlestickWidget({
   const [apiAiModel, setApiAiModel] = React.useState<string | null>(null);
   const [apiAiLoading, setApiAiLoading] = React.useState(false);
   const [apiAiError, setApiAiError] = React.useState<string | null>(null);
+
+  const [apiSrSupport, setApiSrSupport] = React.useState<number | null>(null);
+  const [apiSrResistance, setApiSrResistance] = React.useState<number | null>(null);
 
   const timeframe = timeframeProp ?? internalTf;
   const interval = intervalProp ?? internalIv;
@@ -542,6 +595,63 @@ export function CandlestickWidget({
 
     return () => ac.abort();
   }, [useStockApi, dataProp, useAiAnalysis, activeSymbol, timeframe, interval]);
+
+  React.useEffect(() => {
+    if (!useStockApi || dataProp !== undefined) {
+      setApiSrSupport(null);
+      setApiSrResistance(null);
+      return undefined;
+    }
+    if (!activeSymbol) {
+      setApiSrSupport(null);
+      setApiSrResistance(null);
+      return undefined;
+    }
+
+    const apiInterval = chartIntervalToApi(interval);
+    const q = chartTimeframeToApiQuery(timeframe);
+    const cacheKey = `sr|${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+    const cached = srCacheRef.current.get(cacheKey);
+    if (cached) {
+      setApiSrSupport(cached.support);
+      setApiSrResistance(cached.resistance);
+      return undefined;
+    }
+
+    setApiSrSupport(null);
+    setApiSrResistance(null);
+    const ac = new AbortController();
+
+    void (async () => {
+      try {
+        const res = await getStockChartSupportResistance({
+          symbol: activeSymbol,
+          interval: apiInterval,
+          range: q.range,
+          from: q.from,
+          to: q.to,
+          signal: ac.signal,
+        });
+        if (ac.signal.aborted) {
+          return;
+        }
+        const levels = {
+          support: res.support ?? null,
+          resistance: res.resistance ?? null,
+        };
+        srCacheRef.current.set(cacheKey, levels);
+        setApiSrSupport(levels.support);
+        setApiSrResistance(levels.resistance);
+      } catch {
+        if (!ac.signal.aborted) {
+          setApiSrSupport(null);
+          setApiSrResistance(null);
+        }
+      }
+    })();
+
+    return () => ac.abort();
+  }, [useStockApi, dataProp, activeSymbol, timeframe, interval]);
 
   const resolvedData = React.useMemo(() => {
     if (dataProp !== undefined) {
@@ -721,6 +831,8 @@ export function CandlestickWidget({
       bbMiddle,
       bbLower,
       rsi: null,
+      aiSupport: null,
+      aiResistance: null,
     };
 
     let resizeObserver: ResizeObserver | null = null;
@@ -870,6 +982,66 @@ export function CandlestickWidget({
     chart.priceScale('right', 0).setAutoScale(true);
   }, [resolvedData, showMA, showBB, showRSI, indicatorLines]);
 
+  /** Lightweight Charts horizontal price lines (TradingView-style scale labels via ``title``). */
+  React.useEffect(() => {
+    const r = seriesRefs.current;
+    const candle = r.candle;
+    if (!candle) {
+      return;
+    }
+
+    if (r.aiSupport) {
+      candle.removePriceLine(r.aiSupport);
+      r.aiSupport = null;
+    }
+    if (r.aiResistance) {
+      candle.removePriceLine(r.aiResistance);
+      r.aiResistance = null;
+    }
+
+    if (!useStockApi || dataProp !== undefined || !showAiSr) {
+      return;
+    }
+
+    const showSup = apiSrSupport !== null && Number.isFinite(apiSrSupport);
+    const showRes = apiSrResistance !== null && Number.isFinite(apiSrResistance);
+    if (!showSup && !showRes) {
+      return;
+    }
+
+    if (showSup) {
+      r.aiSupport = candle.createPriceLine({
+        price: apiSrSupport as number,
+        color: STUDY_COLORS.aiSupport,
+        lineWidth: 2,
+        lineStyle: LineStyle.LargeDashed,
+        axisLabelVisible: true,
+        title: 'AI Support',
+      });
+    }
+
+    if (showRes) {
+      r.aiResistance = candle.createPriceLine({
+        price: apiSrResistance as number,
+        color: STUDY_COLORS.aiResistance,
+        lineWidth: 2,
+        lineStyle: LineStyle.LargeDashed,
+        axisLabelVisible: true,
+        title: 'AI Resistance',
+      });
+    }
+  }, [
+    apiSrSupport,
+    apiSrResistance,
+    showAiSr,
+    useStockApi,
+    dataProp,
+    resolvedData.length,
+    borderVisible,
+    priceLineVisible,
+    timeVisible,
+  ]);
+
   const studyLegendProps = React.useMemo(() => {
     const lastBar = resolvedData[resolvedData.length - 1];
     const maPoint = showMA ? indicatorLines.ma[indicatorLines.ma.length - 1] : undefined;
@@ -952,7 +1124,7 @@ export function CandlestickWidget({
   const variantClasses = candlestickVariantClassNames(variant);
 
   return (
-    <BaseWidget {...props} summary={summaryContent} className={cn(variantClasses.root, className)}>
+    <BaseWidget {...props} summary={summaryContent} contextData={{ label: props.title ?? 'Candlestick Chart', text: `${props.title ?? 'Candlestick Chart'} — ${summaryContent}` }} className={cn(variantClasses.root, className)}>
       {showSymbolTabs ? (
         <div className="mb-2 flex flex-col gap-2">
           <div
@@ -1061,53 +1233,77 @@ export function CandlestickWidget({
           {showIndicatorToggles ? (
             <div
               className={cn(
-                'flex flex-wrap items-baseline gap-x-0.5 gap-y-1',
+                'flex flex-wrap items-center gap-x-2 gap-y-1',
                 showControls && 'border-t border-border pt-2',
               )}
             >
-              <span className="pr-1 text-xs text-muted-foreground">Indicators</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                aria-pressed={showMA}
-                aria-label="Moving average"
-                onClick={() => setShowMA((v) => !v)}
-                className={indicatorToggleButtonClass(showMA)}
-              >
-                MA <span className={indicatorToggleSuffixClass(showMA)}>({MA_PERIOD})</span>
-              </Button>
-              <span className="select-none px-0.5 text-muted-foreground/40" aria-hidden>
-                ·
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                aria-pressed={showBB}
-                aria-label="Bollinger Bands"
-                onClick={() => setShowBB((v) => !v)}
-                className={indicatorToggleButtonClass(showBB)}
-              >
-                BB{' '}
-                <span className={indicatorToggleSuffixClass(showBB)}>
-                  ({BB_PERIOD},{BB_MULTIPLIER}σ)
+              <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-0.5 gap-y-1">
+                <span className="pr-1 text-xs text-muted-foreground">Indicators</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  aria-pressed={showMA}
+                  aria-label="Moving average"
+                  onClick={() => setShowMA((v) => !v)}
+                  className={indicatorToggleButtonClass(showMA)}
+                >
+                  MA <span className={indicatorToggleSuffixClass(showMA)}>({MA_PERIOD})</span>
+                </Button>
+                <span className="select-none px-0.5 text-muted-foreground/40" aria-hidden>
+                  ·
                 </span>
-              </Button>
-              <span className="select-none px-0.5 text-muted-foreground/40" aria-hidden>
-                ·
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                aria-pressed={showRSI}
-                aria-label="RSI"
-                onClick={() => setShowRSI((v) => !v)}
-                className={indicatorToggleButtonClass(showRSI)}
-              >
-                RSI <span className={indicatorToggleSuffixClass(showRSI)}>({RSI_PERIOD})</span>
-              </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  aria-pressed={showBB}
+                  aria-label="Bollinger Bands"
+                  onClick={() => setShowBB((v) => !v)}
+                  className={indicatorToggleButtonClass(showBB)}
+                >
+                  BB{' '}
+                  <span className={indicatorToggleSuffixClass(showBB)}>
+                    ({BB_PERIOD},{BB_MULTIPLIER}σ)
+                  </span>
+                </Button>
+                <span className="select-none px-0.5 text-muted-foreground/40" aria-hidden>
+                  ·
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  aria-pressed={showRSI}
+                  aria-label="RSI"
+                  onClick={() => setShowRSI((v) => !v)}
+                  className={indicatorToggleButtonClass(showRSI)}
+                >
+                  RSI <span className={indicatorToggleSuffixClass(showRSI)}>({RSI_PERIOD})</span>
+                </Button>
+              </div>
+              {useStockApi && dataProp === undefined ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  aria-pressed={showAiSr}
+                  aria-label="AI Support and Resistance levels on chart"
+                  onClick={() => setShowAiSr((v) => !v)}
+                  className={cn(
+                    indicatorToggleButtonClass(showAiSr),
+                    'ml-auto inline-flex shrink-0 items-center gap-1',
+                  )}
+                >
+                  <Bot className="h-3.5 w-3.5 opacity-90" aria-hidden />
+                  <span>
+                    AI{' '}
+                    <span className={indicatorToggleSuffixClass(showAiSr)}>
+                      Support/Resistance
+                    </span>
+                  </span>
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -1127,6 +1323,9 @@ export function CandlestickWidget({
           showMA={showMA}
           showBB={showBB}
           showRSI={showRSI}
+          showAiSr={showAiSr && useStockApi && dataProp === undefined}
+          aiSupport={apiSrSupport}
+          aiResistance={apiSrResistance}
         />
       </div>
     </BaseWidget>

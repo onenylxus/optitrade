@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { openuiChatLibrary, openuiChatPromptOptions } from '@openuidev/react-ui/genui-lib';
 
 export type MessageRole = 'user' | 'assistant';
 
@@ -15,12 +16,16 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'er
 
 const WS_URL = 'ws://178.128.213.162:8765/?client_id=OptiTrade';
 
+const OPENUI_SYSTEM_PROMPT = openuiChatLibrary.prompt(openuiChatPromptOptions);
+
 export function useNanobot() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
+  const [isProcessing, setIsProcessing] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const streamBufferRef = useRef<Map<string, string>>(new Map());
   const streamMsgIdRef = useRef<Map<string, string>>(new Map());
+  const isFirstMessageRef = useRef(true);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -39,6 +44,7 @@ export function useNanobot() {
         if (data.event === 'ready') {
           setStatus('connected');
         } else if (data.event === 'delta') {
+          setIsProcessing(false);
           const { stream_id, text } = data as { stream_id: string; text: string };
 
           if (!streamMsgIdRef.current.has(stream_id)) {
@@ -70,6 +76,7 @@ export function useNanobot() {
             streamBufferRef.current.delete(stream_id);
           }
         } else if (data.event === 'message') {
+          setIsProcessing(false);
           setMessages((prev) => [
             ...prev,
             { id: `msg-${Date.now()}`, role: 'assistant', text: data.text as string },
@@ -93,7 +100,15 @@ export function useNanobot() {
     if (!trimmed || wsRef.current?.readyState !== WebSocket.OPEN) return;
 
     setMessages((prev) => [...prev, { id: `msg-${Date.now()}-user`, role: 'user', text: trimmed }]);
-    wsRef.current?.send(trimmed);
+
+    let payload = trimmed;
+    if (isFirstMessageRef.current) {
+      payload = `${OPENUI_SYSTEM_PROMPT}\n\nUser: ${trimmed}`;
+      isFirstMessageRef.current = false;
+    }
+
+    setIsProcessing(true);
+    wsRef.current?.send(payload);
   }, []);
 
   const reconnect = useCallback(() => {
@@ -103,5 +118,5 @@ export function useNanobot() {
     connect();
   }, [connect]);
 
-  return { messages, status, send, reconnect };
+  return { messages, status, isProcessing, send, reconnect };
 }

@@ -88,7 +88,7 @@ export const initialPlacements: WidgetPlacement[] = [
   {
     id: 'widget-news-1',
     widgetType: 'news',
-    col: 13,
+    col: 0,
     row: 12,
     colSpan: 8,
     rowSpan: 8,
