@@ -98,14 +98,14 @@ def main():
     )
     grpc_thread.start()
 
-    news_thread = threading.Thread(
-        target=run_news_pipeline_loop,
-        args=(10,),
-        daemon=True,
-        name="NewsPipelineThread"
-    )
-    news_thread.start()
-    print("Background news pipeline thread started")
+    # news_thread = threading.Thread(
+    #     target=run_news_pipeline_loop,
+    #     args=(10,),
+    #     daemon=True,
+    #     name="NewsPipelineThread"
+    # )
+    # news_thread.start()
+    # print("Background news pipeline thread started")
 
     # Start REST server in main thread
     try:
