@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  type User,
 } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ type AuthMode = 'signin' | 'register';
 export function AuthPortal() {
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [firebaseAuth, setFirebaseAuth] = useState<ReturnType<typeof getFirebaseAuth> | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [backendProfile, setBackendProfile] = useState<AuthenticatedUserResponse | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -49,8 +51,11 @@ export function AuthPortal() {
     }
 
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+      setFirebaseUser(user);
+
       if (!user) {
         setBackendProfile(null);
+        setErrorMessage(null);
         return;
       }
 
@@ -92,11 +97,15 @@ export function AuthPortal() {
         }
 
         const idToken = await credential.user.getIdToken(true);
-        await syncSession(idToken);
+        void syncSession(idToken).catch((error) => {
+          setErrorMessage(error instanceof Error ? error.message : 'Unable to sync profile.');
+        });
       } else {
         const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
         const idToken = await credential.user.getIdToken(true);
-        await syncSession(idToken);
+        void syncSession(idToken).catch((error) => {
+          setErrorMessage(error instanceof Error ? error.message : 'Unable to sync profile.');
+        });
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Authentication failed.');
@@ -114,6 +123,7 @@ export function AuthPortal() {
 
     try {
       await signOut(firebaseAuth);
+      setFirebaseUser(null);
       setBackendProfile(null);
       setErrorMessage(null);
     } catch (error) {
@@ -123,7 +133,7 @@ export function AuthPortal() {
     }
   }
 
-  const isAuthenticated = backendProfile != null;
+  const isAuthenticated = firebaseUser != null;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">

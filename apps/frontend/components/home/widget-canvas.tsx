@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
 import {
   DRAWER_WIDGET_MIME,
   GRID_CELL_HEIGHT_REM,
@@ -16,6 +17,10 @@ import { WidgetProvider } from '@/contexts/widget-context';
 import { WidgetRenderer } from '@/components/home/widget-renderer';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { loadWidgetLayoutString, saveWidgetLayoutString } from '@/lib/firebase/widget-layout-store';
+import { getFirebaseAuth } from '@/lib/firebase/client';
+import { isFirebaseConfigReady } from '@/lib/firebase/config';
+import { deserializeWidgetLayout, serializeWidgetLayout } from '@/lib/widget-layout-serialization';
 import { cn } from '@/lib/utils';
 
 interface WidgetCanvasProps {
@@ -208,10 +213,14 @@ const getInitialNormalizationColumns = (items: WidgetPlacement[]) => {
 
 export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: WidgetCanvasProps) {
   const canvasWidthRef = useRef<HTMLDivElement | null>(null);
+  const backgroundSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedLayoutRef = useRef<string | null>(null);
   const [gridColumns, setGridColumns] = useState(1);
   const [placements, setPlacements] = useState<WidgetPlacement[]>(() =>
     normalizePlacements(initialPlacements, getInitialNormalizationColumns(initialPlacements)),
   );
+  const [authenticatedUserId, setAuthenticatedUserId] = useState<string | null>(null);
+  const [isRemoteLayoutReady, setIsRemoteLayoutReady] = useState(false);
   const [draggedWidget, setDraggedWidget] = useState<{
     widgetType: WidgetType;
     sourceWidgetId: string | null;
@@ -287,6 +296,131 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     () => normalizePlacements(placements, gridColumns),
     [gridColumns, placements],
   );
+  const serializedLayout = useMemo(
+    () => serializeWidgetLayout(normalizedPlacements),
+    [normalizedPlacements],
+  );
+  const serializedLayoutRef = useRef(serializedLayout);
+
+  useEffect(() => {
+    serializedLayoutRef.current = serializedLayout;
+  }, [serializedLayout]);
+
+  useEffect(() => {
+    if (!isFirebaseConfigReady()) {
+      setIsRemoteLayoutReady(true);
+      return;
+    }
+
+    let unsubscribe: (() => void) | null = null;
+
+    try {
+      const firebaseAuth = getFirebaseAuth();
+      unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        setIsRemoteLayoutReady(!user);
+        setAuthenticatedUserId(user?.uid ?? null);
+      });
+    } catch {
+      setIsRemoteLayoutReady(true);
+      return;
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authenticatedUserId) {
+      setIsRemoteLayoutReady(true);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsRemoteLayoutReady(false);
+
+    void (async () => {
+      try {
+        const layoutString = await loadWidgetLayoutString(authenticatedUserId);
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (!layoutString) {
+          lastSavedLayoutRef.current = serializedLayoutRef.current;
+          return;
+        }
+
+        const parsedPlacements = deserializeWidgetLayout(layoutString);
+        if (!parsedPlacements) {
+          lastSavedLayoutRef.current = serializedLayoutRef.current;
+          return;
+        }
+
+        const normalizedLoadedPlacements = normalizePlacements(
+          parsedPlacements,
+          getInitialNormalizationColumns(parsedPlacements),
+        );
+        const normalizedLoadedLayout = serializeWidgetLayout(normalizedLoadedPlacements);
+        lastSavedLayoutRef.current = normalizedLoadedLayout;
+        setPlacements(normalizedLoadedPlacements);
+      } catch {
+        if (!isCancelled) {
+          lastSavedLayoutRef.current = serializedLayoutRef.current;
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsRemoteLayoutReady(true);
+        }
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [authenticatedUserId]);
+
+  useEffect(() => {
+    if (!authenticatedUserId || !isRemoteLayoutReady) {
+      return;
+    }
+
+    if (lastSavedLayoutRef.current === serializedLayout) {
+      return;
+    }
+
+    if (backgroundSaveTimeoutRef.current) {
+      clearTimeout(backgroundSaveTimeoutRef.current);
+    }
+
+    backgroundSaveTimeoutRef.current = setTimeout(() => {
+      void (async () => {
+        try {
+          await saveWidgetLayoutString(authenticatedUserId, serializedLayout);
+          lastSavedLayoutRef.current = serializedLayout;
+        } catch {
+          // Ignore transient save failures and retry on the next layout edit.
+        }
+      })();
+    }, 1000);
+
+    return () => {
+      if (backgroundSaveTimeoutRef.current) {
+        clearTimeout(backgroundSaveTimeoutRef.current);
+      }
+    };
+  }, [authenticatedUserId, isRemoteLayoutReady, serializedLayout]);
+
+  useEffect(() => {
+    return () => {
+      if (backgroundSaveTimeoutRef.current) {
+        clearTimeout(backgroundSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const occupiedCells = useMemo(() => {
     return buildOccupancy(normalizedPlacements);

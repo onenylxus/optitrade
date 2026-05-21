@@ -2,6 +2,7 @@
 
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 import { firebaseConfig, isFirebaseConfigReady } from './config';
 
@@ -21,6 +22,10 @@ export function getFirebaseApp() {
 
 export function getFirebaseAuth() {
   return getAuth(getFirebaseApp());
+}
+
+export function getFirebaseDb() {
+  return getFirestore(getFirebaseApp());
 }
 
 export async function getCurrentUserIdToken(forceRefresh = false): Promise<string> {
