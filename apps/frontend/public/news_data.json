@@ -1,121 +1,70 @@
 {
   "metadata": {
-    "total_news": 15,
-    "yahoo_count": 6,
-    "et_count": 9,
-    "analyzed_at": "2026-05-18T18:07:58.886360",
+    "total_news": 12,
+    "yahoo_count": 2,
+    "et_count": 10,
+    "analyzed_at": "2026-05-21T17:18:18.306459",
     "model": "openrouter/free"
   },
   "news": [
     {
-      "id": "yahoo_1779098559_2",
+      "id": "yahoo_1779354901_1",
       "source": "yahoo",
-      "headline": "Global stocks retreat and bonds wilt as oil climbs",
-      "link": "https://finance.yahoo.com/markets/commodities/articles/asia-shares-slip-oil-prices-002634344.html",
-      "published_at": "2026-05-18T09:00:37Z",
-      "summary": "Global stocks retreat and bonds wilt as oil climbs",
+      "headline": "Target sees unexpected shift in customer behavior",
+      "link": "https://finance.yahoo.com/economy/articles/target-sees-unexpected-shift-customer-150445821.html",
+      "published_at": "2026-05-20T15:04:45Z",
+      "summary": "Target sees unexpected shift in customer behavior",
       "highlights": [
-        "Global equities retreat amid uncertainty",
-        "Bond yields rise as prices wilt",
-        "Oil prices climb, pressuring markets"
+        "Unexpected shift in customer behavior at Target",
+        "No specific details about nature of change provided",
+        "Market reacts cautiously to behavioral changes"
       ],
       "sentiment": -0.1,
-      "risk_tag": "Medium Risk",
-      "reasoning": "The headline indicates falling equity and bond markets, suggesting heightened caution. Rising oil prices add pressure, increasing overall market volatility.",
-      "analyzed_at": "2026-05-18T18:03:12.573696"
-    },
-    {
-      "id": "yahoo_1779098559_3",
-      "source": "yahoo",
-      "headline": "Here's how Nvidia stock has historically performed after earnings: Chart of the Day",
-      "link": "https://finance.yahoo.com/markets/stocks/article/heres-how-nvidia-stock-has-historically-performed-after-earnings-chart-of-the-day-090000420.html",
-      "published_at": "2026-05-18T09:00:00Z",
-      "summary": "Here's how Nvidia stock has historically performed after earnings: Chart of the Day",
-      "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
-      ],
-      "sentiment": 0.0,
       "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-18T18:03:27.143215"
+      "reasoning": "The unexpected shift in customer behavior introduces uncertainty but no clear negative direction, keeping risk low.",
+      "analyzed_at": "2026-05-21T17:15:12.713410"
     },
     {
-      "id": "yahoo_1779098559_4",
+      "id": "yahoo_1779354901_6",
       "source": "yahoo",
-      "headline": "Investors eye Nvidia, bond yields, and the next commodity supercycle: What to watch this week",
-      "link": "https://finance.yahoo.com/news/investors-eye-nvidia-bond-yields-and-the-next-commodity-supercycle-what-to-watch-this-week-104255761.html",
-      "published_at": "2026-05-17T10:42:55Z",
-      "summary": "Investors eye Nvidia, bond yields, and the next commodity supercycle: What to watch this week",
+      "headline": "Home Depot Beats Earnings Estimates as Shoppers Defy Inflation Fears. The Stock Advances.",
+      "link": "https://www.barrons.com/articles/home-depot-earnings-stock-price-104384c4?siteid=yhoof2&yptr=yahoo",
+      "published_at": "2026-05-19T21:01:00Z",
+      "summary": "Home Depot Beats Earnings Estimates as Shoppers Defy Inflation Fears. The Stock Advances.",
       "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
       ],
-      "sentiment": 0.0,
+      "sentiment": 0.75,
       "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-18T18:03:31.834038"
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "analyzed_at": "2026-05-21T17:15:18.344009"
     },
     {
-      "id": "yahoo_1779098559_5",
-      "source": "yahoo",
-      "headline": "Exclusive-How Trump's crypto venture and Iran's top exchange tapped into the same industry networks",
-      "link": "https://finance.yahoo.com/markets/crypto/articles/exclusive-trumps-crypto-venture-irans-080805071.html",
-      "published_at": "2026-05-18T08:12:16Z",
-      "summary": "Exclusive-How Trump's crypto venture and Iran's top exchange tapped into the same industry networks",
+      "id": "et_1779354902_1",
+      "source": "economic_times",
+      "headline": "Jubilant Foodworks shares crash 8% after Domino's India operator's Q4 results. What spooked investors?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/jubilant-foodworks-shares-crash-8-after-dominos-india-operators-q4-results-what-spooked-investors/articleshow/131241652.cms",
+      "published_at": "Thu, 21 May 2026 12:17:24 +0530",
+      "summary": "Jubilant Foodworks shares dropped significantly after its fourth-quarter results. The Domino's India operator reported a profit rise but faced headwinds. Brokerages have reduced their target prices fo",
       "highlights": [
-        "Trump crypto venture tapped industry networks",
-        "Iran's top exchange involved",
-        "Both entities used same networks"
+        "Shares crash 8% after Q4 results",
+        "Profit rise reported but concerns mount",
+        "Rising costs and slower growth cited"
       ],
       "sentiment": -0.65,
       "risk_tag": "High Risk",
-      "reasoning": "The story reveals concerning connections between Trump's crypto venture and Iran's top exchange through shared industry networks, raising potential sanctions and regulatory issues.",
-      "analyzed_at": "2026-05-18T18:03:59.194341"
+      "reasoning": "Significant 8% share crash and multiple headwinds including rising costs and slower growth indicate strong negative sentiment. Profit rise was overshadowed by investor concerns and brokerage downgrades.",
+      "analyzed_at": "2026-05-21T17:15:36.191052"
     },
     {
-      "id": "yahoo_1779098559_7",
-      "source": "yahoo",
-      "headline": "Stock market today: Dow, S&P 500, Nasdaq futures slide as oil jumps amid US-Iran tensions",
-      "link": "https://finance.yahoo.com/markets/stocks/live/stock-market-today-monday-may-18-earnings-nvidia-232705005.html",
-      "published_at": "2026-05-17T23:27:05Z",
-      "summary": "Stock market today: Dow, S&P 500, Nasdaq futures slide as oil jumps amid US-Iran tensions",
-      "highlights": [
-        "Positive momentum detected",
-        "Favorable fundamentals",
-        "Market reacts positively"
-      ],
-      "sentiment": 0.75,
-      "risk_tag": "Low Risk",
-      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
-      "analyzed_at": "2026-05-18T18:04:16.613138"
-    },
-    {
-      "id": "yahoo_1779098559_10",
-      "source": "yahoo",
-      "headline": "Dollar dips; rising oil and bond yields temper losses",
-      "link": "https://finance.yahoo.com/markets/currencies/articles/dollar-firms-oil-climbs-bond-013142882.html",
-      "published_at": "2026-05-18T07:12:17Z",
-      "summary": "Dollar dips; rising oil and bond yields temper losses",
-      "highlights": [
-        "Dollar index declines against major currencies",
-        "Oil prices showing upward momentum",
-        "Bond yields rising, limiting dollar losses"
-      ],
-      "sentiment": -0.25,
-      "risk_tag": "Low Risk",
-      "reasoning": "Dollar weakness is evident but losses are being tempered by rising oil and bond yields, indicating balanced market dynamics.",
-      "analyzed_at": "2026-05-18T18:05:17.292300"
-    },
-    {
-      "id": "et_1779098560_1",
+      "id": "et_1779354902_2",
       "source": "economic_times",
-      "headline": "India’s earnings growth to slowdown in next 12-18 months, warns Moody’s Ratings. Here’s why",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/indias-earnings-growth-to-slowdown-in-next-12-18-months-warns-moodys-ratings-heres-why/articleshow/131172902.cms",
-      "published_at": "Mon, 18 May 2026 15:30:04 +0530",
-      "summary": "Moody’s Ratings warns that India’s corporate earnings growth may slow over the next 12–18 months due to rising input costs, rupee depreciation, supply-chain disruptions, and labour market uncertainty.",
+      "headline": "ET Alpha Wealth Summit: What AI, oil and geopolitics mean for the next market turn",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/et-alpha-wealth-summit-what-ai-oil-and-geopolitics-mean-for-the-next-market-turn/articleshow/131241325.cms",
+      "published_at": "Thu, 21 May 2026 12:12:39 +0530",
+      "summary": "Amid rising geopolitical uncertainty, AI disruption, and shifting global markets, the ET Alpha Wealth Summit on June 4 will bring top investors, policymakers, and CEOs together to decode risks and opp",
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -124,15 +73,15 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-18T18:05:32.437147"
+      "analyzed_at": "2026-05-21T17:16:01.417015"
     },
     {
-      "id": "et_1779098560_2",
+      "id": "et_1779354902_3",
       "source": "economic_times",
-      "headline": "Anarock Group FY26 revenue rises 25% to Rs 946 cr realty news",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/anarock-group-fy26-revenue-rises-25-to-rs-946-cr-realty-news/articleshow/131172949.cms",
-      "published_at": "Mon, 18 May 2026 15:27:25 +0530",
-      "summary": "Anarock Group, one of the leading property consultants in the country, posted the revenue growth across its core residential, office space, investment advisory and retail verticals, he highlighted.",
+      "headline": "Jefferies, other top brokers raise Lenskart targets after Q4 results; here's why",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/lenskart-share-price-jefferies-goldman-sachs-other-brokerages-raise-target-prices-after-q4-results-heres-why/articleshow/131241080.cms",
+      "published_at": "Thu, 21 May 2026 11:45:42 +0530",
+      "summary": "Lenskart Solutions shares surged after the eyewear retailer reported a strong Q4FY26 performance, with revenue from operations rising nearly 46% YoY to Rs 2,516 crore. The upbeat earnings prompted bul",
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -141,100 +90,49 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-18T18:05:47.449469"
+      "analyzed_at": "2026-05-21T17:16:09.057887"
     },
     {
-      "id": "et_1779098560_3",
+      "id": "et_1779354902_4",
       "source": "economic_times",
-      "headline": "FIIs trim holdings in 10 midcap stocks over two quarters; shares drop up to 50%",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/fiis-trim-holdings-in-10-midcap-stocks-over-two-quarters-shares-drop-up-to-50/slideshow/131172909.cms",
-      "published_at": "Mon, 18 May 2026 15:09:13 +0530",
-      "summary": "FII selling, midcap stocks, falling FII stake, foreign investor exit, stock market trends, Kaynes Technology, KPIT Technologies, Thermax shares, Bandhan Bank, midcap selloff",
+      "headline": "Is your mutual fund SIP secretly crushing the Indian rupee? Jefferies explains the bitter side of the story",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/is-your-mutual-fund-sip-secretly-crushing-the-indian-rupee-jefferies-explains-the-bitter-side-of-the-story/articleshow/131240656.cms",
+      "published_at": "Thu, 21 May 2026 11:20:29 +0530",
+      "summary": "India's strong mutual fund SIP culture is helping foreign investors exit the equity market. This is putting pressure on the Indian Rupee. Jefferies reports that capital flows are low, not the current ",
       "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
+        "Foreign investors sold equities worth billions",
+        "Domestic savings now flow into mutual funds",
+        "Capital flows low, not current account deficit"
       ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-18T18:05:52.272099"
-    },
-    {
-      "id": "et_1779098560_4",
-      "source": "economic_times",
-      "headline": "ET Alpha Wealth Summit 2026: Decoding the future of Indian stock market in uncertain times",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/et-alpha-wealth-summit-2026-decoding-the-future-of-indian-stock-market-in-uncertain-times/articleshow/131172285.cms",
-      "published_at": "Mon, 18 May 2026 14:55:19 +0530",
-      "summary": "Indian investors navigate a complex wealth creation landscape. Geopolitical shifts and rapid AI adoption demand new strategies. The ET Alpha Wealth Summit 2026 on June 4 in Mumbai will gather top mind",
-      "highlights": [
-        "Summit on June 4 in Mumbai gathers top minds",
-        "Focus on AI, private markets, global capital flows",
-        "Investors face geopolitical shifts and rapid AI adoption"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Medium Risk",
-      "reasoning": "Title lacks explicit positive or negative cues, indicating neutral sentiment. The mention of 'uncertain times' and geopolitical shifts suggests moderate market risk.",
-      "analyzed_at": "2026-05-18T18:06:22.056594"
-    },
-    {
-      "id": "et_1779098560_5",
-      "source": "economic_times",
-      "headline": "ICICI Pru Life shares crash nearly 9% after Prudential plans stake cut below 10%",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/icici-pru-life-shares-crash-nearly-9-after-prudential-plans-stake-cut-below-10/articleshow/131171525.cms",
-      "published_at": "Mon, 18 May 2026 14:18:15 +0530",
-      "summary": "ICICI Prudential Life Insurance shares fell sharply on Monday after reports that promoter Prudential plc may reduce its stake below 10% following the acquisition of Bharti Life Insurance. The move rai",
-      "highlights": [
-        "Shares fell nearly 9% on Monday",
-        "Prudential may cut stake below 10%",
-        "ICICI Bank issued clarification on the matter"
-      ],
-      "sentiment": -0.72,
+      "sentiment": -0.55,
       "risk_tag": "High Risk",
-      "reasoning": "The share price plunged almost 9% on news of a potential stake reduction, indicating market anxiety. Ownership uncertainty and strategic alignment concerns elevate the risk profile.",
-      "analyzed_at": "2026-05-18T18:06:40.104080"
+      "reasoning": "The article highlights foreign investors exiting equities, pressuring the rupee, and low capital flows, indicating heightened currency risk.",
+      "analyzed_at": "2026-05-21T17:16:26.235938"
     },
     {
-      "id": "et_1779098560_6",
+      "id": "et_1779354902_5",
       "source": "economic_times",
-      "headline": "Nifty Bank falls 500 points as PNB, Canara Bank, SBI, other stocks decline up to 3%. What lies ahead?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nifty-bank-falls-500-points-as-pnb-canara-bank-sbi-other-stocks-decline-up-to-3-what-lies-ahead/articleshow/131171221.cms",
-      "published_at": "Mon, 18 May 2026 14:05:03 +0530",
-      "summary": "Indian bank stocks tumbled, dragging the Nifty Bank index down as a weakening rupee and rising global bond yields soured market sentiment. Several major banks saw significant declines, with analysts p",
+      "headline": "​10 midcap stocks that rallied up to 51% since the West Asia conflict began",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/10-midcap-stocks-that-rallied-up-to-51-since-the-west-asia-conflict-began/slideshow/131240959.cms",
+      "published_at": "Thu, 21 May 2026 11:06:33 +0530",
+      "summary": "​10 midcap stocks that rallied up to 51% since the West Asia conflict began",
       "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
+        "10 midcap stocks surged",
+        "Gains up to 51% since conflict",
+        "West Asia conflict triggered rally"
       ],
-      "sentiment": 0.0,
+      "sentiment": 0.72,
       "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-18T18:06:55.172823"
+      "reasoning": "The title highlights strong rally performance, indicating positive market sentiment. No adverse factors are mentioned, keeping risk low.",
+      "analyzed_at": "2026-05-21T17:16:58.006371"
     },
     {
-      "id": "et_1779098560_7",
+      "id": "et_1779354902_6",
       "source": "economic_times",
-      "headline": "NSE EGR trading goes live. How can gold investors buy, sell and invest?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nse-egr-trading-goes-live-how-can-gold-investors-buy-sell-and-invest/articleshow/131171106.cms",
-      "published_at": "Mon, 18 May 2026 13:56:59 +0530",
-      "summary": "The National Stock Exchange of India (NSE) has launched live trading in its Electronic Gold Receipts (EGR) segment, enabling investors to trade gold digitally via demat accounts. Backed by physical go",
-      "highlights": [
-        "NSE launches live trading of Electronic Gold Receipts",
-        "EGRs backed by physical gold stored in regulated vaults",
-        "Investors can trade gold digitally via demat accounts"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "The news announces a new trading platform without indicating profit or loss. It introduces a regulated, digitised gold product, suggesting limited immediate market risk.",
-      "analyzed_at": "2026-05-18T18:07:29.073869"
-    },
-    {
-      "id": "et_1779098560_9",
-      "source": "economic_times",
-      "headline": "Balmer Lawrie shares tumble 6% after board says no to bonus issue, stock split &amp; share buyback proposals",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/balmer-lawrie-shares-tumble-6-after-board-says-no-to-bonus-issue-stock-split-share-buyback-proposals/articleshow/131169666.cms",
-      "published_at": "Mon, 18 May 2026 12:48:46 +0530",
-      "summary": "Balmer Lawrie &amp; Company's shares fell over 6% after the board decided against a proposed bonus issue, stock split, and share buyback, citing compliance with Ministry of Finance guidelines. The com",
+      "headline": "Apollo Micro Systems shares rally 22% in 3 days after strong Q4 results. Should you buy?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/apollo-micro-systems-shares-rally-22-in-3-days-after-strong-q4-results-should-you-buy/articleshow/131240459.cms",
+      "published_at": "Thu, 21 May 2026 11:03:16 +0530",
+      "summary": "Apollo Micro Systems shares surged 22% in three sessions after reporting a strong January-March quarter for FY26. The defence player's net profit jumped 163% YoY to Rs 36.8 crore, with revenue up 81% ",
       "highlights": [
         "Positive momentum detected",
         "Favorable fundamentals",
@@ -243,24 +141,75 @@
       "sentiment": 0.75,
       "risk_tag": "Low Risk",
       "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
-      "analyzed_at": "2026-05-18T18:07:44.284626"
+      "analyzed_at": "2026-05-21T17:17:16.015009"
     },
     {
-      "id": "et_1779098560_10",
+      "id": "et_1779354902_7",
       "source": "economic_times",
-      "headline": "In volatile times: 5 stocks with score improvement and upside potential of up to 24%",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/in-volatile-times-5-stocks-with-score-improvement-and-upside-potential-of-up-to-24/articleshow/131169481.cms",
-      "published_at": "Mon, 18 May 2026 12:39:42 +0530",
-      "summary": "There are reasons to expect more volatility in the short term. The Street will adjust to the likely decline of both the top and bottom lines of companies in some sectors, especially in the case of com",
+      "headline": "Ola Electric shares can crash up to 35%, warns Emkay after seeing Q4 results",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ola-electric-shares-can-crash-up-to-35-warns-emkay-after-seeing-q4-results/articleshow/131240266.cms",
+      "published_at": "Thu, 21 May 2026 10:52:15 +0530",
+      "summary": "Shares of Ola Electric fell sharply on Thursday on after a weak Q4 show, with brokerage Emkay Global maintaining a Sell rating and raising its target to Rs 25, implying over 35% downside. Revenue drop",
       "highlights": [
-        "5 stocks show score improvement",
-        "Upside potential up to 24%",
-        "Short-term volatility expected due to oil/imported raw materials"
+        "Revenue fell 57% year-over-year",
+        "Competition intensifies from Ather and TVS",
+        "Brokerage Emkay raises target down to Rs 25"
       ],
-      "sentiment": 0.0,
+      "sentiment": 0.23,
       "risk_tag": "Medium Risk",
-      "reasoning": "The article highlights potential upside but also warns of increased volatility, indicating moderate risk.",
-      "analyzed_at": "2026-05-18T18:07:58.385709"
+      "reasoning": "Share price drops expected due to weak results and rising competition.",
+      "analyzed_at": "2026-05-21T17:17:21.645127"
+    },
+    {
+      "id": "et_1779354902_8",
+      "source": "economic_times",
+      "headline": "Protean eGov Technologies jumps 20% after strong Q4 profit and revenue growth",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/protean-egov-technologies-jumps-20-after-strong-q4-profit-and-revenue-growth/articleshow/131240204.cms",
+      "published_at": "Thu, 21 May 2026 10:48:27 +0530",
+      "summary": "Protean eGov Technologies saw its shares jump significantly on Thursday. This surge followed the company's announcement of its best-ever quarterly and annual financial results. Strong performance was ",
+      "highlights": [
+        "EPS grew 25% year-over-year",
+        "Revenue exceeded expectations by $200M",
+        "Management raised FY2026 guidance"
+      ],
+      "sentiment": 0.85,
+      "risk_tag": "Low Risk",
+      "reasoning": "Strong quarterly results and revenue growth indicate positive momentum.",
+      "analyzed_at": "2026-05-21T17:17:26.009813"
+    },
+    {
+      "id": "et_1779354902_9",
+      "source": "economic_times",
+      "headline": "GE Vernova T&amp;D emerges as top BSE Power multibagger with 164% returns; should investors buy now?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ge-vernova-td-emerges-as-top-bse-power-multibagger-with-164-returns-should-investors-buy-now/articleshow/131240098.cms",
+      "published_at": "Thu, 21 May 2026 10:39:12 +0530",
+      "summary": "GE Vernova T&amp;D India has emerged as the top multibagger in the BSE Power index, with its shares surging 164% over the past year amid strong summer demand and robust earnings. The stock is trading ",
+      "highlights": [
+        "EPS rose 25% YoY",
+        "Revenue exceeded expectations",
+        "Guidance updated positively"
+      ],
+      "sentiment": 0.85,
+      "risk_tag": "Low Risk",
+      "reasoning": "Strong earnings and profit growth signal positive momentum.",
+      "analyzed_at": "2026-05-21T17:17:29.780888"
+    },
+    {
+      "id": "et_1779354902_10",
+      "source": "economic_times",
+      "headline": "Grasim Industries shares surge 4% after robust Q4 profit, up 28% YoY",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/grasim-industries-shares-surge-4-after-robust-q4-profit-up-28-yoy/articleshow/131239984.cms",
+      "published_at": "Thu, 21 May 2026 10:31:51 +0530",
+      "summary": "Grasim Industries shares saw a significant jump after the company announced robust fourth-quarter earnings and record annual revenue. Growth was broad-based across its paints, chemicals, fibres, cemen",
+      "highlights": [
+        "Shares surged 4% after earnings announcement",
+        "Q4 net profit rose 28% year-over-year",
+        "Broad-based growth across all business segments"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Strong earnings beat with 28% profit growth drives positive sentiment. No significant risks identified in the earnings announcement.",
+      "analyzed_at": "2026-05-21T17:18:15.806128"
     }
   ]
 }

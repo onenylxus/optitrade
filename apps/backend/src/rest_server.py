@@ -130,16 +130,16 @@ def create_app() -> FastAPI:
             )
 
     #for kay testing only remove error
-        # @app.get("/api/stock/chart")
-        # async def dummy_stock_chart():
-        #     return []
+        @app.get("/api/stock/chart")
+        async def dummy_stock_chart():
+            return []
 
-        # @app.get("/api/ai/widget/stock-chart")
-        # async def dummy_ai_widget():
+        @app.get("/api/ai/widget/stock-chart")
+        async def dummy_ai_widget():
 
-        #     return {"status": "disabled", "data": []}
-    app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
-    app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
+            return {"status": "disabled", "data": []}
+    #app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
+    #app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
 
     service = GreeterService()
 
