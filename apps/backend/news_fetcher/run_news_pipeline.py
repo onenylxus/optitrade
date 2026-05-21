@@ -16,7 +16,7 @@ def start_analysis():
     print("="*60)
 
     pipeline = NewsAnalysisPipeline(limit_per_source=10)
-    results = pipeline.run()
+    results = pipeline.run_once()
 
     print(f"\n✅ Analysis completed!")
     print(f"📁 Results saved to: {OUTPUT_FILE}")

@@ -253,15 +253,37 @@ class NewsAnalysisPipeline:
         print("\n📡 Step 1: Fetching News")
         print("-"*50)
         all_news = []
-        yahoo_news = YahooNewsFetcher.fetch(limit=self.limit_per_source)
-        all_news.extend(yahoo_news)
-        et_news = EconomicTimesFetcher.fetch(limit=self.limit_per_source)
-        all_news.extend(et_news)
+        try:
+          yahoo_news = YahooNewsFetcher.fetch(limit=self.limit_per_source)
+          all_news.extend(yahoo_news)
+          et_news = EconomicTimesFetcher.fetch(limit=self.limit_per_source)
+          all_news.extend(et_news)
 
-        print(f"\n📊 Fetch completed: {len(all_news)} raw news items")
+          print(f"\n📊 Fetch completed: {len(all_news)} raw news items")
+
+        except Exception as e:
+            print(f"⚠️ [Network/API Error] Unable to retrieve the latest news: {e}")
+            print("Attempt to load historical data for the front-end to avoid a blank screen upon startup")
+
+            if os.path.exists(OUTPUT_FILE):
+                try:
+                    with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+                        old_data = json.load(f)
+                        print("✅ Successfully loaded historical cache data! The front-end will continue to display the old news.")
+                        return old_data.get("news", [])
+                except Exception:
+                    pass
+            print("❌ The historical JSON file does not exist, and no fallback data is available.")
+            return []
+
+        if not all_news:
+            print("No new news was retrieved; historical data was automatically read and returned...")
+            if os.path.exists(OUTPUT_FILE):
+                with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+                    return json.load(f).get("news", [])
+            return []
 
         filtered_news = FinanceNewsFilter.filter_list(all_news)
-
 
         unique_news = Deduplicator.deduplicate(filtered_news)
         print(f"🔄 After basic filtering and deduplication, {len(unique_news)} financial news items remain.")
@@ -270,6 +292,9 @@ class NewsAnalysisPipeline:
 
         if not new_news_to_analyze:
             print("\n All the news has been analyzed; there are no new headlines!")
+            if os.path.exists(OUTPUT_FILE):
+                with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+                    return json.load(f).get("news", [])
             return []
 
         print(f"\nDetected {len(new_news_to_analyze)} new news items! Preparing for Cloud AI analysis...")
@@ -334,7 +359,27 @@ class NewsAnalysisPipeline:
 
         combined_news = new_results + existing_news
 
-        combined_news = combined_news[:100]
+        def parse_date(item):
+            pub_time = item.get("published_at", "")
+            if "T" in pub_time:
+                try:
+                    clean_time = pub_time.split(".")[0].replace("Z", "")
+                    return datetime.strptime(clean_time, "%Y-%m-%dT%H:%M:%S")
+                except Exception:
+                    pass
+
+            if "," in pub_time:
+                try:
+                    clean_time = pub_time.split(" +")[0].split(" -")[0]
+                    return datetime.strptime(clean_time, "%a, %d %b %Y %H:%M:%S")
+                except Exception:
+                    pass
+
+            return datetime.min
+
+        combined_news.sort(key=parse_date, reverse=True)
+
+        combined_news = combined_news[:50]
 
         output = {
             "metadata": {
