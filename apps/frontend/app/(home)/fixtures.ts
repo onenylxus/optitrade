@@ -9,7 +9,8 @@ export type WidgetType =
   | 'portfolio-small'
   | 'portfolio-medium'
   | 'portfolio-large'
-  | 'news';
+  | 'news'
+  | 'earnings';
 
 export interface WidgetSpan {
   cols: number;
@@ -41,6 +42,7 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   'portfolio-medium': { cols: 6, rows: 7 },
   'portfolio-large': { cols: 8, rows: 8 },
   news: { cols: 8, rows: 8 },
+  earnings: { cols: 6, rows: 5 },
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
@@ -53,6 +55,7 @@ export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }
   { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '6x7' },
   { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '8x8' },
   { id: 'news', label: 'News Widget', sizeLabel: '8x8' },
+  { id: 'earnings', label: 'Earnings Calendar', sizeLabel: '6x5' },
 ];
 
 export const initialPlacements: WidgetPlacement[] = [
