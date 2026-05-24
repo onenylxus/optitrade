@@ -163,6 +163,93 @@ function buildCandlestickInsight(
   return parts.join(' ');
 }
 
+function buildCandlestickChatContext(params: {
+  activeSymbol: string;
+  symbols: string[];
+  timeframe: ChartTimeframe;
+  interval: ChartInterval;
+  data: CandlestickData<Time>[];
+  showMA: boolean;
+  showBB: boolean;
+  showRSI: boolean;
+  indicators: IndicatorBundle;
+  showAiSr: boolean;
+  apiSrSupport: number | null;
+  apiSrResistance: number | null;
+}): string {
+  const {
+    activeSymbol,
+    symbols,
+    timeframe,
+    interval,
+    data,
+    showMA,
+    showBB,
+    showRSI,
+    indicators,
+    showAiSr,
+    apiSrSupport,
+    apiSrResistance,
+  } = params;
+
+  const first = data[0];
+  const last = data[data.length - 1];
+  const lines: string[] = [];
+
+  const pricePart = last ? ` — $${fmt2(last.close)}` : '';
+  lines.push(
+    `Current Stock Focus: ${activeSymbol || '—'} (${timeframe}, ${interval})${pricePart}`,
+  );
+  lines.push(`Watchlist: ${symbols.length ? symbols.join(', ') : '—'}`);
+
+  if (first && last && data.length >= 2) {
+    const pct = first.close !== 0 ? ((last.close - first.close) / first.close) * 100 : 0;
+    const sign = pct >= 0 ? '+' : '';
+    const tone = pct > 0.05 ? 'up' : pct < -0.05 ? 'down' : 'flat';
+    lines.push(`Momentum: ${sign}${pct.toFixed(2)}% (${tone}) over ${timeframe}`);
+  } else {
+    lines.push('Momentum: —');
+  }
+
+  const indicatorParts: string[] = [];
+  if (showMA && indicators.ma.length > 0) {
+    const ma = indicators.ma[indicators.ma.length - 1];
+    if (ma && last) {
+      const rel = last.close >= ma.value ? 'above' : 'below';
+      indicatorParts.push(`MA(${MA_PERIOD}) ${fmt2(ma.value)} (${rel})`);
+    }
+  }
+  if (showBB && indicators.bb.lower.length > 0) {
+    const lo = indicators.bb.lower[indicators.bb.lower.length - 1];
+    const up = indicators.bb.upper[indicators.bb.upper.length - 1];
+    if (lo && up) {
+      indicatorParts.push(`BB ${fmt2(lo.value)}–${fmt2(up.value)}`);
+    }
+  }
+  if (showRSI && indicators.rsi.length > 0) {
+    const rsi = indicators.rsi[indicators.rsi.length - 1];
+    if (rsi) {
+      indicatorParts.push(`RSI(${RSI_PERIOD}) ${fmt2(rsi.value)}`);
+    }
+  }
+  lines.push(`Indicators: ${indicatorParts.length ? indicatorParts.join(', ') : 'none active'}`);
+
+  if (showAiSr && (apiSrSupport != null || apiSrResistance != null)) {
+    const levels: string[] = [];
+    if (apiSrSupport != null) {
+      levels.push(`support $${fmt2(apiSrSupport)}`);
+    }
+    if (apiSrResistance != null) {
+      levels.push(`resistance $${fmt2(apiSrResistance)}`);
+    }
+    lines.push(`Key Levels: ${levels.join(', ')}`);
+  } else {
+    lines.push('Key Levels: —');
+  }
+
+  return lines.join('\n');
+}
+
 const selectClass = cn(
   'h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground',
   'shadow-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
@@ -1075,6 +1162,38 @@ export function CandlestickWidget({
 
   const loadAiSummary = useStockApi && dataProp === undefined && useAiAnalysis;
 
+  const contextText = React.useMemo(
+    () =>
+      buildCandlestickChatContext({
+        activeSymbol,
+        symbols,
+        timeframe,
+        interval,
+        data: resolvedData,
+        showMA,
+        showBB,
+        showRSI,
+        indicators: indicatorLines,
+        showAiSr,
+        apiSrSupport,
+        apiSrResistance,
+      }),
+    [
+      activeSymbol,
+      symbols,
+      timeframe,
+      interval,
+      resolvedData,
+      showMA,
+      showBB,
+      showRSI,
+      indicatorLines,
+      showAiSr,
+      apiSrSupport,
+      apiSrResistance,
+    ],
+  );
+
   const summaryContent = React.useMemo(() => {
     if (!loadAiSummary) {
       return (
@@ -1124,7 +1243,12 @@ export function CandlestickWidget({
   const variantClasses = candlestickVariantClassNames(variant);
 
   return (
-    <BaseWidget {...props} summary={summaryContent} contextData={{ label: props.title ?? 'Candlestick Chart', text: `${props.title ?? 'Candlestick Chart'} — ${summaryContent}` }} className={cn(variantClasses.root, className)}>
+    <BaseWidget
+      {...props}
+      summary={summaryContent}
+      contextData={{ label: props.title ?? 'Candlestick Chart', text: contextText }}
+      className={cn(variantClasses.root, className)}
+    >
       {showSymbolTabs ? (
         <div className="mb-2 flex flex-col gap-2">
           <div
