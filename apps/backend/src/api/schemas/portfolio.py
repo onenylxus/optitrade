@@ -115,6 +115,26 @@ class PortfolioPaperRequest(BaseModel):
     positions: list[dict[str, object]] | None = None
 
 
+class PortfolioEditablePosition(BaseModel):
+    id: str | None = None
+    symbol: str
+    quantity: float
+    avgPrice: float
+    currentPrice: float
+    sector: str | None = None
+
+
+class PortfolioEditableRequest(BaseModel):
+    name: str | None = None
+    positions: list[PortfolioEditablePosition] | None = None
+
+
+class PortfolioEditableResponse(BaseModel):
+    name: str
+    positions: list[PortfolioSnapshotPosition]
+    updatedAt: str
+
+
 class PortfolioPaperResponse(BaseModel):
     id: str
     name: str

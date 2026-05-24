@@ -25,6 +25,15 @@ class PortfolioController:
     def get_connection(self) -> dict:
         return self._service.get_broker_connection_status()
 
+    def get_editable_portfolio(self) -> dict:
+        try:
+            return self._service.get_editable_portfolio()
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
+
     def connect(self, payload: dict) -> dict:
         try:
             return self._service.validate_connection_request(payload)
@@ -42,6 +51,15 @@ class PortfolioController:
     def create_paper_portfolio(self, payload: dict) -> dict:
         try:
             return self._service.create_paper_portfolio(payload)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
+
+    def update_editable_portfolio(self, payload: dict) -> dict:
+        try:
+            return self._service.update_editable_portfolio(payload)
         except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

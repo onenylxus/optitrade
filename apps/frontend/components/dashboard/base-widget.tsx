@@ -116,7 +116,7 @@ const menuItemClass =
 
         <Separator className="shrink-0" />
 
-        <CardContent className="min-h-0 shrink-0 overflow-visible px-0 py-1">{children}</CardContent>
+        <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-visible px-0 py-1">{children}</CardContent>
       </div>
     </Card>
   );

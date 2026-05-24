@@ -65,6 +65,7 @@ class PortfolioService:
         self.data_dir = data_dir or Path(__file__).resolve().parents[2] / "data"
         self.positions = positions
         self.paper_portfolios_path = self.data_dir / "paper_portfolios.json"
+        self.editable_portfolio_path = self.data_dir / "editable_portfolio.json"
         self.broker_connection_path = self.data_dir / "broker_connection.json"
 
     def build_portfolio_snapshot(self) -> dict[str, Any]:
@@ -126,7 +127,7 @@ class PortfolioService:
                 )
                 connection = self.get_broker_connection_status()
 
-        return self._demo_snapshot(connection)
+        return self._editable_snapshot(connection)
 
     def validate_connection_request(self, payload: dict[str, Any]) -> dict[str, Any]:
         broker = str(payload.get("broker", "mock")).lower().strip()
@@ -219,25 +220,45 @@ class PortfolioService:
 
     def create_paper_portfolio(self, payload: dict[str, Any]) -> dict[str, Any]:
         name = str(payload.get("name", "Paper Portfolio")).strip() or "Paper Portfolio"
-        positions = payload.get("positions", [])
-        if not isinstance(positions, list):
-            raise ValueError("positions must be a list")
+        positions = self._normalize_positions_payload(payload.get("positions", []))
 
         records = self._read_paper_portfolios()
         record = {
             "id": f"paper-{len(records) + 1}",
             "name": name,
             "status": "created",
-            "positions": positions,
+            "positions": [self._position_payload(position) for position in positions],
             "createdAt": datetime.now(UTC).isoformat(),
         }
         records.append(record)
         self._write_paper_portfolios(records)
+        self._write_editable_portfolio(
+            {
+                "name": name,
+                "positions": [self._position_payload(position) for position in positions],
+                "updatedAt": datetime.now(UTC).isoformat(),
+            }
+        )
         return record
 
-    def _demo_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
-        total_value = sum(position.market_value for position in self.positions)
-        total_cost = sum(position.cost_basis for position in self.positions)
+    def get_editable_portfolio(self) -> dict[str, Any]:
+        return self._read_editable_portfolio()
+
+    def update_editable_portfolio(self, payload: dict[str, Any]) -> dict[str, Any]:
+        name = str(payload.get("name", "Portfolio Widget Portfolio")).strip() or "Portfolio Widget Portfolio"
+        positions = self._normalize_positions_payload(payload.get("positions", []))
+        record = {
+            "name": name,
+            "positions": [self._position_payload(position) for position in positions],
+            "updatedAt": datetime.now(UTC).isoformat(),
+        }
+        self._write_editable_portfolio(record)
+        return record
+
+    def _editable_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
+        positions = self._read_editable_positions()
+        total_value = sum(position.market_value for position in positions)
+        total_cost = sum(position.cost_basis for position in positions)
         pnl = total_value - total_cost
         pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
         daily_pnl = total_value * 0.012
@@ -245,9 +266,9 @@ class PortfolioService:
         return {
             "asOf": datetime.now(UTC).isoformat(),
             "baseCurrency": "USD",
-            "source": "backend" if connection["status"] == "connected" else "demo",
+            "source": "paper",
             "broker": self._broker_connection_payload_dict(connection),
-            "positions": [self._position_payload(position) for position in self.positions],
+            "positions": [self._position_payload(position) for position in positions],
             "summary": {
                 "totalValue": round(total_value, 2),
                 "totalCost": round(total_cost, 2),
@@ -258,7 +279,7 @@ class PortfolioService:
                 "marginUsage": round(total_value * 0.25, 2),
                 "buyingPower": round(total_value * 0.15, 2),
             },
-            "sectorValues": self._build_sector_values(self.positions),
+            "sectorValues": self._build_sector_values(positions),
             "history": self._build_history(total_value),
         }
 
@@ -330,6 +351,55 @@ class PortfolioService:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         with self.paper_portfolios_path.open("w", encoding="utf-8") as file:
             json.dump(records, file, indent=2)
+            file.write("\n")
+
+    def _read_editable_portfolio(self) -> dict[str, Any]:
+        if self.editable_portfolio_path.exists():
+            with self.editable_portfolio_path.open("r", encoding="utf-8") as file:
+                payload = json.load(file)
+            if not isinstance(payload, dict):
+                raise ValueError("editable portfolio store must contain an object")
+            positions = self._normalize_positions_payload(payload.get("positions", []))
+            return {
+                "name": str(payload.get("name", "Portfolio Widget Portfolio")).strip()
+                or "Portfolio Widget Portfolio",
+                "positions": [self._position_payload(position) for position in positions],
+                "updatedAt": str(payload.get("updatedAt") or datetime.now(UTC).isoformat()),
+            }
+
+        records = self._read_paper_portfolios()
+        if records:
+            latest = records[-1]
+            positions = self._normalize_positions_payload(latest.get("positions", []))
+            migrated = {
+                "name": str(latest.get("name", "Portfolio Widget Portfolio")).strip()
+                or "Portfolio Widget Portfolio",
+                "positions": [self._position_payload(position) for position in positions],
+                "updatedAt": str(
+                    latest.get("createdAt")
+                    or latest.get("updatedAt")
+                    or datetime.now(UTC).isoformat()
+                ),
+            }
+            self._write_editable_portfolio(migrated)
+            return migrated
+
+        seeded = {
+            "name": "Portfolio Widget Portfolio",
+            "positions": [self._position_payload(position) for position in self.positions],
+            "updatedAt": datetime.now(UTC).isoformat(),
+        }
+        self._write_editable_portfolio(seeded)
+        return seeded
+
+    def _read_editable_positions(self) -> tuple[Position, ...]:
+        record = self._read_editable_portfolio()
+        return self._normalize_positions_payload(record.get("positions", []))
+
+    def _write_editable_portfolio(self, record: dict[str, Any]) -> None:
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        with self.editable_portfolio_path.open("w", encoding="utf-8") as file:
+            json.dump(record, file, indent=2)
             file.write("\n")
 
     def _write_broker_connection(self, connection: dict[str, Any]) -> None:
@@ -415,3 +485,40 @@ class PortfolioService:
             port=self._safe_int(settings.get("port"), 7497),
             client_id=self._safe_int(settings.get("clientId"), 1),
         )
+
+    def _normalize_positions_payload(self, raw_positions: Any) -> tuple[Position, ...]:
+        if raw_positions is None:
+            return ()
+        if not isinstance(raw_positions, list):
+            raise ValueError("positions must be a list")
+
+        positions: list[Position] = []
+        for index, raw_position in enumerate(raw_positions, start=1):
+            if not isinstance(raw_position, dict):
+                raise ValueError("each position must be an object")
+
+            symbol = str(raw_position.get("symbol", "")).strip().upper()
+            if not symbol:
+                raise ValueError("symbol is required for each position")
+
+            position_id = str(raw_position.get("id", "")).strip() or f"position-{index}"
+            sector = str(raw_position.get("sector", "Uncategorized")).strip() or "Uncategorized"
+            positions.append(
+                Position(
+                    id=position_id,
+                    symbol=symbol,
+                    quantity=self._safe_float(raw_position.get("quantity"), "quantity"),
+                    avg_price=self._safe_float(raw_position.get("avgPrice"), "avgPrice"),
+                    current_price=self._safe_float(raw_position.get("currentPrice"), "currentPrice"),
+                    sector=sector,
+                )
+            )
+
+        return tuple(positions)
+
+    @staticmethod
+    def _safe_float(value: Any, field_name: str) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"{field_name} must be a number") from error
