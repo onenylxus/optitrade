@@ -5,7 +5,7 @@ import { Loader2, Send, Wifi, WifiOff } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Renderer } from '@openuidev/react-lang';
-import { openuiLibrary } from '@openuidev/react-ui/genui-lib';
+import { openuiChatLibrary } from '@openuidev/react-ui/genui-lib';
 import { useNanobot } from '@/lib/use-nanobot';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -65,7 +65,7 @@ const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
 
 function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
   if (text.trimStart().startsWith('root =')) {
-    return <Renderer library={openuiLibrary} response={text} isStreaming={isStreaming} />;
+    return <Renderer library={openuiChatLibrary} response={text} isStreaming={isStreaming} />;
   }
   return (
     <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
