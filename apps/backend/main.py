@@ -11,6 +11,7 @@ from protos import helloworld_pb2, helloworld_pb2_grpc
 from src.rest_server import create_app
 from src.services import GreeterService
 
+from news_fetcher.pipeline import NewsAnalysisPipeline
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
     def __init__(self, service: GreeterService):
@@ -73,6 +74,12 @@ def run_rest_server(rest_port: int = 8000):
     import asyncio
     asyncio.run(server.serve())
 
+def run_news_pipeline_loop(limit: int = 10):
+    try:
+        pipeline = NewsAnalysisPipeline(limit_per_source=limit)
+        pipeline.start_automated_loop()
+    except Exception as e:
+        print(f"News: Pipeline daemon thread experiences critical crash: {e}")
 
 def main():
     """Start both gRPC and REST servers."""
@@ -90,6 +97,15 @@ def main():
         daemon=False,
     )
     grpc_thread.start()
+
+    # news_thread = threading.Thread(
+    #     target=run_news_pipeline_loop,
+    #     args=(10,),
+    #     daemon=True,
+    #     name="NewsPipelineThread"
+    # )
+    # news_thread.start()
+    # print("Background news pipeline thread started")
 
     # Start REST server in main thread
     try:
