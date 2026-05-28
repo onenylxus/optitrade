@@ -6,7 +6,10 @@ from fastapi import HTTPException, status
 
 from src.api.schemas.ai_stock_chart import StockChartSupportResistanceResponse
 from src.api.schemas.stock_chart import ChartInterval, ChartRange
-from src.services.stock_chart_service import StockChartService, resolve_stock_chart_params
+from src.services.stock_chart_service import (
+    StockChartService,
+    resolve_stock_chart_params,
+)
 from src.services.stock_support_resistance import compute_support_resistance
 
 

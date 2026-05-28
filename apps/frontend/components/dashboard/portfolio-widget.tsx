@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Check,
@@ -15,7 +15,10 @@ import {
 import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import type { PortfolioBrokerOption, PortfolioChatContextValue } from '@/contexts/portfolio-context';
+import type {
+  PortfolioBrokerOption,
+  PortfolioChatContextValue,
+} from '@/contexts/portfolio-context';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 export interface Stock {
@@ -124,7 +127,12 @@ const BROKER_OPTIONS: BrokerOptionConfig[] = [
   { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
   { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
   { id: 'binance', label: 'Binance', supported: true, description: 'API key + secret' },
-  { id: 'mock', label: 'Paper Portfolio', supported: true, description: 'Backend-stored editable positions' },
+  {
+    id: 'mock',
+    label: 'Paper Portfolio',
+    supported: true,
+    description: 'Backend-stored editable positions',
+  },
 ];
 
 const formatCurrency = (value: number, maxDigits = 0) =>
@@ -322,13 +330,7 @@ function PerformanceChart({
   );
 }
 
-function PortfolioSourceBadge({
-  source,
-  label,
-}: {
-  source: PortfolioWidgetSource;
-  label: string;
-}) {
+function PortfolioSourceBadge({ source, label }: { source: PortfolioWidgetSource; label: string }) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium tracking-wide ${
@@ -357,7 +359,8 @@ function BrokerConnectionPanel({
   onBrokerChange: (broker: PortfolioBrokerOption) => void;
 }) {
   const [connecting, setConnecting] = useState(false);
-  const [selectedBrokerState, setSelectedBrokerState] = useState<PortfolioBrokerOption>(selectedBroker);
+  const [selectedBrokerState, setSelectedBrokerState] =
+    useState<PortfolioBrokerOption>(selectedBroker);
   const [host, setHost] = useState('127.0.0.1');
   const [port, setPort] = useState('7497');
   const [clientId, setClientId] = useState('1');
@@ -373,7 +376,9 @@ function BrokerConnectionPanel({
     const brokerId = initialConnection?.id ?? selectedBroker;
     setSelectedBrokerState(brokerId);
     setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
-    setPort(String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)));
+    setPort(
+      String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)),
+    );
     setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
     setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
     setApiKey('');
@@ -391,7 +396,9 @@ function BrokerConnectionPanel({
         await onUsePaperPortfolio();
         onBack();
       } catch (connectError) {
-        setError(connectError instanceof Error ? connectError.message : 'Unable to use paper portfolio');
+        setError(
+          connectError instanceof Error ? connectError.message : 'Unable to use paper portfolio',
+        );
       } finally {
         setConnecting(false);
       }
@@ -412,16 +419,21 @@ function BrokerConnectionPanel({
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string; detail?: string }
-          | null;
-        throw new Error(payload?.detail ?? payload?.error ?? `Broker connection API returned ${response.status}`);
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+          detail?: string;
+        } | null;
+        throw new Error(
+          payload?.detail ?? payload?.error ?? `Broker connection API returned ${response.status}`,
+        );
       }
       onBrokerChange(selectedBrokerState);
       await onConnected();
       onBack();
     } catch (connectError) {
-      setError(connectError instanceof Error ? connectError.message : 'Unable to connect to broker');
+      setError(
+        connectError instanceof Error ? connectError.message : 'Unable to connect to broker',
+      );
     } finally {
       setConnecting(false);
     }
@@ -578,7 +590,11 @@ function BrokerConnectionPanel({
                 await onUsePaperPortfolio();
                 onBack();
               } catch (connectError) {
-                setError(connectError instanceof Error ? connectError.message : 'Unable to use paper portfolio');
+                setError(
+                  connectError instanceof Error
+                    ? connectError.message
+                    : 'Unable to use paper portfolio',
+                );
               } finally {
                 setConnecting(false);
               }
@@ -612,12 +628,6 @@ function PortfolioEditorPanel({
   const [name, setName] = useState(initialName);
   const [draftStocks, setDraftStocks] = useState<Stock[]>(initialStocks);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setName(initialName);
-    setDraftStocks(initialStocks);
-    setError(null);
-  }, [initialName, initialStocks]);
 
   const updateStock = (stockId: string, patch: Partial<Stock>) => {
     setDraftStocks((current) =>
@@ -672,7 +682,8 @@ function PortfolioEditorPanel({
           </div>
           {isLiveSnapshot && (
             <div className="text-[10px] text-slate-400">
-              Live broker data is active. Saved edits will appear when you switch back to Paper Portfolio.
+              Live broker data is active. Saved edits will appear when you switch back to Paper
+              Portfolio.
             </div>
           )}
         </div>
@@ -785,7 +796,9 @@ function PortfolioEditorPanel({
         </button>
 
         {error && <div className="text-[11px] text-rose-600">{error}</div>}
-        {saveStatus === 'saved' && <div className="text-[11px] text-emerald-600">Portfolio saved.</div>}
+        {saveStatus === 'saved' && (
+          <div className="text-[11px] text-emerald-600">Portfolio saved.</div>
+        )}
         {saveStatus === 'error' && !error && (
           <div className="text-[11px] text-rose-600">Unable to save portfolio.</div>
         )}
@@ -826,10 +839,16 @@ function PortfolioWidgetSmall({
       </div>
 
       <div className="absolute right-0 top-0 z-10 flex items-center gap-1">
-        <button onClick={onOpenEditor} className="text-slate-200 transition-colors hover:text-slate-400">
+        <button
+          onClick={onOpenEditor}
+          className="text-slate-200 transition-colors hover:text-slate-400"
+        >
           <Pencil size={12} />
         </button>
-        <button onClick={onOpenSettings} className="text-slate-200 transition-colors hover:text-slate-400">
+        <button
+          onClick={onOpenSettings}
+          className="text-slate-200 transition-colors hover:text-slate-400"
+        >
           <Settings size={12} />
         </button>
       </div>
@@ -858,10 +877,16 @@ function PortfolioWidgetMedium({
       <div className="flex items-center justify-between py-2.5">
         <PortfolioSourceBadge source={source} label={sourceLabel} />
         <div className="flex items-center gap-2">
-          <button onClick={onOpenEditor} className="text-slate-300 transition-colors hover:text-slate-500">
+          <button
+            onClick={onOpenEditor}
+            className="text-slate-300 transition-colors hover:text-slate-500"
+          >
             <Pencil size={14} />
           </button>
-          <button onClick={onOpenSettings} className="text-slate-300 transition-colors hover:text-slate-500">
+          <button
+            onClick={onOpenSettings}
+            className="text-slate-300 transition-colors hover:text-slate-500"
+          >
             <Settings size={14} />
           </button>
         </div>
@@ -870,7 +895,9 @@ function PortfolioWidgetMedium({
       <div className="flex items-center justify-between border-b border-slate-50 py-3">
         <div>
           <div className="mb-0.5 text-[9px] uppercase text-slate-400">Total Value</div>
-          <div className="text-lg font-medium text-slate-900">{formatCurrency(data.totalValue)}</div>
+          <div className="text-lg font-medium text-slate-900">
+            {formatCurrency(data.totalValue)}
+          </div>
         </div>
         <div className="w-24">
           <PerformanceChart data={data.history} height={32} />
@@ -895,7 +922,9 @@ function PortfolioWidgetMedium({
                 </div>
               </div>
               <div className="flex flex-col items-end">
-                <div className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}>
+                <div
+                  className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}
+                >
                   {formatCurrency(stock.currentPrice, 1)}
                 </div>
                 <div className="text-[8px] font-mono text-slate-400">
@@ -1038,7 +1067,9 @@ function PortfolioWidgetLarge({
               </div>
             ))}
             {data.sectorValues.length === 0 && (
-              <div className="text-[10px] text-slate-400">Sector allocation will appear after you add positions.</div>
+              <div className="text-[10px] text-slate-400">
+                Sector allocation will appear after you add positions.
+              </div>
             )}
           </div>
         </div>
@@ -1072,12 +1103,14 @@ const PortfolioWidgetRoot = ({
 
   const resolvedVariant = variant ?? size ?? 'medium';
 
-  const loadPortfolio = async () => {
+  const loadPortfolio = useCallback(async () => {
     try {
       setLoading(true);
       const [snapshotResponse, editableResponse] = await Promise.all([
         fetch(portfolioApiUrl('/api/portfolio'), { headers: { Accept: 'application/json' } }),
-        fetch(portfolioApiUrl('/api/portfolio/editable'), { headers: { Accept: 'application/json' } }),
+        fetch(portfolioApiUrl('/api/portfolio/editable'), {
+          headers: { Accept: 'application/json' },
+        }),
       ]);
 
       if (!snapshotResponse.ok) {
@@ -1134,11 +1167,11 @@ const PortfolioWidgetRoot = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [setPortfolio]);
 
   useEffect(() => {
     void loadPortfolio();
-  }, [setPortfolio]);
+  }, [loadPortfolio]);
 
   const activatePaperPortfolio = async () => {
     const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
@@ -1147,10 +1180,13 @@ const PortfolioWidgetRoot = ({
       body: JSON.stringify({ broker: 'mock' }),
     });
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as
-        | { error?: string; detail?: string }
-        | null;
-      throw new Error(payload?.detail ?? payload?.error ?? `Portfolio API returned ${response.status}`);
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+        detail?: string;
+      } | null;
+      throw new Error(
+        payload?.detail ?? payload?.error ?? `Portfolio API returned ${response.status}`,
+      );
     }
     await loadPortfolio();
   };
@@ -1164,10 +1200,15 @@ const PortfolioWidgetRoot = ({
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        const errorPayload = (await response.json().catch(() => null)) as
-          | { error?: string; detail?: string }
-          | null;
-        throw new Error(errorPayload?.detail ?? errorPayload?.error ?? `Portfolio API returned ${response.status}`);
+        const errorPayload = (await response.json().catch(() => null)) as {
+          error?: string;
+          detail?: string;
+        } | null;
+        throw new Error(
+          errorPayload?.detail ??
+            errorPayload?.error ??
+            `Portfolio API returned ${response.status}`,
+        );
       }
 
       const editable = (await response.json()) as PortfolioEditableResponse;
@@ -1183,7 +1224,10 @@ const PortfolioWidgetRoot = ({
     }
   };
 
-  const portfolioData = useMemo(() => backendData ?? buildPortfolioData(stocks), [backendData, stocks]);
+  const portfolioData = useMemo(
+    () => backendData ?? buildPortfolioData(stocks),
+    [backendData, stocks],
+  );
 
   const variantProps: PortfolioVariantProps = {
     stocks,
@@ -1200,7 +1244,11 @@ const PortfolioWidgetRoot = ({
     `Daily PnL: $${portfolioData.dailyPnl.toFixed(2)}`,
     `Positions: ${
       stocks.length > 0
-        ? stocks.map((stock) => `${stock.symbol} x${stock.quantity} @ $${stock.currentPrice.toFixed(2)}`).join(', ')
+        ? stocks
+            .map(
+              (stock) => `${stock.symbol} x${stock.quantity} @ $${stock.currentPrice.toFixed(2)}`,
+            )
+            .join(', ')
         : 'none'
     }`,
   ].join('. ');
@@ -1228,6 +1276,7 @@ const PortfolioWidgetRoot = ({
         />
       ) : panelMode === 'editor' ? (
         <PortfolioEditorPanel
+          key={`${editablePortfolioName}:${JSON.stringify(editableStocks)}`}
           initialName={editablePortfolioName}
           initialStocks={editableStocks}
           saveStatus={saveStatus}

@@ -9,10 +9,10 @@ from fastapi import APIRouter, Depends
 from src.api.controllers.portfolio_controller import PortfolioController
 from src.api.deps import get_portfolio_service
 from src.api.schemas.portfolio import (
+    PortfolioConnectionResponse,
     PortfolioConnectRequest,
     PortfolioEditableRequest,
     PortfolioEditableResponse,
-    PortfolioConnectionResponse,
     PortfolioPaperRequest,
     PortfolioPaperResponse,
     PortfolioSnapshotResponse,
@@ -35,21 +35,29 @@ def portfolio_snapshot(
     return controller.get_snapshot()
 
 
-@router.get("/editable", response_model=PortfolioEditableResponse, response_model_by_alias=True)
+@router.get(
+    "/editable", response_model=PortfolioEditableResponse, response_model_by_alias=True
+)
 def editable_portfolio(
     controller: Annotated[PortfolioController, Depends(get_portfolio_controller)],
 ) -> PortfolioEditableResponse:
     return controller.get_editable_portfolio()
 
 
-@router.get("/connection", response_model=PortfolioConnectionResponse, response_model_by_alias=True)
+@router.get(
+    "/connection",
+    response_model=PortfolioConnectionResponse,
+    response_model_by_alias=True,
+)
 def portfolio_connection(
     controller: Annotated[PortfolioController, Depends(get_portfolio_controller)],
 ) -> PortfolioConnectionResponse:
     return controller.get_connection()
 
 
-@router.post("/connect", response_model=PortfolioConnectionResponse, response_model_by_alias=True)
+@router.post(
+    "/connect", response_model=PortfolioConnectionResponse, response_model_by_alias=True
+)
 def portfolio_connect(
     payload: PortfolioConnectRequest,
     controller: Annotated[PortfolioController, Depends(get_portfolio_controller)],
@@ -57,7 +65,9 @@ def portfolio_connect(
     return controller.connect(payload.model_dump(exclude_none=True))
 
 
-@router.put("/editable", response_model=PortfolioEditableResponse, response_model_by_alias=True)
+@router.put(
+    "/editable", response_model=PortfolioEditableResponse, response_model_by_alias=True
+)
 def update_editable_portfolio(
     payload: PortfolioEditableRequest,
     controller: Annotated[PortfolioController, Depends(get_portfolio_controller)],

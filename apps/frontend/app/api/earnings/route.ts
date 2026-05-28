@@ -16,7 +16,7 @@ export async function GET() {
     const fileContent = fs.readFileSync(jsonPath, 'utf-8');
     const data = JSON.parse(fileContent);
     return NextResponse.json({ earnings: data, source: 'file' });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to load earnings' }, { status: 500 });
   }
 }

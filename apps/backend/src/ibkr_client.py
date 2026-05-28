@@ -27,8 +27,8 @@ def ibkr_dependency_available() -> bool:
 def validate_ibkr_connection(settings: IbkrConnectionSettings) -> dict[str, Any]:
     if IB is None:
         raise RuntimeError(
-            "ib_insync is not installed. Run `npx nx run @optitrade/backend:add --name ib_insync` "
-            "then `npx nx run @optitrade/backend:sync`."
+            "ib_insync is not installed. Run `npx nx run @optitrade/backend:add "
+            "--name ib_insync` then `npx nx run @optitrade/backend:sync`."
         )
 
     _ensure_event_loop()
@@ -64,8 +64,8 @@ def validate_ibkr_connection(settings: IbkrConnectionSettings) -> dict[str, Any]
 def fetch_ibkr_portfolio_snapshot(settings: IbkrConnectionSettings) -> dict[str, Any]:
     if IB is None:
         raise RuntimeError(
-            "ib_insync is not installed. Run `npx nx run @optitrade/backend:add --name ib_insync` "
-            "then `npx nx run @optitrade/backend:sync`."
+            "ib_insync is not installed. Run `npx nx run @optitrade/backend:add "
+            "--name ib_insync` then `npx nx run @optitrade/backend:sync`."
         )
 
     _ensure_event_loop()
@@ -81,8 +81,12 @@ def fetch_ibkr_portfolio_snapshot(settings: IbkrConnectionSettings) -> dict[str,
 
         managed_accounts = list(ib.managedAccounts() or [])
         account_id = managed_accounts[0] if managed_accounts else None
-        account_values = ib.accountSummary(account=account_id) if account_id else ib.accountSummary()
-        portfolio_items = ib.portfolio(account=account_id) if account_id else ib.portfolio()
+        account_values = (
+            ib.accountSummary(account=account_id) if account_id else ib.accountSummary()
+        )
+        portfolio_items = (
+            ib.portfolio(account=account_id) if account_id else ib.portfolio()
+        )
 
         account_summary = _account_summary_map(account_values)
         position_payloads = [
@@ -193,21 +197,31 @@ def _instrument_sector_label(sec_type: str, symbol: str, exchange: str) -> str:
         return "Cash / FX"
     if normalized == "BOND":
         return "Bonds"
-    return f"{normalized} ({exchange})" if exchange and exchange != "Unknown" else normalized
+    return (
+        f"{normalized} ({exchange})"
+        if exchange and exchange != "Unknown"
+        else normalized
+    )
 
 
-def _sector_values(positions: list[dict[str, Any]], total_value: float) -> list[dict[str, Any]]:
+def _sector_values(
+    positions: list[dict[str, Any]], total_value: float
+) -> list[dict[str, Any]]:
     grouped: dict[str, float] = {}
     for position in positions:
         sector = str(position.get("sector") or "Uncategorized")
-        grouped[sector] = grouped.get(sector, 0.0) + float(position.get("marketValue", 0.0))
+        grouped[sector] = grouped.get(sector, 0.0) + float(
+            position.get("marketValue", 0.0)
+        )
 
     return sorted(
         [
             {
                 "sector": sector,
                 "value": round(value, 2),
-                "percent": round((value / total_value) * 100, 4) if total_value else 0.0,
+                "percent": round((value / total_value) * 100, 4)
+                if total_value
+                else 0.0,
             }
             for sector, value in grouped.items()
         ],

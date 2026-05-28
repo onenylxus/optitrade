@@ -72,14 +72,16 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
   }
 
   if (widgetType === 'news') {
-      return <NewsWidget title="Financial News" summary="AI-powered sentiment analysis" variant="medium" />;
-    }
-
-    if (widgetType === 'earnings') {
-      return <EarningsWidget title="Earnings Calendar" summary="Upcoming earnings & results" />;
-    }
-
     return (
+      <NewsWidget title="Financial News" summary="AI-powered sentiment analysis" variant="medium" />
+    );
+  }
+
+  if (widgetType === 'earnings') {
+    return <EarningsWidget title="Earnings Calendar" summary="Upcoming earnings & results" />;
+  }
+
+  return (
     <TextWidget
       title="AI Insight"
       text="Momentum remains positive across large-cap tech while breadth is narrowing. Keep position sizes controlled into the next macro event window."

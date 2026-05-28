@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -100,7 +99,7 @@ class PortfolioSnapshotResponse(BaseModel):
 
 
 class PortfolioConnectRequest(BaseModel):
-    broker: PortfolioBrokerId
+    broker: PortfolioBrokerId = PortfolioBrokerId.IBKR
     host: str | None = None
     port: int | None = None
     clientId: int | None = None

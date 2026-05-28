@@ -1,27 +1,28 @@
 """FastAPI REST server for greeter service."""
 
+import json
+import os
+import threading
 from collections.abc import Mapping
 from contextlib import asynccontextmanager
 from typing import Any
-import os
-import json
-import threading
-from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
+from news_fetcher import OUTPUT_FILE
+from news_fetcher.run_news_pipeline import start_analysis
+
+from .api.controllers.portfolio_controller import PortfolioController
+from .api.deps import get_portfolio_service
 from .api.routes.ai_routes import router as ai_router
-from .api.routes.stock_routes import router as stock_router
 from .api.routes.portfolio_routes import router as portfolio_router
+from .api.routes.stock_routes import router as stock_router
 from .firebase_auth import verify_firebase_id_token
 from .services import GreeterService
-
-from news_fetcher.run_news_pipeline import start_analysis
-from news_fetcher import OUTPUT_FILE
 
 
 class HelloRequest(BaseModel):
@@ -83,10 +84,10 @@ def get_current_user(
 
 @asynccontextmanager
 async def _rest_lifespan(app: FastAPI):
-    """Lifespan context manager for FastAPI application to manage startup and shutdown events."""
+    """Lifespan context manager for FastAPI startup and shutdown events."""
     pipeline_thread = threading.Thread(target=start_analysis, daemon=True)
     pipeline_thread.start()
-    
+
     """Shared HTTP client for OpenRouter (keep-alive)."""
     app.state.http_openrouter = httpx.AsyncClient(
         timeout=httpx.Timeout(90.0, connect=20.0),
@@ -111,7 +112,7 @@ def create_app() -> FastAPI:
         title="OptiTrade API",
         description="RESTful API for OptiTrade services",
         version="0.1.0",
-        lifespan=_rest_lifespan
+        lifespan=_rest_lifespan,
     )
 
     # Allow frontend dev servers to call REST endpoints from the browser.
@@ -131,22 +132,23 @@ def create_app() -> FastAPI:
     @app.get("/api/news")
     async def get_news_data():
         if os.path.exists(OUTPUT_FILE):
-            with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+            with open(OUTPUT_FILE, encoding="utf-8") as f:
                 data = json.load(f)
             return JSONResponse(content=data)
         else:
-
             return JSONResponse(
                 status_code=status.HTTP_202_ACCEPTED,
                 content={
-                    "message": "AI News Pipeline is running for the first time. Please refresh in a few seconds."
+                    "message": (
+                        "AI News Pipeline is running for the first time. "
+                        "Please refresh in a few seconds."
+                    )
                 },
             )
 
     app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
     app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
     app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
-
 
     service = GreeterService()
 
@@ -221,7 +223,6 @@ def create_app() -> FastAPI:
         email_value = user.get("email")
         email = str(email_value) if email_value is not None else None
         return AuthenticatedUserResponse(uid=uid, email=email)
-
 
     @app.post("/api/paper-portfolio", status_code=201, tags=["portfolio"])
     def paper_portfolio_compat(payload: dict) -> dict:

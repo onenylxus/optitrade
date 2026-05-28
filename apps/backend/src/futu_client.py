@@ -14,7 +14,9 @@ except ImportError:  # pragma: no cover - optional dependency
 
 def validate_futu_connection(host: str, port: int, market: str) -> dict[str, Any]:
     if OpenSecTradeContext is None or TrdEnv is None:
-        raise RuntimeError("futu-api is not installed. Install the futu package in the backend env.")
+        raise RuntimeError(
+            "futu-api is not installed. Install the futu package in the backend env."
+        )
 
     trd_env = _market_to_trd_env(market)
     ctx = OpenSecTradeContext(host=host, port=port, trd_env=trd_env)
@@ -39,7 +41,9 @@ def validate_futu_connection(host: str, port: int, market: str) -> dict[str, Any
 
 def fetch_futu_portfolio_snapshot(host: str, port: int, market: str) -> dict[str, Any]:
     if OpenSecTradeContext is None or TrdEnv is None:
-        raise RuntimeError("futu-api is not installed. Install the futu package in the backend env.")
+        raise RuntimeError(
+            "futu-api is not installed. Install the futu package in the backend env."
+        )
 
     trd_env = _market_to_trd_env(market)
     ctx = OpenSecTradeContext(host=host, port=port, trd_env=trd_env)
@@ -108,9 +112,16 @@ def _position_payloads(pos_df: Any) -> list[dict[str, Any]]:
         quantity = float(record.get("qty", record.get("position", 0.0)) or 0.0)
         avg_price = float(record.get("cost_price", record.get("price", 0.0)) or 0.0)
         current_price = float(record.get("price", avg_price) or avg_price)
-        market_value = float(record.get("market_val", quantity * current_price) or quantity * current_price)
+        market_value = float(
+            record.get("market_val", quantity * current_price)
+            or quantity * current_price
+        )
         unrealized_pnl = market_value - (quantity * avg_price)
-        unrealized_pnl_percent = (unrealized_pnl / (quantity * avg_price) * 100) if quantity and avg_price else 0.0
+        unrealized_pnl_percent = (
+            (unrealized_pnl / (quantity * avg_price) * 100)
+            if quantity and avg_price
+            else 0.0
+        )
 
         positions.append(
             {
@@ -130,18 +141,24 @@ def _position_payloads(pos_df: Any) -> list[dict[str, Any]]:
     return positions
 
 
-def _sector_values(positions: list[dict[str, Any]], total_value: float) -> list[dict[str, Any]]:
+def _sector_values(
+    positions: list[dict[str, Any]], total_value: float
+) -> list[dict[str, Any]]:
     grouped: dict[str, float] = {}
     for position in positions:
         sector = str(position.get("sector") or "Uncategorized")
-        grouped[sector] = grouped.get(sector, 0.0) + float(position.get("marketValue", 0.0))
+        grouped[sector] = grouped.get(sector, 0.0) + float(
+            position.get("marketValue", 0.0)
+        )
 
     return sorted(
         [
             {
                 "sector": sector,
                 "value": round(value, 2),
-                "percent": round((value / total_value) * 100, 4) if total_value else 0.0,
+                "percent": round((value / total_value) * 100, 4)
+                if total_value
+                else 0.0,
             }
             for sector, value in grouped.items()
         ],

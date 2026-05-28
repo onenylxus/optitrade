@@ -72,7 +72,8 @@ function truncateForFallback(text: string, targetLen: number): string {
     idx = found + 2;
   }
   if (doubleBreaks.length > 0) {
-    return window.slice(0, doubleBreaks[doubleBreaks.length - 1]!).trimEnd();
+    const lastDoubleBreak = doubleBreaks[doubleBreaks.length - 1];
+    return window.slice(0, lastDoubleBreak).trimEnd();
   }
   const lastSpace = window.lastIndexOf(' ', targetLen);
   if (lastSpace > 160) {

@@ -118,7 +118,12 @@ class PortfolioTests(unittest.TestCase):
         ):
             self.client.post(
                 "/api/portfolio/connect",
-                json={"host": "127.0.0.1", "port": 4002, "accountId": "DU7654321", "clientId": 7},
+                json={
+                    "host": "127.0.0.1",
+                    "port": 4002,
+                    "accountId": "DU7654321",
+                    "clientId": 7,
+                },
             )
 
         payload = self.client.get("/api/portfolio/connection").json()
@@ -130,20 +135,28 @@ class PortfolioTests(unittest.TestCase):
         self.assertEqual(payload["clientId"], 7)
 
     def test_futu_connection_is_persisted(self):
-        with patch("src.portfolio._validate_futu_socket") as validate_futu_socket, patch(
-            "src.portfolio.validate_futu_connection",
-            return_value={
-                "status": "connected",
-                "broker": "Futu",
-                "host": "127.0.0.1",
-                "port": 11111,
-                "market": "HK",
-                "syncedAt": "2026-05-10T00:00:00+00:00",
-            },
-        ) as validate_futu_connection:
+        with (
+            patch("src.portfolio._validate_futu_socket") as validate_futu_socket,
+            patch(
+                "src.portfolio.validate_futu_connection",
+                return_value={
+                    "status": "connected",
+                    "broker": "Futu",
+                    "host": "127.0.0.1",
+                    "port": 11111,
+                    "market": "HK",
+                    "syncedAt": "2026-05-10T00:00:00+00:00",
+                },
+            ) as validate_futu_connection,
+        ):
             response = self.client.post(
                 "/api/portfolio/connect",
-                json={"broker": "futu", "host": "127.0.0.1", "port": 11111, "market": "HK"},
+                json={
+                    "broker": "futu",
+                    "host": "127.0.0.1",
+                    "port": 11111,
+                    "market": "HK",
+                },
             )
             payload = response.json()
 
@@ -166,7 +179,12 @@ class PortfolioTests(unittest.TestCase):
         ):
             response = self.client.post(
                 "/api/portfolio/connect",
-                json={"broker": "futu", "host": "127.0.0.1", "port": 11111, "market": "HK"},
+                json={
+                    "broker": "futu",
+                    "host": "127.0.0.1",
+                    "port": 11111,
+                    "market": "HK",
+                },
             )
 
         self.assertEqual(response.status_code, 400)
@@ -209,7 +227,9 @@ class PortfolioTests(unittest.TestCase):
     def test_binance_connection_rejects_invalid_credentials(self):
         with patch(
             "src.portfolio.validate_binance_connection",
-            side_effect=RuntimeError("Unable to validate Binance API credentials: Invalid API-key"),
+            side_effect=RuntimeError(
+                "Unable to validate Binance API credentials: Invalid API-key"
+            ),
         ):
             response = self.client.post(
                 "/api/portfolio/connect",

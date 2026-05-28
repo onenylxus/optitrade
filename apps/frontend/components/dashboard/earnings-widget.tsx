@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BaseWidget } from './base-widget';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
 import {
@@ -26,15 +26,96 @@ interface EarningItem {
 
 // Demo data — fetched from yfinance 2026-05-23; real data via /api/earnings (Phase 2)
 const DEMO_EARNINGS: EarningItem[] = [
-  { ticker: 'NVDA', companyName: 'NVIDIA Corp',      date: '2026-05-21', time: 'AMC', epsEstimate: 2.09,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q2 FY26' },
-  { ticker: 'JPM',  companyName: 'JPMorgan Chase',  date: '2026-07-14', time: 'BMO', epsEstimate: 5.39,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q2 FY26' },
-  { ticker: 'NFLX', companyName: 'Netflix Inc',     date: '2026-07-17', time: 'AMC', epsEstimate: 0.79,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q2 FY26' },
-  { ticker: 'GOOGL',companyName: 'Alphabet Inc',    date: '2026-07-24', time: 'BMO', epsEstimate: 2.88,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q2 FY26' },
-  { ticker: 'META', companyName: 'Meta Platforms',  date: '2026-07-30', time: 'AMC', epsEstimate: 7.53,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q2 FY26' },
-  { ticker: 'MSFT', companyName: 'Microsoft Corp',  date: '2026-07-30', time: 'BMO', epsEstimate: 4.24,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q4 FY26' },
-  { ticker: 'AAPL', companyName: 'Apple Inc',        date: '2026-07-31', time: 'AMC', epsEstimate: 1.90,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q3 FY26' },
-  { ticker: 'AMZN', companyName: 'Amazon.com Inc',   date: '2026-07-31', time: 'AMC', epsEstimate: 1.81,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q2 FY26' },
-  { ticker: 'FIG',  companyName: 'Figma Inc',        date: '2026-08-15', time: 'AMC', epsEstimate: 0.04,  epsActual: null,  surprise: null,  fiscalPeriod: 'Q2 FY26' },
+  {
+    ticker: 'NVDA',
+    companyName: 'NVIDIA Corp',
+    date: '2026-05-21',
+    time: 'AMC',
+    epsEstimate: 2.09,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q2 FY26',
+  },
+  {
+    ticker: 'JPM',
+    companyName: 'JPMorgan Chase',
+    date: '2026-07-14',
+    time: 'BMO',
+    epsEstimate: 5.39,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q2 FY26',
+  },
+  {
+    ticker: 'NFLX',
+    companyName: 'Netflix Inc',
+    date: '2026-07-17',
+    time: 'AMC',
+    epsEstimate: 0.79,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q2 FY26',
+  },
+  {
+    ticker: 'GOOGL',
+    companyName: 'Alphabet Inc',
+    date: '2026-07-24',
+    time: 'BMO',
+    epsEstimate: 2.88,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q2 FY26',
+  },
+  {
+    ticker: 'META',
+    companyName: 'Meta Platforms',
+    date: '2026-07-30',
+    time: 'AMC',
+    epsEstimate: 7.53,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q2 FY26',
+  },
+  {
+    ticker: 'MSFT',
+    companyName: 'Microsoft Corp',
+    date: '2026-07-30',
+    time: 'BMO',
+    epsEstimate: 4.24,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q4 FY26',
+  },
+  {
+    ticker: 'AAPL',
+    companyName: 'Apple Inc',
+    date: '2026-07-31',
+    time: 'AMC',
+    epsEstimate: 1.9,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q3 FY26',
+  },
+  {
+    ticker: 'AMZN',
+    companyName: 'Amazon.com Inc',
+    date: '2026-07-31',
+    time: 'AMC',
+    epsEstimate: 1.81,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q2 FY26',
+  },
+  {
+    ticker: 'FIG',
+    companyName: 'Figma Inc',
+    date: '2026-08-15',
+    time: 'AMC',
+    epsEstimate: 0.04,
+    epsActual: null,
+    surprise: null,
+    fiscalPeriod: 'Q2 FY26',
+  },
 ];
 
 interface EarningsWidgetProps {
@@ -54,8 +135,8 @@ function daysUntil(iso: string): number {
 }
 
 function urgencyClass(days: number): string {
-  if (days <= 2)  return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-  if (days <= 5)  return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+  if (days <= 2) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+  if (days <= 5) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
   return 'bg-muted text-muted-foreground';
 }
 
@@ -66,15 +147,18 @@ export function EarningsWidget({
   const { portfolio } = usePortfolioContext();
   const [filter, setFilter] = useState<'all' | 'portfolio'>('all');
   const [earningsData, setEarningsData] = useState<EarningItem[]>(DEMO_EARNINGS);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Phase 2: load from /api/earnings (populated by Python backend cron)
   useEffect(() => {
-    setLoading(true);
     fetch('/api/earnings')
       .then((r) => r.json())
-      .then((d) => { if (d.earnings?.length) setEarningsData(d.earnings); })
-      .catch(() => { /* fallback to demo */ })
+      .then((d) => {
+        if (d.earnings?.length) setEarningsData(d.earnings);
+      })
+      .catch(() => {
+        /* fallback to demo */
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -98,9 +182,7 @@ export function EarningsWidget({
     });
   }, [filtered]);
 
-  const upcomingCount = sorted.filter(
-    (e) => e.epsActual === null && daysUntil(e.date) >= 0,
-  ).length;
+  const upcomingCount = sorted.filter((e) => e.epsActual === null && daysUntil(e.date) >= 0).length;
 
   const contextItems = sorted
     .filter((e) => e.epsActual === null && daysUntil(e.date) >= 0)
@@ -141,9 +223,13 @@ export function EarningsWidget({
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {loading ? (
-          <div className="flex items-center justify-center h-28"><span className="text-sm text-muted-foreground">Loading…</span></div>
+          <div className="flex items-center justify-center h-28">
+            <span className="text-sm text-muted-foreground">Loading…</span>
+          </div>
         ) : sorted.length === 0 ? (
-          <div className="flex items-center justify-center h-28"><span className="text-sm text-muted-foreground">No earnings found</span></div>
+          <div className="flex items-center justify-center h-28">
+            <span className="text-sm text-muted-foreground">No earnings found</span>
+          </div>
         ) : (
           <Table>
             <TableHeader>
@@ -171,17 +257,31 @@ export function EarningsWidget({
                       <div className="flex flex-col gap-0.5">
                         <span className="text-xs font-medium">{formatDate(item.date)}</span>
                         {isUpcoming && (
-                          <span className={cn('inline-block w-fit px-1.5 py-0.5 rounded text-[10px] font-medium', urgencyClass(days))}>
+                          <span
+                            className={cn(
+                              'inline-block w-fit px-1.5 py-0.5 rounded text-[10px] font-medium',
+                              urgencyClass(days),
+                            )}
+                          >
                             {days < 0 ? 'Reported' : days === 0 ? 'TODAY' : `${days}d`}
                           </span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell><span className="font-mono text-xs font-bold">{item.ticker}</span></TableCell>
                     <TableCell>
-                      <span className="text-xs truncate max-w-[120px] block" title={item.companyName}>{item.companyName}</span>
+                      <span className="font-mono text-xs font-bold">{item.ticker}</span>
                     </TableCell>
-                    <TableCell className="text-center"><span className="text-[10px] font-mono font-semibold">{item.time}</span></TableCell>
+                    <TableCell>
+                      <span
+                        className="text-xs truncate max-w-[120px] block"
+                        title={item.companyName}
+                      >
+                        {item.companyName}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-[10px] font-mono font-semibold">{item.time}</span>
+                    </TableCell>
                     <TableCell className="text-right">
                       <span className="font-mono text-xs">
                         {item.epsEstimate != null ? `$${item.epsEstimate.toFixed(2)}` : '—'}
@@ -189,19 +289,27 @@ export function EarningsWidget({
                     </TableCell>
                     <TableCell className="text-right">
                       {item.epsActual != null ? (
-                        <span className="font-mono text-xs font-semibold">${item.epsActual.toFixed(2)}</span>
+                        <span className="font-mono text-xs font-semibold">
+                          ${item.epsActual.toFixed(2)}
+                        </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       {item.surprise != null ? (
-                        <span className={cn(
-                          'font-mono text-xs font-semibold',
-                          item.surprise > 0 ? 'text-green-600 dark:text-green-400' :
-                          item.surprise < 0 ? 'text-red-600 dark:text-red-400' : '',
-                        )}>
-                          {item.surprise > 0 ? '+' : ''}{item.surprise.toFixed(1)}%
+                        <span
+                          className={cn(
+                            'font-mono text-xs font-semibold',
+                            item.surprise > 0
+                              ? 'text-green-600 dark:text-green-400'
+                              : item.surprise < 0
+                                ? 'text-red-600 dark:text-red-400'
+                                : '',
+                          )}
+                        >
+                          {item.surprise > 0 ? '+' : ''}
+                          {item.surprise.toFixed(1)}%
                         </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
