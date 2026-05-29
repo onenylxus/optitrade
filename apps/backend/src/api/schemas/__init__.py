@@ -1,1 +1,1 @@
-"""API schemas package."""
+"""Pydantic models for REST APIs."""

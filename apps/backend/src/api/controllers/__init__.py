@@ -1,1 +1,1 @@
-"""API controllers package."""
+"""HTTP controllers (orchestration between routes and services)."""

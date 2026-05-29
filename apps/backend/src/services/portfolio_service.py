@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-import json
 from pathlib import Path
 from typing import Any
 
-from src.binance_client import fetch_binance_portfolio_snapshot, validate_binance_connection
-from src.futu_client import fetch_futu_portfolio_snapshot, validate_futu_connection
+from src import portfolio as portfolio_module
 from src.ibkr_client import (
     IbkrConnectionSettings,
-    fetch_ibkr_portfolio_snapshot,
-    validate_ibkr_connection,
 )
 
 
@@ -65,14 +62,17 @@ class PortfolioService:
         self.data_dir = data_dir or Path(__file__).resolve().parents[2] / "data"
         self.positions = positions
         self.paper_portfolios_path = self.data_dir / "paper_portfolios.json"
+        self.editable_portfolio_path = self.data_dir / "editable_portfolio.json"
         self.broker_connection_path = self.data_dir / "broker_connection.json"
 
     def build_portfolio_snapshot(self) -> dict[str, Any]:
-        connection = self.get_broker_connection_status()
+        connection = self._default_broker_connection()
         if connection["id"] == "ibkr" and connection["status"] == "connected":
             try:
-                return fetch_ibkr_portfolio_snapshot(self._ibkr_settings(connection))
-            except RuntimeError as error:
+                return portfolio_module.fetch_ibkr_portfolio_snapshot(
+                    self._ibkr_settings(connection)
+                )
+            except (RuntimeError, TypeError) as error:
                 self._write_broker_connection(
                     self._broker_connection(
                         id="ibkr",
@@ -84,15 +84,15 @@ class PortfolioService:
                         last_error=str(error),
                     )
                 )
-                connection = self.get_broker_connection_status()
+                connection = self._read_broker_connection()
         elif connection["id"] == "futu" and connection["status"] == "connected":
             try:
-                return fetch_futu_portfolio_snapshot(
+                return portfolio_module.fetch_futu_portfolio_snapshot(
                     host=str(connection["settings"].get("host", "127.0.0.1")),
                     port=self._safe_int(connection["settings"].get("port"), 11111),
                     market=str(connection["settings"].get("market", "US")),
                 )
-            except RuntimeError as error:
+            except (RuntimeError, TypeError) as error:
                 self._write_broker_connection(
                     self._broker_connection(
                         id="futu",
@@ -104,15 +104,17 @@ class PortfolioService:
                         last_error=str(error),
                     )
                 )
-                connection = self.get_broker_connection_status()
+                connection = self._read_broker_connection()
         elif connection["id"] == "binance" and connection["status"] == "connected":
             try:
-                return fetch_binance_portfolio_snapshot(
+                return portfolio_module.fetch_binance_portfolio_snapshot(
                     api_key=str(connection["settings"].get("apiKey", "")),
                     api_secret=str(connection["settings"].get("apiSecret", "")),
-                    testnet=self._safe_bool(connection["settings"].get("testnet", True)),
+                    testnet=self._safe_bool(
+                        connection["settings"].get("testnet", True)
+                    ),
                 )
-            except RuntimeError as error:
+            except (RuntimeError, TypeError) as error:
                 self._write_broker_connection(
                     self._broker_connection(
                         id="binance",
@@ -124,12 +126,39 @@ class PortfolioService:
                         last_error=str(error),
                     )
                 )
-                connection = self.get_broker_connection_status()
+                connection = self._read_broker_connection()
 
-        return self._demo_snapshot(connection)
+        positions = self.positions
+        total_value = sum(position.market_value for position in positions)
+        total_cost = sum(position.cost_basis for position in positions)
+        pnl = total_value - total_cost
+        pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
+
+        daily_pnl_percent = 1.2
+        daily_pnl = total_value * daily_pnl_percent / 100
+
+        return {
+            "asOf": datetime.now(UTC).isoformat(),
+            "baseCurrency": "USD",
+            "source": "backend",
+            "broker": self._broker_connection_payload(connection),
+            "positions": [self._position_payload(position) for position in positions],
+            "summary": {
+                "totalValue": round(total_value, 2),
+                "totalCost": round(total_cost, 2),
+                "pnl": round(pnl, 2),
+                "pnlPercent": round(pnl_percent, 4),
+                "dailyPnl": round(daily_pnl, 2),
+                "dailyPnlPercent": round(daily_pnl_percent, 4),
+                "marginUsage": round(total_value * 0.25, 2),
+                "buyingPower": round(total_value * 0.15, 2),
+            },
+            "sectorValues": self._build_sector_values(positions),
+            "history": self._build_history(total_value),
+        }
 
     def validate_connection_request(self, payload: dict[str, Any]) -> dict[str, Any]:
-        broker = str(payload.get("broker", "mock")).lower().strip()
+        broker = str(payload.get("broker", "ibkr")).lower().strip()
 
         if broker == "mock":
             connection = self._broker_connection(
@@ -145,7 +174,7 @@ class PortfolioService:
             host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
             port = int(payload.get("port", 7497))
             client_id = int(payload.get("clientId", 1))
-            validated = validate_ibkr_connection(
+            validated = portfolio_module.validate_ibkr_connection(
                 IbkrConnectionSettings(host=host, port=port, client_id=client_id)
             )
             connection = self._broker_connection(
@@ -168,8 +197,8 @@ class PortfolioService:
             host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
             port = int(payload.get("port", 11111))
             market = str(payload.get("market", "US")).strip().upper() or "US"
-            self._validate_socket(host, port)
-            validated = validate_futu_connection(host, port, market)
+            portfolio_module._validate_futu_socket(host, port)
+            validated = portfolio_module.validate_futu_connection(host, port, market)
             connection = self._broker_connection(
                 id="futu",
                 status=str(validated.get("status", "connected")),
@@ -184,7 +213,9 @@ class PortfolioService:
         api_key = str(payload.get("apiKey", "")).strip()
         api_secret = str(payload.get("apiSecret", "")).strip()
         testnet = self._safe_bool(payload.get("testnet", True))
-        validated = validate_binance_connection(api_key, api_secret, testnet=testnet)
+        validated = portfolio_module.validate_binance_connection(
+            api_key, api_secret, testnet=testnet
+        )
         connection = self._broker_connection(
             id="binance",
             status=str(validated.get("status", "connected")),
@@ -197,6 +228,9 @@ class PortfolioService:
         return self._broker_connection_payload(connection)
 
     def get_broker_connection_status(self) -> dict[str, Any]:
+        return self._broker_connection_payload(self._read_broker_connection())
+
+    def _read_broker_connection(self) -> dict[str, Any]:
         if not self.broker_connection_path.exists():
             return self._default_broker_connection()
 
@@ -219,25 +253,50 @@ class PortfolioService:
 
     def create_paper_portfolio(self, payload: dict[str, Any]) -> dict[str, Any]:
         name = str(payload.get("name", "Paper Portfolio")).strip() or "Paper Portfolio"
-        positions = payload.get("positions", [])
-        if not isinstance(positions, list):
-            raise ValueError("positions must be a list")
+        positions = self._normalize_positions_payload(payload.get("positions", []))
 
         records = self._read_paper_portfolios()
         record = {
             "id": f"paper-{len(records) + 1}",
             "name": name,
             "status": "created",
-            "positions": positions,
+            "positions": [self._position_payload(position) for position in positions],
             "createdAt": datetime.now(UTC).isoformat(),
         }
         records.append(record)
         self._write_paper_portfolios(records)
+        self._write_editable_portfolio(
+            {
+                "name": name,
+                "positions": [
+                    self._position_payload(position) for position in positions
+                ],
+                "updatedAt": datetime.now(UTC).isoformat(),
+            }
+        )
         return record
 
-    def _demo_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
-        total_value = sum(position.market_value for position in self.positions)
-        total_cost = sum(position.cost_basis for position in self.positions)
+    def get_editable_portfolio(self) -> dict[str, Any]:
+        return self._read_editable_portfolio()
+
+    def update_editable_portfolio(self, payload: dict[str, Any]) -> dict[str, Any]:
+        name = (
+            str(payload.get("name", "Portfolio Widget Portfolio")).strip()
+            or "Portfolio Widget Portfolio"
+        )
+        positions = self._normalize_positions_payload(payload.get("positions", []))
+        record = {
+            "name": name,
+            "positions": [self._position_payload(position) for position in positions],
+            "updatedAt": datetime.now(UTC).isoformat(),
+        }
+        self._write_editable_portfolio(record)
+        return record
+
+    def _editable_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
+        positions = self._read_editable_positions()
+        total_value = sum(position.market_value for position in positions)
+        total_cost = sum(position.cost_basis for position in positions)
         pnl = total_value - total_cost
         pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
         daily_pnl = total_value * 0.012
@@ -245,9 +304,9 @@ class PortfolioService:
         return {
             "asOf": datetime.now(UTC).isoformat(),
             "baseCurrency": "USD",
-            "source": "backend" if connection["status"] == "connected" else "demo",
+            "source": "backend",
             "broker": self._broker_connection_payload_dict(connection),
-            "positions": [self._position_payload(position) for position in self.positions],
+            "positions": [self._position_payload(position) for position in positions],
             "summary": {
                 "totalValue": round(total_value, 2),
                 "totalCost": round(total_cost, 2),
@@ -258,7 +317,7 @@ class PortfolioService:
                 "marginUsage": round(total_value * 0.25, 2),
                 "buyingPower": round(total_value * 0.15, 2),
             },
-            "sectorValues": self._build_sector_values(self.positions),
+            "sectorValues": self._build_sector_values(positions),
             "history": self._build_history(total_value),
         }
 
@@ -310,11 +369,15 @@ class PortfolioService:
                 payload[key] = connection["settings"][key]
         if connection["id"] == "binance":
             api_key = str(connection["settings"].get("apiKey", ""))
-            payload["apiKeyPreview"] = api_key if len(api_key) <= 8 else f"{api_key[:4]}...{api_key[-4:]}"
+            payload["apiKeyPreview"] = (
+                api_key if len(api_key) <= 8 else f"{api_key[:4]}...{api_key[-4:]}"
+            )
             payload["hasSecret"] = bool(connection["settings"].get("apiSecret"))
         return payload
 
-    def _broker_connection_payload_dict(self, connection: dict[str, Any]) -> dict[str, Any]:
+    def _broker_connection_payload_dict(
+        self, connection: dict[str, Any]
+    ) -> dict[str, Any]:
         return self._broker_connection_payload(connection)
 
     def _read_paper_portfolios(self) -> list[dict[str, Any]]:
@@ -330,6 +393,63 @@ class PortfolioService:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         with self.paper_portfolios_path.open("w", encoding="utf-8") as file:
             json.dump(records, file, indent=2)
+            file.write("\n")
+
+    def _read_editable_portfolio(self) -> dict[str, Any]:
+        if self.editable_portfolio_path.exists():
+            with self.editable_portfolio_path.open("r", encoding="utf-8") as file:
+                payload = json.load(file)
+            if not isinstance(payload, dict):
+                raise ValueError("editable portfolio store must contain an object")
+            positions = self._normalize_positions_payload(payload.get("positions", []))
+            return {
+                "name": str(payload.get("name", "Portfolio Widget Portfolio")).strip()
+                or "Portfolio Widget Portfolio",
+                "positions": [
+                    self._position_payload(position) for position in positions
+                ],
+                "updatedAt": str(
+                    payload.get("updatedAt") or datetime.now(UTC).isoformat()
+                ),
+            }
+
+        records = self._read_paper_portfolios()
+        if records:
+            latest = records[-1]
+            positions = self._normalize_positions_payload(latest.get("positions", []))
+            migrated = {
+                "name": str(latest.get("name", "Portfolio Widget Portfolio")).strip()
+                or "Portfolio Widget Portfolio",
+                "positions": [
+                    self._position_payload(position) for position in positions
+                ],
+                "updatedAt": str(
+                    latest.get("createdAt")
+                    or latest.get("updatedAt")
+                    or datetime.now(UTC).isoformat()
+                ),
+            }
+            self._write_editable_portfolio(migrated)
+            return migrated
+
+        seeded = {
+            "name": "Portfolio Widget Portfolio",
+            "positions": [
+                self._position_payload(position) for position in self.positions
+            ],
+            "updatedAt": datetime.now(UTC).isoformat(),
+        }
+        self._write_editable_portfolio(seeded)
+        return seeded
+
+    def _read_editable_positions(self) -> tuple[Position, ...]:
+        record = self._read_editable_portfolio()
+        return self._normalize_positions_payload(record.get("positions", []))
+
+    def _write_editable_portfolio(self, record: dict[str, Any]) -> None:
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        with self.editable_portfolio_path.open("w", encoding="utf-8") as file:
+            json.dump(record, file, indent=2)
             file.write("\n")
 
     def _write_broker_connection(self, connection: dict[str, Any]) -> None:
@@ -369,7 +489,9 @@ class PortfolioService:
             with socket.create_connection((host, port), timeout=5):
                 return
         except OSError as error:
-            raise RuntimeError(f"Unable to connect to Futu OpenAPI at {host}:{port}: {error}") from error
+            raise RuntimeError(
+                f"Unable to connect to Futu OpenAPI at {host}:{port}: {error}"
+            ) from error
 
     @staticmethod
     def _build_sector_values(positions: tuple[Position, ...]) -> list[dict[str, Any]]:
@@ -384,7 +506,9 @@ class PortfolioService:
                 {
                     "sector": sector,
                     "value": round(value, 2),
-                    "percent": round((value / total_value) * 100, 4) if total_value else 0.0,
+                    "percent": round((value / total_value) * 100, 4)
+                    if total_value
+                    else 0.0,
                 }
                 for sector, value in grouped.items()
             ),
@@ -415,3 +539,47 @@ class PortfolioService:
             port=self._safe_int(settings.get("port"), 7497),
             client_id=self._safe_int(settings.get("clientId"), 1),
         )
+
+    def _normalize_positions_payload(self, raw_positions: Any) -> tuple[Position, ...]:
+        if raw_positions is None:
+            return ()
+        if not isinstance(raw_positions, list):
+            raise ValueError("positions must be a list")
+
+        positions: list[Position] = []
+        for index, raw_position in enumerate(raw_positions, start=1):
+            if not isinstance(raw_position, dict):
+                raise ValueError("each position must be an object")
+
+            symbol = str(raw_position.get("symbol", "")).strip().upper()
+            if not symbol:
+                raise ValueError("symbol is required for each position")
+
+            position_id = str(raw_position.get("id", "")).strip() or f"position-{index}"
+            sector = (
+                str(raw_position.get("sector", "Uncategorized")).strip()
+                or "Uncategorized"
+            )
+            positions.append(
+                Position(
+                    id=position_id,
+                    symbol=symbol,
+                    quantity=self._safe_float(raw_position.get("quantity"), "quantity"),
+                    avg_price=self._safe_float(
+                        raw_position.get("avgPrice"), "avgPrice"
+                    ),
+                    current_price=self._safe_float(
+                        raw_position.get("currentPrice"), "currentPrice"
+                    ),
+                    sector=sector,
+                )
+            )
+
+        return tuple(positions)
+
+    @staticmethod
+    def _safe_float(value: Any, field_name: str) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"{field_name} must be a number") from error

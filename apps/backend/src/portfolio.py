@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import socket
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-import hashlib
-import hmac
-import json
 from pathlib import Path
-import socket
 from typing import Any
 
 from src.binance_client import (
@@ -16,7 +14,6 @@ from src.binance_client import (
     validate_binance_connection,
 )
 from src.futu_client import fetch_futu_portfolio_snapshot, validate_futu_connection
-
 from src.ibkr_client import (
     IbkrConnectionSettings,
     fetch_ibkr_portfolio_snapshot,
@@ -72,6 +69,7 @@ BROKER_LABELS = {
     "binance": "Binance",
     "mock": "Mock Data",
 }
+
 
 @dataclass(frozen=True)
 class BrokerConnection:
@@ -179,7 +177,9 @@ def _validate_futu_socket(host: str, port: int) -> None:
         with socket.create_connection((host, port), timeout=5):
             return
     except OSError as error:
-        raise RuntimeError(f"Unable to connect to Futu OpenAPI at {host}:{port}: {error}") from error
+        raise RuntimeError(
+            f"Unable to connect to Futu OpenAPI at {host}:{port}: {error}"
+        ) from error
 
 
 def _configured_broker_connection(
@@ -254,7 +254,7 @@ def _build_sector_values(positions: tuple[Position, ...]) -> list[dict[str, Any]
 def build_portfolio_snapshot(
     positions: tuple[Position, ...] = DEFAULT_POSITIONS,
 ) -> dict[str, Any]:
-    connection = get_broker_connection_status()
+    connection = _default_broker_connection()
     if connection.id == "ibkr" and connection.status == "connected":
         try:
             return fetch_ibkr_portfolio_snapshot(_ibkr_settings(connection))
@@ -320,7 +320,7 @@ def build_portfolio_snapshot(
     return {
         "asOf": _utc_now(),
         "baseCurrency": "USD",
-        "source": "backend" if connection.status == "connected" else "demo",
+        "source": "backend",
         "broker": _broker_connection_payload(connection),
         "positions": [_position_payload(position) for position in positions],
         "summary": {
@@ -339,7 +339,7 @@ def build_portfolio_snapshot(
 
 
 def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
-    broker_id = _normalize_broker_id(payload.get("broker"))
+    broker_id = _normalize_broker_id(payload.get("broker", "ibkr"))
 
     if broker_id == "mock":
         connection = _default_broker_connection()
@@ -439,7 +439,9 @@ def get_broker_connection_status() -> BrokerConnection:
     return BrokerConnection(
         id=broker_id,
         status=str(payload.get("status", "disconnected")),
-        broker=str(payload.get("name") or payload.get("broker") or _broker_label(broker_id)),
+        broker=str(
+            payload.get("name") or payload.get("broker") or _broker_label(broker_id)
+        ),
         settings=_legacy_settings(payload),
         account_id=payload.get("accountId"),
         synced_at=payload.get("syncedAt"),
@@ -513,7 +515,16 @@ def _broker_connection_payload(connection: BrokerConnection) -> dict[str, Any]:
         "syncedAt": connection.synced_at,
         "lastError": connection.last_error,
     }
-    for key in ("host", "port", "clientId", "market", "apiKey", "apiKeyPreview", "hasSecret", "testnet"):
+    for key in (
+        "host",
+        "port",
+        "clientId",
+        "market",
+        "apiKey",
+        "apiKeyPreview",
+        "hasSecret",
+        "testnet",
+    ):
         if key in settings:
             payload[key] = settings[key]
     return payload

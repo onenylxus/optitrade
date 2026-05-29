@@ -58,7 +58,7 @@
       "executor": "@nxlv/python:run-commands",
       "outputs": [],
       "options": {
-        "command": "uv run python -m grpc_tools.protoc -Iprotos --python_out=protos --grpc_python_out=protos protos/helloworld.proto",
+        "command": "uv run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. protos/helloworld.proto",
         "cwd": "{projectRoot}"
       },
       "cache": true
@@ -75,6 +75,17 @@
         "cwd": "{projectRoot}"
       },
       "cache": true
+    },
+    "start": {
+      "executor": "@nxlv/python:run-commands",
+      "outputs": [],
+      "dependsOn": ["proto"],
+      "options": {
+        "command": "uv run python main.py",
+        "cwd": "{projectRoot}"
+      },
+      "continuous": true,
+      "cache": false
     },
     "install": {
       "executor": "@nxlv/python:install",

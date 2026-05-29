@@ -1,0 +1,215 @@
+{
+  "metadata": {
+    "total_news": 12,
+    "yahoo_count": 5,
+    "et_count": 7,
+    "analyzed_at": "2026-05-24T08:39:17.092994",
+    "model": "openrouter/free"
+  },
+  "news": [
+    {
+      "id": "yahoo_1779583147_3",
+      "source": "yahoo",
+      "headline": "Morgan Stanley resets PANW stock price target on demand trends",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/morgan-stanley-resets-panw-stock-223300963.html",
+      "published_at": "2026-05-22T22:33:00Z",
+      "summary": "Morgan Stanley resets PANW stock price target on demand trends",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:08.184391"
+    },
+    {
+      "id": "yahoo_1779583147_6",
+      "source": "yahoo",
+      "headline": "Music catalogs strike a chord with private capital—but investors want more than just royalties",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/music-catalogs-strike-chord-private-182231783.html",
+      "published_at": "2026-05-22T18:22:31Z",
+      "summary": "Music catalogs strike a chord with private capital—but investors want more than just royalties",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:08.989495"
+    },
+    {
+      "id": "yahoo_1779583147_7",
+      "source": "yahoo",
+      "headline": "SoftBank Stock Spikes as OpenAI Prepares for Historic IPO",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/softbank-stock-spikes-openai-prepares-182405426.html",
+      "published_at": "2026-05-22T18:24:05Z",
+      "summary": "SoftBank Stock Spikes as OpenAI Prepares for Historic IPO",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:09.734523"
+    },
+    {
+      "id": "yahoo_1779583147_9",
+      "source": "yahoo",
+      "headline": "Are Wall Street Analysts Bullish on BXP Stock?",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/wall-street-analysts-bullish-bxp-180952183.html",
+      "published_at": "2026-05-22T18:09:52Z",
+      "summary": "Are Wall Street Analysts Bullish on BXP Stock?",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:10.437497"
+    },
+    {
+      "id": "yahoo_1779583147_10",
+      "source": "yahoo",
+      "headline": "Nvidia Stock Price Predictions: How NVDA Could Rally to $380",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/nvidia-stock-price-predictions-nvda-174512493.html",
+      "published_at": "2026-05-22T17:45:12Z",
+      "summary": "Nvidia Stock Price Predictions: How NVDA Could Rally to $380",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "analyzed_at": "2026-05-24T08:39:11.229428"
+    },
+    {
+      "id": "et_1779583147_1",
+      "source": "economic_times",
+      "headline": "Long-term Investing: Ecosystem with an edge called India; 12 large- mid- and small-cap stocks with upside potential of up to 34%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/long-term-investing-ecosystem-with-an-edge-called-india-12-large-mid-and-small-cap-stocks-with-upside-potential-of-up-to-34/articleshow/131283072.cms",
+      "published_at": "Sat, 23 May 2026 22:24:34 +0530",
+      "summary": "Tactical investing should not be confused with long-term investing. In a world where geopolitical risk, commodity shocks, and uncertainty are likely to stay high, investors need to think in terms of e",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:12.012955"
+    },
+    {
+      "id": "et_1779583147_4",
+      "source": "economic_times",
+      "headline": "Vedanta, MCX, among 10 stocks that saw highest increase in retail shareholding in Q4. Do you own any?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/vedanta-mcx-among-10-stocks-that-saw-highest-increase-in-retail-shareholding-in-q4-do-you-own-any/slideshow/131276400.cms",
+      "published_at": "Sat, 23 May 2026 14:01:58 +0530",
+      "summary": "Vedanta, MCX, among 10 stocks that saw highest increase in retail shareholding in Q4. Do you own any?",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:12.748455"
+    },
+    {
+      "id": "et_1779583147_5",
+      "source": "economic_times",
+      "headline": "Explained! Modus operandi and how Sebi cracked whip in alleged pump-and-dump scheme involving 82 stocks",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/explained-modus-operandi-and-how-sebi-cracked-whip-in-alleged-pump-and-dump-scheme-involving-82-stocks/articleshow/131276202.cms",
+      "published_at": "Sat, 23 May 2026 13:58:23 +0530",
+      "summary": "Sebi has exposed a stock manipulation network that used social media platforms like Telegram, WhatsApp, and X to artificially inflate SME stock prices. The accused allegedly employed a pump-and-dump s",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:13.510088"
+    },
+    {
+      "id": "et_1779583147_6",
+      "source": "economic_times",
+      "headline": "Concurrent Losers: 13 stocks decline for 5 consecutive sessions",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/concurrent-losers-13-stocks-decline-for-5-consecutive-sessions/slideshow/131273840.cms",
+      "published_at": "Sat, 23 May 2026 12:42:39 +0530",
+      "summary": "Even as the Sensex posted modest gains during the week ending May 22, 13 BSE 500 stocks declined in every trading session. Afcons Infrastructure and Alok Industries led the losses with 11% declines, w",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:14.379409"
+    },
+    {
+      "id": "et_1779583147_7",
+      "source": "economic_times",
+      "headline": "Nomura picks 6 stocks with up to 49% upside potential that can benefit from India’s EV push",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nomura-picks-6-stocks-with-up-to-49-upside-potential-that-can-benefit-from-indias-ev-push/slideshow/131273685.cms",
+      "published_at": "Sat, 23 May 2026 12:35:24 +0530",
+      "summary": "Nomura said India’s EV adoption is nearing an inflection point amid rising fuel prices and supportive policies. The brokerage identified six stocks, including M&amp;M, TVS Motor and UNO Minda, as key ",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:15.097312"
+    },
+    {
+      "id": "et_1779583147_8",
+      "source": "economic_times",
+      "headline": "Why organized players like Titan Company could emerge bigger winners in India’s evolving gold market",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/why-organized-players-like-titan-company-could-emerge-bigger-winners-in-indias-evolving-gold-market/articleshow/131273387.cms",
+      "published_at": "Sat, 23 May 2026 12:15:06 +0530",
+      "summary": "India's gold market is rapidly formalizing despite high prices and tax hikes. Resilient consumer demand, especially for investment, favours organized players like Titan. Titan, leveraging Tanishq's br",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:15.867977"
+    },
+    {
+      "id": "et_1779583147_10",
+      "source": "economic_times",
+      "headline": "Reliance Industries, TCS, among 10 stocks with sharpest decrease in retail shareholding in Q4",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/reliance-industries-tcs-among-10-stocks-with-sharpest-decrease-in-retail-shareholding-in-q4/slideshow/131273170.cms",
+      "published_at": "Sat, 23 May 2026 11:27:53 +0530",
+      "summary": "Ten major stocks, including HDFC Bank, Reliance Industries, and ITC, experienced the sharpest decrease in retail shareholding value, corresponding with significant stock price declines during the quar",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-24T08:39:16.588023"
+    }
+  ]
+}

@@ -11,13 +11,22 @@ interface EditWidgetDrawerProps {
   open: boolean;
   mode?: 'overlay' | 'inline';
   className?: string;
+  onWidgetDragStart?: (widgetType: WidgetType) => void;
+  onWidgetDragEnd?: () => void;
 }
 
-export function EditWidgetDrawer({ open, mode = 'overlay', className }: EditWidgetDrawerProps) {
+export function EditWidgetDrawer({
+  open,
+  mode = 'overlay',
+  className,
+  onWidgetDragStart,
+  onWidgetDragEnd,
+}: EditWidgetDrawerProps) {
   const onDragStart = (event: DragEvent<HTMLDivElement>, widgetType: WidgetType) => {
     event.dataTransfer.setData(DRAWER_WIDGET_MIME, widgetType);
     event.dataTransfer.setData('text/plain', widgetType);
     event.dataTransfer.effectAllowed = 'copyMove';
+    onWidgetDragStart?.(widgetType);
   };
 
   const isInline = mode === 'inline';
@@ -56,6 +65,7 @@ export function EditWidgetDrawer({ open, mode = 'overlay', className }: EditWidg
               key={widget.id}
               draggable
               onDragStart={(event) => onDragStart(event, widget.id)}
+              onDragEnd={() => onWidgetDragEnd?.()}
               className="bg-muted/20 hover:bg-muted/35 border-border/70 cursor-grab rounded-lg border p-3 transition-colors active:cursor-grabbing"
             >
               <div className="text-foreground text-sm font-medium">{widget.label}</div>

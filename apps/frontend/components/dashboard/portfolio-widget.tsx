@@ -1,14 +1,25 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { Check, Loader2, Settings, ArrowLeft, Lock, Save } from 'lucide-react';
-import { Area, AreaChart, YAxis, XAxis } from 'recharts';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  Lock,
+  Pencil,
+  Plus,
+  Save,
+  Settings,
+  Trash2,
+} from 'lucide-react';
+import { Area, AreaChart, XAxis, YAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import type { PortfolioBrokerOption, PortfolioChatContextValue } from '@/contexts/portfolio-context';
+import type {
+  PortfolioBrokerOption,
+  PortfolioChatContextValue,
+} from '@/contexts/portfolio-context';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
-
-// --- Interfaces ---
 
 export interface Stock {
   id: string;
@@ -20,6 +31,8 @@ export interface Stock {
 }
 
 type PortfolioVariant = 'small' | 'medium' | 'large';
+type PortfolioWidgetSource = 'backend' | 'paper';
+type PortfolioPanelMode = 'broker' | 'editor' | null;
 
 interface PortfolioWidgetProps extends Omit<
   React.ComponentProps<typeof BaseWidget>,
@@ -44,11 +57,10 @@ interface PortfolioDerivedData {
 interface PortfolioVariantProps {
   stocks: Stock[];
   data: PortfolioDerivedData;
-  source: 'backend' | 'demo';
-  liveBrokerLabel: string;
-  saveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  source: PortfolioWidgetSource;
+  sourceLabel: string;
   onOpenSettings: () => void;
-  onSavePaperPortfolio: () => void;
+  onOpenEditor: () => void;
 }
 
 interface PortfolioApiPosition extends Stock {
@@ -61,7 +73,7 @@ interface PortfolioApiPosition extends Stock {
 interface PortfolioApiSnapshot {
   asOf?: string;
   baseCurrency?: string;
-  source?: 'backend' | 'demo';
+  source?: 'backend' | 'paper';
   broker?: {
     id?: PortfolioBrokerOption;
     status: 'connected' | 'configured' | 'disconnected';
@@ -89,6 +101,12 @@ interface PortfolioApiSnapshot {
   history: PortfolioDerivedData['history'];
 }
 
+interface PortfolioEditableResponse {
+  name: string;
+  positions: PortfolioApiPosition[];
+  updatedAt: string;
+}
+
 interface PortfolioMappedSnapshot {
   stocks: Stock[];
   data: PortfolioDerivedData;
@@ -105,53 +123,17 @@ interface BrokerOptionConfig {
 const PORTFOLIO_API_BASE_URL =
   process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
-// --- Mock Data ---
-
-const DEFAULT_STOCKS: Stock[] = [
+const BROKER_OPTIONS: BrokerOptionConfig[] = [
+  { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
+  { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
+  { id: 'binance', label: 'Binance', supported: true, description: 'API key + secret' },
   {
-    id: '1',
-    symbol: 'NVDA',
-    quantity: 200,
-    avgPrice: 120,
-    currentPrice: 145.75,
-    sector: 'Technology',
-  },
-  {
-    id: '2',
-    symbol: 'AAPL',
-    quantity: 100,
-    avgPrice: 175,
-    currentPrice: 189.5,
-    sector: 'Technology',
-  },
-  {
-    id: '4',
-    symbol: 'MSFT',
-    quantity: 40,
-    avgPrice: 380,
-    currentPrice: 420.15,
-    sector: 'Technology',
-  },
-  {
-    id: '5',
-    symbol: 'AMZN',
-    quantity: 120,
-    avgPrice: 145,
-    currentPrice: 178.22,
-    sector: 'Consumer',
-  },
-  { id: '9', symbol: 'JPM', quantity: 60, avgPrice: 140, currentPrice: 195.3, sector: 'Financial' },
-  {
-    id: '12',
-    symbol: 'NFLX',
-    quantity: 20,
-    avgPrice: 450,
-    currentPrice: 610.05,
-    sector: 'Communication',
+    id: 'mock',
+    label: 'Paper Portfolio',
+    supported: true,
+    description: 'Backend-stored editable positions',
   },
 ];
-
-// --- Utilities ---
 
 const formatCurrency = (value: number, maxDigits = 0) =>
   new Intl.NumberFormat('en-US', {
@@ -169,66 +151,75 @@ const portfolioApiUrl = (path: string) => {
   return `${baseUrl}${path}`;
 };
 
-function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSnapshot {
+const getBrokerOption = (broker: PortfolioBrokerOption) =>
+  BROKER_OPTIONS.find((option) => option.id === broker);
+
+function mapPositionsToStocks(positions: PortfolioApiPosition[]): Stock[] {
+  return positions.map((position, index) => ({
+    id: position.id || `position-${index + 1}`,
+    symbol: position.symbol,
+    quantity: position.quantity,
+    avgPrice: position.avgPrice,
+    currentPrice: position.currentPrice,
+    sector: position.sector,
+  }));
+}
+
+function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
+  const totalValue = stocks.reduce((sum, stock) => sum + stock.currentPrice * stock.quantity, 0);
+  const totalCost = stocks.reduce((sum, stock) => sum + stock.avgPrice * stock.quantity, 0);
+  const pnl = totalValue - totalCost;
+  const pnlPercent = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+  const dailyPnl = totalValue * 0.012;
+  const dailyPnlPercent = 1.2;
+  const marginUsage = totalValue * 0.25;
+  const history = [
+    { time: '09:30', value: totalValue * 0.985 },
+    { time: '10:30', value: totalValue * 0.992 },
+    { time: '11:30', value: totalValue * 1.012 },
+    { time: '12:30', value: totalValue * 1.005 },
+    { time: '13:30', value: totalValue * 1.018 },
+    { time: '14:30', value: totalValue * 1.011 },
+    { time: '15:30', value: totalValue },
+  ];
+  const groupedSectorValues = stocks.reduce<Record<string, number>>((acc, stock) => {
+    const sector = stock.sector || 'Uncategorized';
+    acc[sector] = (acc[sector] ?? 0) + stock.currentPrice * stock.quantity;
+    return acc;
+  }, {});
+  const sectorValues = Object.entries(groupedSectorValues)
+    .map(([sector, value]) => ({
+      sector,
+      value,
+      percent: totalValue > 0 ? (value / totalValue) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
+
   return {
-    stocks: snapshot.positions.map((position) => ({
-      id: position.id,
-      symbol: position.symbol,
-      quantity: position.quantity,
-      avgPrice: position.avgPrice,
-      currentPrice: position.currentPrice,
-      sector: position.sector,
-    })),
-    data: {
-      totalValue: snapshot.summary.totalValue,
-      pnl: snapshot.summary.pnl,
-      pnlPercent: snapshot.summary.pnlPercent,
-      dailyPnl: snapshot.summary.dailyPnl,
-      dailyPnlPercent: snapshot.summary.dailyPnlPercent,
-      marginUsage: snapshot.summary.marginUsage,
-      sectorValues: snapshot.sectorValues,
-      history: snapshot.history,
-    },
-    chatContext: {
-      asOf: snapshot.asOf ?? new Date().toISOString(),
-      baseCurrency: snapshot.baseCurrency ?? 'USD',
-      source: snapshot.source ?? 'backend',
-      broker: snapshot.broker ?? {
-        id: 'mock',
-        status: 'disconnected',
-        name: 'Mock Data',
-      },
-      summary: snapshot.summary,
-      positions: snapshot.positions.map((position) => ({
-        symbol: position.symbol,
-        quantity: position.quantity,
-        avgPrice: position.avgPrice,
-        currentPrice: position.currentPrice,
-        sector: position.sector,
-        marketValue: position.marketValue ?? position.currentPrice * position.quantity,
-        unrealizedPnl:
-          position.unrealizedPnl ?? (position.currentPrice - position.avgPrice) * position.quantity,
-        unrealizedPnlPercent:
-          position.unrealizedPnlPercent ??
-          (position.avgPrice === 0
-            ? 0
-            : ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100),
-      })),
-      sectorValues: snapshot.sectorValues,
-    },
+    totalValue,
+    pnl,
+    pnlPercent,
+    dailyPnl,
+    dailyPnlPercent,
+    marginUsage,
+    sectorValues,
+    history,
   };
 }
 
-function buildMockChatContext(stocks: Stock[]): PortfolioChatContextValue {
+function buildPaperChatContext(
+  stocks: Stock[],
+  broker?: PortfolioApiSnapshot['broker'],
+): PortfolioChatContextValue {
   const data = buildPortfolioData(stocks);
   return {
     asOf: new Date().toISOString(),
     baseCurrency: 'USD',
-    source: 'demo',
-    broker: {
+    source: 'paper',
+    broker: broker ?? {
       id: 'mock',
       status: 'disconnected',
-      name: 'Mock Data',
+      name: 'Paper Portfolio',
     },
     summary: {
       totalValue: data.totalValue,
@@ -253,49 +244,47 @@ function buildMockChatContext(stocks: Stock[]): PortfolioChatContextValue {
   };
 }
 
-function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
-  const totalValue = stocks.reduce((sum, stock) => sum + stock.currentPrice * stock.quantity, 0);
-  const totalCost = stocks.reduce((sum, stock) => sum + stock.avgPrice * stock.quantity, 0);
-  const pnl = totalValue - totalCost;
-  const pnlPercent = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
-
-  const dailyPnl = totalValue * 0.012;
-  const dailyPnlPercent = 1.2;
-  const marginUsage = totalValue * 0.25;
-
-  const history = [
-    { time: '09:30', value: totalValue * 0.985 },
-    { time: '10:30', value: totalValue * 0.992 },
-    { time: '11:30', value: totalValue * 1.012 },
-    { time: '12:30', value: totalValue * 1.005 },
-    { time: '13:30', value: totalValue * 1.018 },
-    { time: '14:30', value: totalValue * 1.011 },
-    { time: '15:30', value: totalValue },
-  ];
-
-  const groupedSectorValues = stocks.reduce<Record<string, number>>((acc, stock) => {
-    const sector = stock.sector || 'Uncategorized';
-    acc[sector] = (acc[sector] ?? 0) + stock.currentPrice * stock.quantity;
-    return acc;
-  }, {});
-
-  const sectorValues = Object.entries(groupedSectorValues)
-    .map(([sector, value]) => ({
-      sector,
-      value,
-      percent: totalValue > 0 ? (value / totalValue) * 100 : 0,
-    }))
-    .sort((a, b) => b.value - a.value);
-
+function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSnapshot {
+  const source = snapshot.source === 'backend' ? 'backend' : 'paper';
   return {
-    totalValue,
-    pnl,
-    pnlPercent,
-    dailyPnl,
-    dailyPnlPercent,
-    marginUsage,
-    sectorValues,
-    history,
+    stocks: mapPositionsToStocks(snapshot.positions),
+    data: {
+      totalValue: snapshot.summary.totalValue,
+      pnl: snapshot.summary.pnl,
+      pnlPercent: snapshot.summary.pnlPercent,
+      dailyPnl: snapshot.summary.dailyPnl,
+      dailyPnlPercent: snapshot.summary.dailyPnlPercent,
+      marginUsage: snapshot.summary.marginUsage,
+      sectorValues: snapshot.sectorValues,
+      history: snapshot.history,
+    },
+    chatContext: {
+      asOf: snapshot.asOf ?? new Date().toISOString(),
+      baseCurrency: snapshot.baseCurrency ?? 'USD',
+      source,
+      broker: snapshot.broker ?? {
+        id: 'mock',
+        status: 'disconnected',
+        name: 'Paper Portfolio',
+      },
+      summary: snapshot.summary,
+      positions: snapshot.positions.map((position) => ({
+        symbol: position.symbol,
+        quantity: position.quantity,
+        avgPrice: position.avgPrice,
+        currentPrice: position.currentPrice,
+        sector: position.sector,
+        marketValue: position.marketValue ?? position.currentPrice * position.quantity,
+        unrealizedPnl:
+          position.unrealizedPnl ?? (position.currentPrice - position.avgPrice) * position.quantity,
+        unrealizedPnlPercent:
+          position.unrealizedPnlPercent ??
+          (position.avgPrice === 0
+            ? 0
+            : ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100),
+      })),
+      sectorValues: snapshot.sectorValues,
+    },
   };
 }
 
@@ -308,8 +297,9 @@ function PerformanceChart({
   height?: number;
   showAxis?: boolean;
 }) {
-  const isPositive = data[data.length - 1].value >= data[0].value;
-  const chartColor = isPositive ? 'var(--emerald-500)' : 'var(--rose-500)';
+  const baseline = data[0]?.value ?? 0;
+  const latest = data[data.length - 1]?.value ?? 0;
+  const chartColor = latest >= baseline ? 'var(--emerald-500)' : 'var(--rose-500)';
 
   return (
     <ChartContainer
@@ -340,55 +330,37 @@ function PerformanceChart({
   );
 }
 
-function PortfolioSourceBadge({
-  source,
-  brokerName,
-}: {
-  source: 'backend' | 'demo';
-  brokerName?: string;
-}) {
-  const label = source === 'backend' ? brokerName ?? 'Live' : 'Mock';
+function PortfolioSourceBadge({ source, label }: { source: PortfolioWidgetSource; label: string }) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium tracking-wide ${
         source === 'backend' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
       }`}
-      title={source === 'backend' ? `Live ${label} portfolio` : 'Mock portfolio data'}
+      title={source === 'backend' ? `Live ${label} portfolio` : 'Backend-stored paper portfolio'}
     >
       {label}
     </span>
   );
 }
 
-// --- Sub-Components ---
-
-const BROKER_OPTIONS: BrokerOptionConfig[] = [
-  { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
-  { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
-  { id: 'binance', label: 'Binance', supported: true, description: 'API key + secret' },
-  { id: 'mock', label: 'Mock Data', supported: true, description: 'No connection required' },
-];
-
-const getBrokerOption = (broker: PortfolioBrokerOption) =>
-  BROKER_OPTIONS.find((option) => option.id === broker);
-
 function BrokerConnectionPanel({
   onBack,
   onConnected,
-  onUseMockData,
+  onUsePaperPortfolio,
   selectedBroker,
   initialConnection,
   onBrokerChange,
 }: {
   onBack: () => void;
   onConnected: () => Promise<void>;
-  onUseMockData: () => void;
+  onUsePaperPortfolio: () => Promise<void>;
   selectedBroker: PortfolioBrokerOption;
   initialConnection: PortfolioApiSnapshot['broker'];
   onBrokerChange: (broker: PortfolioBrokerOption) => void;
 }) {
   const [connecting, setConnecting] = useState(false);
-  const [selectedBrokerState, setSelectedBrokerState] = useState<PortfolioBrokerOption>(selectedBroker);
+  const [selectedBrokerState, setSelectedBrokerState] =
+    useState<PortfolioBrokerOption>(selectedBroker);
   const [host, setHost] = useState('127.0.0.1');
   const [port, setPort] = useState('7497');
   const [clientId, setClientId] = useState('1');
@@ -405,11 +377,7 @@ function BrokerConnectionPanel({
     setSelectedBrokerState(brokerId);
     setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
     setPort(
-      String(
-        initialConnection?.port ??
-          settings.port ??
-          (brokerId === 'futu' ? 11111 : 7497),
-      ),
+      String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)),
     );
     setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
     setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
@@ -417,14 +385,23 @@ function BrokerConnectionPanel({
     setApiSecret('');
     setTestnet(Boolean(initialConnection?.testnet ?? settings.testnet ?? true));
     setError(initialConnection?.lastError ?? null);
-  }, []);
+  }, [initialConnection, selectedBroker]);
 
   const handleConnect = async () => {
     setError(null);
 
     if (selectedBrokerState === 'mock') {
-      onUseMockData();
-      onBack();
+      setConnecting(true);
+      try {
+        await onUsePaperPortfolio();
+        onBack();
+      } catch (connectError) {
+        setError(
+          connectError instanceof Error ? connectError.message : 'Unable to use paper portfolio',
+        );
+      } finally {
+        setConnecting(false);
+      }
       return;
     }
 
@@ -435,28 +412,28 @@ function BrokerConnectionPanel({
           ? { broker: selectedBrokerState, host, port: Number(port), clientId: Number(clientId) }
           : selectedBrokerState === 'futu'
             ? { broker: selectedBrokerState, host, port: Number(port), market }
-            : {
-                broker: selectedBrokerState,
-                apiKey,
-                apiSecret,
-                testnet,
-              };
+            : { broker: selectedBrokerState, apiKey, apiSecret, testnet };
       const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string; detail?: string }
-          | null;
-        throw new Error(payload?.detail ?? payload?.error ?? `IBKR connection API returned ${response.status}`);
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+          detail?: string;
+        } | null;
+        throw new Error(
+          payload?.detail ?? payload?.error ?? `Broker connection API returned ${response.status}`,
+        );
       }
       onBrokerChange(selectedBrokerState);
       await onConnected();
       onBack();
     } catch (connectError) {
-      setError(connectError instanceof Error ? connectError.message : 'Unable to connect to broker');
+      setError(
+        connectError instanceof Error ? connectError.message : 'Unable to connect to broker',
+      );
     } finally {
       setConnecting(false);
     }
@@ -465,38 +442,39 @@ function BrokerConnectionPanel({
   return (
     <div className="flex h-full flex-col bg-white">
       <div className="flex items-center gap-3 border-b border-slate-50 py-3">
-        <button onClick={onBack} className="text-slate-400 hover:text-slate-900 transition-colors">
+        <button onClick={onBack} className="text-slate-400 transition-colors hover:text-slate-900">
           <ArrowLeft size={16} />
         </button>
         <div className="text-[11px] font-medium uppercase tracking-tight text-slate-500">
           Broker Connection
         </div>
       </div>
-        <div className="flex-1 py-5 space-y-4">
-          <div className="grid grid-cols-2 gap-2">
-            {BROKER_OPTIONS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => {
-                  setSelectedBrokerState(option.id);
-                  setError(null);
-                }}
-                className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
-                  selectedBrokerState === option.id
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <div>{option.label}</div>
-                <div className="text-[9px] opacity-70">{option.description}</div>
-              </button>
-            ))}
-          </div>
+      <div className="flex-1 space-y-4 py-5">
+        <div className="grid grid-cols-2 gap-2">
+          {BROKER_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => {
+                setSelectedBrokerState(option.id);
+                setError(null);
+              }}
+              className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
+                selectedBrokerState === option.id
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <div>{option.label}</div>
+              <div className="text-[9px] opacity-70">{option.description}</div>
+            </button>
+          ))}
+        </div>
+
         {selectedBrokerState === 'ibkr' && (
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
-              <div className="text-[10px] text-slate-400 uppercase">Host</div>
+              <div className="text-[10px] uppercase text-slate-400">Host</div>
               <input
                 type="text"
                 value={host}
@@ -505,7 +483,7 @@ function BrokerConnectionPanel({
               />
             </div>
             <div className="space-y-1">
-              <div className="text-[10px] text-slate-400 uppercase">Port</div>
+              <div className="text-[10px] uppercase text-slate-400">Port</div>
               <input
                 type="text"
                 value={port}
@@ -514,7 +492,7 @@ function BrokerConnectionPanel({
               />
             </div>
             <div className="space-y-1">
-              <div className="text-[10px] text-slate-400 uppercase">Client ID</div>
+              <div className="text-[10px] uppercase text-slate-400">Client ID</div>
               <input
                 type="text"
                 value={clientId}
@@ -524,10 +502,11 @@ function BrokerConnectionPanel({
             </div>
           </div>
         )}
+
         {selectedBrokerState === 'futu' && (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <div className="text-[10px] text-slate-400 uppercase">Host</div>
+              <div className="text-[10px] uppercase text-slate-400">Host</div>
               <input
                 type="text"
                 value={host}
@@ -536,7 +515,7 @@ function BrokerConnectionPanel({
               />
             </div>
             <div className="space-y-1">
-              <div className="text-[10px] text-slate-400 uppercase">Port</div>
+              <div className="text-[10px] uppercase text-slate-400">Port</div>
               <input
                 type="text"
                 value={port}
@@ -545,7 +524,7 @@ function BrokerConnectionPanel({
               />
             </div>
             <div className="space-y-1">
-              <div className="text-[10px] text-slate-400 uppercase">Market</div>
+              <div className="text-[10px] uppercase text-slate-400">Market</div>
               <input
                 type="text"
                 value={market}
@@ -555,10 +534,11 @@ function BrokerConnectionPanel({
             </div>
           </div>
         )}
+
         {selectedBrokerState === 'binance' && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1 col-span-2">
-              <div className="text-[10px] text-slate-400 uppercase">API Key</div>
+            <div className="col-span-2 space-y-1">
+              <div className="text-[10px] uppercase text-slate-400">API Key</div>
               <input
                 type="password"
                 value={apiKey}
@@ -566,8 +546,8 @@ function BrokerConnectionPanel({
                 className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
               />
             </div>
-            <div className="space-y-1 col-span-2">
-              <div className="text-[10px] text-slate-400 uppercase">API Secret</div>
+            <div className="col-span-2 space-y-1">
+              <div className="text-[10px] uppercase text-slate-400">API Secret</div>
               <input
                 type="password"
                 value={apiSecret}
@@ -585,34 +565,44 @@ function BrokerConnectionPanel({
             </label>
           </div>
         )}
-        {selectedBrokerState !== 'ibkr' && selectedBrokerState !== 'futu' && selectedBrokerState !== 'binance' && selectedBrokerState !== 'mock' && (
-          <div className="text-[11px] text-slate-500 leading-4">
-            {selectedOption?.label} is not configured.
-          </div>
-        )}
-        {error && <div className="text-[11px] text-rose-600 leading-4">{error}</div>}
+
+        {error && <div className="text-[11px] leading-4 text-rose-600">{error}</div>}
+
         <button
           onClick={handleConnect}
           disabled={connecting}
-          className="w-full bg-slate-900 py-2.5 text-xs text-white hover:bg-slate-800 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex w-full items-center justify-center gap-2 bg-slate-900 py-2.5 text-xs text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {connecting ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
           {selectedBrokerState === 'mock'
-            ? 'Use Mock Portfolio Data'
+            ? 'Use Paper Portfolio'
             : connecting
               ? 'Syncing...'
               : `Connect ${selectedOption?.label ?? 'Broker'}`}
         </button>
+
         {selectedBrokerState !== 'mock' && (
           <button
-            onClick={() => {
-              onUseMockData();
-              onBack();
+            onClick={async () => {
+              setConnecting(true);
+              setError(null);
+              try {
+                await onUsePaperPortfolio();
+                onBack();
+              } catch (connectError) {
+                setError(
+                  connectError instanceof Error
+                    ? connectError.message
+                    : 'Unable to use paper portfolio',
+                );
+              } finally {
+                setConnecting(false);
+              }
             }}
             disabled={connecting}
             className="w-full border border-slate-200 bg-white py-2.5 text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
-            Use Mock Portfolio Data
+            Use Paper Portfolio
           </button>
         )}
       </div>
@@ -620,23 +610,256 @@ function BrokerConnectionPanel({
   );
 }
 
-function PortfolioWidgetSmall({ data, source, liveBrokerLabel, onOpenSettings }: PortfolioVariantProps) {
+function PortfolioEditorPanel({
+  initialName,
+  initialStocks,
+  saveStatus,
+  isLiveSnapshot,
+  onBack,
+  onSave,
+}: {
+  initialName: string;
+  initialStocks: Stock[];
+  saveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  isLiveSnapshot: boolean;
+  onBack: () => void;
+  onSave: (payload: { name: string; positions: Stock[] }) => Promise<void>;
+}) {
+  const [name, setName] = useState(initialName);
+  const [draftStocks, setDraftStocks] = useState<Stock[]>(initialStocks);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateStock = (stockId: string, patch: Partial<Stock>) => {
+    setDraftStocks((current) =>
+      current.map((stock) => (stock.id === stockId ? { ...stock, ...patch } : stock)),
+    );
+  };
+
+  const addStock = () => {
+    setDraftStocks((current) => [
+      ...current,
+      {
+        id: `draft-${Date.now()}-${current.length + 1}`,
+        symbol: '',
+        quantity: 0,
+        avgPrice: 0,
+        currentPrice: 0,
+        sector: 'Uncategorized',
+      },
+    ]);
+  };
+
+  const removeStock = (stockId: string) => {
+    setDraftStocks((current) => current.filter((stock) => stock.id !== stockId));
+  };
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      await onSave({
+        name,
+        positions: draftStocks.map((stock) => ({
+          ...stock,
+          symbol: stock.symbol.trim().toUpperCase(),
+          sector: stock.sector.trim() || 'Uncategorized',
+        })),
+      });
+      onBack();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Unable to save portfolio');
+    }
+  };
+
   return (
-    <div className="relative flex h-full flex-col items-center justify-center bg-white">
-      <button
-        onClick={onOpenSettings}
-        className="absolute right-0 top-0 text-slate-200 hover:text-slate-400"
-      >
-        <Settings size={12} />
-      </button>
-      <div className="absolute left-0 top-0">
-        <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? liveBrokerLabel : undefined} />
+    <div className="flex h-full flex-col bg-white">
+      <div className="flex items-center gap-3 border-b border-slate-50 py-3">
+        <button onClick={onBack} className="text-slate-400 transition-colors hover:text-slate-900">
+          <ArrowLeft size={16} />
+        </button>
+        <div>
+          <div className="text-[11px] font-medium uppercase tracking-tight text-slate-500">
+            Paper Portfolio Editor
+          </div>
+          {isLiveSnapshot && (
+            <div className="text-[10px] text-slate-400">
+              Live broker data is active. Saved edits will appear when you switch back to Paper
+              Portfolio.
+            </div>
+          )}
+        </div>
       </div>
-      <div className={`text-xl font-medium tracking-tight ${percentClass(data.pnlPercent)}`}>
-        {data.pnlPercent >= 0 ? '+' : ''}
-        {data.pnlPercent.toFixed(1)}%
+
+      <div className="flex-1 space-y-4 overflow-y-auto py-4">
+        <div className="space-y-1">
+          <div className="text-[10px] uppercase text-slate-400">Portfolio Name</div>
+          <input
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-900"
+          />
+        </div>
+
+        <div className="space-y-3">
+          {draftStocks.map((stock) => (
+            <div key={stock.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  Position
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeStock(stock.id)}
+                  className="text-slate-300 transition-colors hover:text-rose-600"
+                  title="Remove position"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                <label className="space-y-1">
+                  <span className="text-[10px] uppercase text-slate-400">Symbol</span>
+                  <input
+                    type="text"
+                    value={stock.symbol}
+                    onChange={(event) => updateStock(stock.id, { symbol: event.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs uppercase outline-none focus:border-slate-900"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-[10px] uppercase text-slate-400">Quantity</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={stock.quantity}
+                    onChange={(event) =>
+                      updateStock(stock.id, {
+                        quantity: event.target.value === '' ? 0 : Number(event.target.value),
+                      })
+                    }
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-[10px] uppercase text-slate-400">Avg Price</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={stock.avgPrice}
+                    onChange={(event) =>
+                      updateStock(stock.id, {
+                        avgPrice: event.target.value === '' ? 0 : Number(event.target.value),
+                      })
+                    }
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-[10px] uppercase text-slate-400">Current Price</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={stock.currentPrice}
+                    onChange={(event) =>
+                      updateStock(stock.id, {
+                        currentPrice: event.target.value === '' ? 0 : Number(event.target.value),
+                      })
+                    }
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-[10px] uppercase text-slate-400">Sector</span>
+                  <input
+                    type="text"
+                    value={stock.sector}
+                    onChange={(event) => updateStock(stock.id, { sector: event.target.value })}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
+                  />
+                </label>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={addStock}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-2 text-xs text-slate-600 transition-colors hover:border-slate-900 hover:text-slate-900"
+        >
+          <Plus size={14} />
+          Add Position
+        </button>
+
+        {error && <div className="text-[11px] text-rose-600">{error}</div>}
+        {saveStatus === 'saved' && (
+          <div className="text-[11px] text-emerald-600">Portfolio saved.</div>
+        )}
+        {saveStatus === 'error' && !error && (
+          <div className="text-[11px] text-rose-600">Unable to save portfolio.</div>
+        )}
       </div>
-      <div className="text-[10px] text-slate-400 mt-0.5">{formatCurrency(data.pnl)}</div>
+
+      <div className="border-t border-slate-50 py-3">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saveStatus === 'saving'}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 py-2.5 text-xs text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+        >
+          {saveStatus === 'saving' ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : saveStatus === 'saved' ? (
+            <Check size={12} />
+          ) : (
+            <Save size={12} />
+          )}
+          {saveStatus === 'saving' ? 'Saving...' : 'Save Paper Portfolio'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PortfolioWidgetSmall({
+  data,
+  source,
+  sourceLabel,
+  onOpenSettings,
+  onOpenEditor,
+}: PortfolioVariantProps) {
+  return (
+    <div className="absolute inset-0 bg-white">
+      <div className="absolute left-0 top-0 z-10">
+        <PortfolioSourceBadge source={source} label={sourceLabel} />
+      </div>
+
+      <div className="absolute right-0 top-0 z-10 flex items-center gap-1">
+        <button
+          onClick={onOpenEditor}
+          className="text-slate-200 transition-colors hover:text-slate-400"
+        >
+          <Pencil size={12} />
+        </button>
+        <button
+          onClick={onOpenSettings}
+          className="text-slate-200 transition-colors hover:text-slate-400"
+        >
+          <Settings size={12} />
+        </button>
+      </div>
+
+      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+        <div className={`text-xl font-medium tracking-tight ${percentClass(data.pnlPercent)}`}>
+          {data.pnlPercent >= 0 ? '+' : ''}
+          {data.pnlPercent.toFixed(1)}%
+        </div>
+        <div className="mt-0.5 text-[10px] text-slate-400">{formatCurrency(data.pnl)}</div>
+      </div>
     </div>
   );
 }
@@ -645,35 +868,33 @@ function PortfolioWidgetMedium({
   stocks,
   data,
   source,
-  liveBrokerLabel,
-  saveStatus,
+  sourceLabel,
   onOpenSettings,
-  onSavePaperPortfolio,
+  onOpenEditor,
 }: PortfolioVariantProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <div className="flex items-center justify-between py-2.5">
-        <div className="flex items-center gap-2">
-          <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? liveBrokerLabel : undefined} />
-        </div>
+        <PortfolioSourceBadge source={source} label={sourceLabel} />
         <div className="flex items-center gap-2">
           <button
-            onClick={onSavePaperPortfolio}
-            disabled={saveStatus === 'saving'}
-            className="text-slate-300 hover:text-slate-500 disabled:opacity-50"
-            title="Save paper portfolio"
+            onClick={onOpenEditor}
+            className="text-slate-300 transition-colors hover:text-slate-500"
           >
-            {saveStatus === 'saved' ? <Check size={14} /> : <Save size={14} />}
+            <Pencil size={14} />
           </button>
-          <button onClick={onOpenSettings} className="text-slate-300 hover:text-slate-500">
+          <button
+            onClick={onOpenSettings}
+            className="text-slate-300 transition-colors hover:text-slate-500"
+          >
             <Settings size={14} />
           </button>
         </div>
       </div>
 
-      <div className="py-3 border-b border-slate-50 flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-slate-50 py-3">
         <div>
-          <div className="text-[9px] uppercase text-slate-400 mb-0.5">Total Value</div>
+          <div className="mb-0.5 text-[9px] uppercase text-slate-400">Total Value</div>
           <div className="text-lg font-medium text-slate-900">
             {formatCurrency(data.totalValue)}
           </div>
@@ -684,29 +905,35 @@ function PortfolioWidgetMedium({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {stocks.map((stock) => (
-          <div
-            key={stock.id}
-            className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors px-1"
-          >
-            <div className="flex flex-col">
-              <div className="text-xs font-bold text-slate-800">{stock.symbol}</div>
-              <div className="text-[8px] text-slate-400 uppercase tracking-tighter">
-                {stock.quantity} shs
-              </div>
-            </div>
-            <div className="flex flex-col items-end">
-              <div
-                className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}
-              >
-                {formatCurrency(stock.currentPrice, 1)}
-              </div>
-              <div className="text-[8px] text-slate-400 font-mono">
-                Avg: {formatCurrency(stock.avgPrice, 0)}
-              </div>
-            </div>
+        {stocks.length === 0 ? (
+          <div className="py-6 text-center text-xs text-slate-400">
+            No positions yet. Open the editor to build your paper portfolio.
           </div>
-        ))}
+        ) : (
+          stocks.map((stock) => (
+            <div
+              key={stock.id}
+              className="flex items-center justify-between border-b border-slate-50 px-1 py-2 transition-colors last:border-0 hover:bg-slate-50"
+            >
+              <div className="flex flex-col">
+                <div className="text-xs font-bold text-slate-800">{stock.symbol}</div>
+                <div className="text-[8px] uppercase tracking-tighter text-slate-400">
+                  {stock.quantity} shs
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <div
+                  className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}
+                >
+                  {formatCurrency(stock.currentPrice, 1)}
+                </div>
+                <div className="text-[8px] font-mono text-slate-400">
+                  Avg: {formatCurrency(stock.avgPrice, 0)}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -716,36 +943,33 @@ function PortfolioWidgetLarge({
   stocks,
   data,
   source,
-  liveBrokerLabel,
-  saveStatus,
+  sourceLabel,
   onOpenSettings,
-  onSavePaperPortfolio,
+  onOpenEditor,
 }: PortfolioVariantProps) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
-      <div className="flex items-center justify-between py-3 border-b border-slate-50">
-        <div className="flex items-center gap-2">
-          <PortfolioSourceBadge source={source} brokerName={source === 'backend' ? liveBrokerLabel : undefined} />
-        </div>
+      <div className="flex items-center justify-between border-b border-slate-50 py-3">
+        <PortfolioSourceBadge source={source} label={sourceLabel} />
         <div className="flex items-center gap-2">
           <button
-            onClick={onSavePaperPortfolio}
-            disabled={saveStatus === 'saving'}
-            className="text-slate-300 hover:text-slate-600 disabled:opacity-50 transition-colors"
-            title="Save paper portfolio"
+            onClick={onOpenEditor}
+            className="text-slate-300 transition-colors hover:text-slate-600"
+            title="Edit paper portfolio"
           >
-            {saveStatus === 'saved' ? <Check size={14} /> : <Save size={14} />}
+            <Pencil size={14} />
           </button>
           <button
             onClick={onOpenSettings}
-            className="text-slate-300 hover:text-slate-600 transition-colors"
+            className="text-slate-300 transition-colors hover:text-slate-600"
+            title="Broker settings"
           >
             <Settings size={14} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 py-4 bg-slate-50/40 border-b border-slate-50 px-1">
+      <div className="grid grid-cols-4 gap-4 border-b border-slate-50 bg-slate-50/40 px-1 py-4">
         {[
           { label: 'Net Liq', val: formatCurrency(data.totalValue) },
           {
@@ -759,82 +983,94 @@ function PortfolioWidgetLarge({
             class: percentClass(data.pnl),
           },
           { label: 'Buying Power', val: formatCurrency(data.totalValue * 0.15) },
-        ].map((m) => (
-          <div key={m.label}>
-            <div className="text-[9px] uppercase text-slate-400 mb-0.5 tracking-wide">
-              {m.label}
+        ].map((metric) => (
+          <div key={metric.label}>
+            <div className="mb-0.5 text-[9px] uppercase tracking-wide text-slate-400">
+              {metric.label}
             </div>
-            <div className={`text-xs font-semibold ${m.class || ''}`}>{m.val}</div>
+            <div className={`text-xs font-semibold ${metric.class || ''}`}>{metric.val}</div>
           </div>
         ))}
       </div>
 
-      <div className="py-2 border-b border-slate-50 bg-white">
+      <div className="border-b border-slate-50 bg-white py-2">
         <PerformanceChart data={data.history} height={60} showAxis />
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="w-3/5 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-slate-100">
-          <table className="w-full text-[10px] text-left border-collapse">
-            <thead className="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_rgba(0,0,0,0.05)] text-slate-400 uppercase text-[8px] tracking-wider">
-              <tr>
-                <th className="py-2 font-semibold first:pl-0 bg-white">Instrument</th>
-                <th className="py-2 text-right font-semibold bg-white">Avg</th>
-                <th className="py-2 text-right font-semibold bg-white">Price</th>
-                <th className="py-2 text-right font-semibold last:pr-0 bg-white">Return</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {stocks.map((stock) => {
-                const stockPnl = (stock.currentPrice / stock.avgPrice - 1) * 100;
-                return (
-                  <tr key={stock.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="py-2 first:pl-0">
-                      <div className="font-bold text-slate-900 leading-tight">{stock.symbol}</div>
-                      <div className="text-[8px] text-slate-400 font-mono tracking-tighter">
-                        {stock.quantity} <span className="text-[7px] opacity-70">shs</span>
-                      </div>
-                    </td>
-                    <td className="py-2 text-right font-mono text-slate-400 text-[9px]">
-                      {formatCurrency(stock.avgPrice, 0)}
-                    </td>
-                    <td className="py-2 text-right font-bold text-slate-800 text-[9px]">
-                      {formatCurrency(stock.currentPrice, 0)}
-                    </td>
-                    <td
-                      className={`py-2 text-right font-bold last:pr-0 text-[9px] ${percentClass(stockPnl)}`}
-                    >
-                      {stockPnl >= 0 ? '+' : ''}
-                      {stockPnl.toFixed(1)}%
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          {stocks.length === 0 ? (
+            <div className="py-6 text-center text-xs text-slate-400">
+              No positions yet. Open the editor to build your paper portfolio.
+            </div>
+          ) : (
+            <table className="w-full border-collapse text-left text-[10px]">
+              <thead className="sticky top-0 z-10 bg-white text-[8px] uppercase tracking-wider text-slate-400 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+                <tr>
+                  <th className="bg-white py-2 font-semibold first:pl-0">Instrument</th>
+                  <th className="bg-white py-2 text-right font-semibold">Avg</th>
+                  <th className="bg-white py-2 text-right font-semibold">Price</th>
+                  <th className="bg-white py-2 text-right font-semibold last:pr-0">Return</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {stocks.map((stock) => {
+                  const stockPnl =
+                    stock.avgPrice === 0 ? 0 : (stock.currentPrice / stock.avgPrice - 1) * 100;
+                  return (
+                    <tr key={stock.id} className="group transition-colors hover:bg-slate-50/50">
+                      <td className="py-2 first:pl-0">
+                        <div className="font-bold leading-tight text-slate-900">{stock.symbol}</div>
+                        <div className="font-mono text-[8px] tracking-tighter text-slate-400">
+                          {stock.quantity} <span className="text-[7px] opacity-70">shs</span>
+                        </div>
+                      </td>
+                      <td className="py-2 text-right font-mono text-[9px] text-slate-400">
+                        {formatCurrency(stock.avgPrice, 0)}
+                      </td>
+                      <td className="py-2 text-right text-[9px] font-bold text-slate-800">
+                        {formatCurrency(stock.currentPrice, 0)}
+                      </td>
+                      <td
+                        className={`py-2 text-right text-[9px] font-bold last:pr-0 ${percentClass(stockPnl)}`}
+                      >
+                        {stockPnl >= 0 ? '+' : ''}
+                        {stockPnl.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
-        <div className="w-2/5 bg-slate-50/30 p-3 border-l border-slate-50 overflow-y-auto">
-          <div className="text-[8px] uppercase text-slate-400 mb-3 font-bold tracking-widest border-b border-slate-100 pb-1">
+        <div className="w-2/5 overflow-y-auto border-l border-slate-50 bg-slate-50/30 p-3">
+          <div className="mb-3 border-b border-slate-100 pb-1 text-[8px] font-bold uppercase tracking-widest text-slate-400">
             Allocation
           </div>
           <div className="space-y-4">
             {data.sectorValues.map((sector) => (
               <div key={sector.sector} className="group">
-                <div className="flex items-center justify-between text-[8px] mb-1 text-slate-500 font-bold uppercase tracking-tighter">
-                  <span className="truncate pr-1 group-hover:text-slate-900 transition-colors">
+                <div className="mb-1 flex items-center justify-between text-[8px] font-bold uppercase tracking-tighter text-slate-500">
+                  <span className="truncate pr-1 transition-colors group-hover:text-slate-900">
                     {sector.sector}
                   </span>
                   <span className="font-mono">{sector.percent.toFixed(0)}%</span>
                 </div>
-                <div className="h-1 w-full bg-slate-200/60 rounded-full overflow-hidden">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200/60">
                   <div
-                    className="h-full bg-slate-400 group-hover:bg-slate-700 transition-all"
+                    className="h-full bg-slate-400 transition-all group-hover:bg-slate-700"
                     style={{ width: `${sector.percent}%` }}
                   />
                 </div>
               </div>
             ))}
+            {data.sectorValues.length === 0 && (
+              <div className="text-[10px] text-slate-400">
+                Sector allocation will appear after you add positions.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -845,150 +1081,208 @@ function PortfolioWidgetLarge({
 const PortfolioWidgetRoot = ({
   variant,
   size,
-  title = "Portfolio",
+  title = 'Portfolio',
   ...props
 }: PortfolioWidgetProps) => {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
+  const [editablePortfolioName, setEditablePortfolioName] = useState('Portfolio Widget Portfolio');
+  const [editableStocks, setEditableStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<'demo' | 'backend'>('demo');
-  const [liveBrokerLabel, setLiveBrokerLabel] = useState<string | undefined>('Mock');
-  const [showBrokerPanel, setShowBrokerPanel] = useState(false);
+  const [source, setSource] = useState<PortfolioWidgetSource>('paper');
+  const [sourceLabel, setSourceLabel] = useState('Paper Portfolio');
+  const [panelMode, setPanelMode] = useState<PortfolioPanelMode>(null);
   const [selectedBroker, setSelectedBroker] = useState<PortfolioBrokerOption>('mock');
   const [brokerConnection, setBrokerConnection] = useState<PortfolioApiSnapshot['broker']>({
     id: 'mock',
     status: 'disconnected',
-    name: 'Mock Data',
+    name: 'Paper Portfolio',
   });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const { setPortfolio } = usePortfolioContext();
 
   const resolvedVariant = variant ?? size ?? 'medium';
 
-  const useMockData = () => {
-    setStocks(DEFAULT_STOCKS);
-    setBackendData(null);
-    setPortfolio(buildMockChatContext(DEFAULT_STOCKS));
-    setSelectedBroker('mock');
-    setBrokerConnection({
-      id: 'mock',
-      status: 'disconnected',
-      name: 'Mock Data',
-    });
-    setSource('demo');
-    setLiveBrokerLabel('Mock');
-    setLoading(false);
-  };
-
-  const loadPortfolio = async () => {
+  const loadPortfolio = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(portfolioApiUrl('/api/portfolio'), {
-        headers: { Accept: 'application/json' },
-      });
+      const [snapshotResponse, editableResponse] = await Promise.all([
+        fetch(portfolioApiUrl('/api/portfolio'), { headers: { Accept: 'application/json' } }),
+        fetch(portfolioApiUrl('/api/portfolio/editable'), {
+          headers: { Accept: 'application/json' },
+        }),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(`Portfolio API returned ${response.status}`);
+      if (!snapshotResponse.ok) {
+        throw new Error(`Portfolio API returned ${snapshotResponse.status}`);
       }
 
-      const snapshot = (await response.json()) as PortfolioApiSnapshot;
+      const snapshot = (await snapshotResponse.json()) as PortfolioApiSnapshot;
       const mappedSnapshot = mapPortfolioSnapshot(snapshot);
-      setBrokerConnection(mappedSnapshot.chatContext.broker);
+      const broker = mappedSnapshot.chatContext.broker;
+      const isLiveBroker = snapshot.source === 'backend' && broker.status === 'connected';
+
       setStocks(mappedSnapshot.stocks);
-      const brokerStatus = mappedSnapshot.chatContext.broker.status;
-      const brokerId = mappedSnapshot.chatContext.broker.id ?? 'mock';
-      const isLiveBroker = brokerStatus === 'connected';
-      setBackendData(isLiveBroker ? mappedSnapshot.data : null);
+      setBackendData(mappedSnapshot.data);
+      setBrokerConnection(broker);
+      setSelectedBroker(broker.id ?? 'mock');
+
       if (isLiveBroker) {
-        setPortfolio(mappedSnapshot.chatContext);
+        setSource('backend');
+        setSourceLabel(broker.name || 'Live Broker');
+        setPortfolio({ ...mappedSnapshot.chatContext, source: 'backend' });
       } else {
-        const mockContext = buildMockChatContext(mappedSnapshot.stocks);
-        mockContext.broker = mappedSnapshot.chatContext.broker;
-        setPortfolio(mockContext);
+        setSource('paper');
+        setSourceLabel('Paper Portfolio');
+        setPortfolio({
+          ...buildPaperChatContext(mappedSnapshot.stocks, broker),
+          asOf: mappedSnapshot.chatContext.asOf,
+          baseCurrency: mappedSnapshot.chatContext.baseCurrency,
+        });
       }
-      if (brokerStatus === 'connected' || brokerStatus === 'configured') {
-        setSelectedBroker(brokerId);
-        setLiveBrokerLabel(mappedSnapshot.chatContext.broker.name || 'Configured');
-        setSource(isLiveBroker ? 'backend' : 'demo');
+
+      if (editableResponse.ok) {
+        const editable = (await editableResponse.json()) as PortfolioEditableResponse;
+        setEditablePortfolioName(editable.name);
+        setEditableStocks(mapPositionsToStocks(editable.positions));
       } else {
-        setSelectedBroker('mock');
-        setLiveBrokerLabel('Mock');
-        setSource('demo');
+        setEditablePortfolioName('Portfolio Widget Portfolio');
+        setEditableStocks(mappedSnapshot.stocks);
       }
     } catch {
-      useMockData();
+      const emptyData = buildPortfolioData([]);
+      setStocks([]);
+      setBackendData(emptyData);
+      setEditablePortfolioName('Portfolio Widget Portfolio');
+      setEditableStocks([]);
+      setBrokerConnection({
+        id: 'mock',
+        status: 'disconnected',
+        name: 'Paper Portfolio',
+      });
+      setSelectedBroker('mock');
+      setSource('paper');
+      setSourceLabel('Paper Portfolio');
+      setPortfolio(buildPaperChatContext([]));
     } finally {
       setLoading(false);
     }
-  };
+  }, [setPortfolio]);
 
   useEffect(() => {
     void loadPortfolio();
-  }, [setPortfolio]);
+  }, [loadPortfolio]);
+
+  const activatePaperPortfolio = async () => {
+    const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ broker: 'mock' }),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+        detail?: string;
+      } | null;
+      throw new Error(
+        payload?.detail ?? payload?.error ?? `Portfolio API returned ${response.status}`,
+      );
+    }
+    await loadPortfolio();
+  };
+
+  const saveEditablePortfolio = async (payload: { name: string; positions: Stock[] }) => {
+    setSaveStatus('saving');
+    try {
+      const response = await fetch(portfolioApiUrl('/api/portfolio/editable'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorPayload = (await response.json().catch(() => null)) as {
+          error?: string;
+          detail?: string;
+        } | null;
+        throw new Error(
+          errorPayload?.detail ??
+            errorPayload?.error ??
+            `Portfolio API returned ${response.status}`,
+        );
+      }
+
+      const editable = (await response.json()) as PortfolioEditableResponse;
+      setEditablePortfolioName(editable.name);
+      setEditableStocks(mapPositionsToStocks(editable.positions));
+      await loadPortfolio();
+      setSaveStatus('saved');
+      window.setTimeout(() => setSaveStatus('idle'), 1600);
+    } catch (error) {
+      setSaveStatus('error');
+      window.setTimeout(() => setSaveStatus('idle'), 1600);
+      throw error;
+    }
+  };
 
   const portfolioData = useMemo(
     () => backendData ?? buildPortfolioData(stocks),
     [backendData, stocks],
   );
 
-  const savePaperPortfolio = async () => {
-    setSaveStatus('saving');
-    try {
-      const response = await fetch(portfolioApiUrl('/api/paper-portfolio'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Portfolio Widget Paper Portfolio',
-          positions: stocks,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Paper portfolio API returned ${response.status}`);
-      }
-
-      setSaveStatus('saved');
-      window.setTimeout(() => setSaveStatus('idle'), 1600);
-    } catch {
-      setSaveStatus('error');
-      window.setTimeout(() => setSaveStatus('idle'), 1600);
-    }
-  };
-
   const variantProps: PortfolioVariantProps = {
     stocks,
     data: portfolioData,
     source,
-    liveBrokerLabel: liveBrokerLabel ?? 'IBKR',
-    saveStatus,
-    onOpenSettings: () => setShowBrokerPanel(true),
-    onSavePaperPortfolio: savePaperPortfolio,
+    sourceLabel,
+    onOpenSettings: () => setPanelMode('broker'),
+    onOpenEditor: () => setPanelMode('editor'),
   };
 
   const contextText = [
     `Total Value: $${portfolioData.totalValue.toFixed(2)}`,
     `Unrealized PnL: ${portfolioData.pnlPercent >= 0 ? '+' : ''}${portfolioData.pnlPercent.toFixed(2)}%`,
     `Daily PnL: $${portfolioData.dailyPnl.toFixed(2)}`,
-    `Positions: ${stocks.map(s =>
-      `${s.symbol} ×${s.quantity} @ $${s.currentPrice.toFixed(2)}`
-    ).join(', ')}`,
+    `Positions: ${
+      stocks.length > 0
+        ? stocks
+            .map(
+              (stock) => `${stock.symbol} x${stock.quantity} @ $${stock.currentPrice.toFixed(2)}`,
+            )
+            .join(', ')
+        : 'none'
+    }`,
   ].join('. ');
 
   return (
-    <BaseWidget title={title} {...props} contextData={{ label: title, text: `Portfolio Snapshot: ${contextText}` }} className="overflow-hidden">
+    <BaseWidget
+      title={title}
+      {...props}
+      contextData={{ label: title, text: `Portfolio Snapshot: ${contextText}` }}
+      className="overflow-hidden"
+    >
       {loading ? (
         <div className="flex h-full items-center justify-center space-x-2 text-slate-300">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="text-[10px] font-medium uppercase tracking-widest">Synchronizing</span>
         </div>
-      ) : showBrokerPanel ? (
+      ) : panelMode === 'broker' ? (
         <BrokerConnectionPanel
-          onBack={() => setShowBrokerPanel(false)}
+          onBack={() => setPanelMode(null)}
           onConnected={loadPortfolio}
-          onUseMockData={useMockData}
+          onUsePaperPortfolio={activatePaperPortfolio}
           selectedBroker={selectedBroker}
           initialConnection={brokerConnection}
           onBrokerChange={setSelectedBroker}
+        />
+      ) : panelMode === 'editor' ? (
+        <PortfolioEditorPanel
+          key={`${editablePortfolioName}:${JSON.stringify(editableStocks)}`}
+          initialName={editablePortfolioName}
+          initialStocks={editableStocks}
+          saveStatus={saveStatus}
+          isLiveSnapshot={source === 'backend'}
+          onBack={() => setPanelMode(null)}
+          onSave={saveEditablePortfolio}
         />
       ) : (
         <>

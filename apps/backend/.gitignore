@@ -225,5 +225,7 @@ uv.lock
 protos/*_pb2_grpc.py
 protos/*_pb2.py
 
+# Firebase
+optitrade-hku-firebase-adminsdk.json
 # Local portfolio runtime store
 data/*.json

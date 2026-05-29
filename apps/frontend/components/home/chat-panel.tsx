@@ -5,7 +5,7 @@ import { Loader2, Send, Wifi, WifiOff } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Renderer } from '@openuidev/react-lang';
-import { openuiLibrary } from '@openuidev/react-ui/genui-lib';
+import { openuiChatLibrary } from '@openuidev/react-ui/genui-lib';
 import { useNanobot } from '@/lib/use-nanobot';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -63,10 +63,46 @@ const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
   ),
 };
 
-function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
-  if (text.trimStart().startsWith('root =')) {
-    return <Renderer library={openuiLibrary} response={text} isStreaming={isStreaming} />;
+// Extracts the OpenUI Lang program (starting at `root = ...`) from an LLM
+// response that may contain preamble text, reasoning blocks, or ```openui
+// code fences. Returns { preamble, openui } where either may be empty.
+function splitOpenUiResponse(raw: string): { preamble: string; openui: string } {
+  // Strip a single ```openui ... ``` (or ``` ... ```) fence if present.
+  const fenceMatch = raw.match(/```(?:openui|openui-lang)?\s*\n([\s\S]*?)(?:```|$)/);
+  const candidate = fenceMatch ? fenceMatch[1] : raw;
+
+  // Find the first `root =` at the start of a line.
+  const rootMatch = candidate.match(/(^|\n)\s*root\s*=/);
+  if (!rootMatch || rootMatch.index === undefined) {
+    return { preamble: raw, openui: '' };
   }
+  const sliceStart = rootMatch.index + (rootMatch[1] ? rootMatch[1].length : 0);
+  const openui = candidate.slice(sliceStart);
+  // Preamble is whatever appeared before the fence (or before root=).
+  const preamble = fenceMatch
+    ? raw.slice(0, raw.indexOf(fenceMatch[0])).trim()
+    : candidate.slice(0, sliceStart).trim();
+  return { preamble, openui };
+}
+
+function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
+  const { preamble, openui } = splitOpenUiResponse(text);
+
+  if (openui) {
+    return (
+      <>
+        {preamble && (
+          <div className="mb-2">
+            <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+              {preamble}
+            </Markdown>
+          </div>
+        )}
+        <Renderer library={openuiChatLibrary} response={openui} isStreaming={isStreaming} />
+      </>
+    );
+  }
+
   return (
     <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
       {text}
@@ -76,6 +112,13 @@ function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: bool
 
 function MessageBubble({ role, text, isStreaming }: { role: string; text: string; isStreaming?: boolean }) {
   const isUser = role === 'user';
+  // Hide phantom empty assistant bubbles (e.g. whitespace-only streams or
+  // reasoning/tool channels with no user-visible text). The global typing
+  // indicator already conveys "assistant is working", so an empty card adds
+  // no signal — drop it whether streaming or finished.
+  if (!isUser && !text.trim()) {
+    return null;
+  }
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start w-full'}`}>
       <div

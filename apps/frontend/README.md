@@ -55,3 +55,24 @@ npx nx run @optitrade/frontend:build-storybook
 - Shared components: `apps/frontend/components`
 - Utilities: `apps/frontend/lib`
 - Stories: `apps/frontend/stories`
+
+## Firebase Setup (Frontend)
+
+Firebase Web SDK wiring is available under:
+
+- `apps/frontend/lib/firebase/config.ts`
+- `apps/frontend/lib/firebase/client.ts`
+
+You can provide config in either way:
+
+1. Environment variables (recommended):
+	- Copy `apps/frontend/.env.local.example` to `apps/frontend/.env.local`
+	- Fill `NEXT_PUBLIC_FIREBASE_*` values from Firebase console
+2. Direct object override:
+	- Edit `directConfigOverride` in `apps/frontend/lib/firebase/config.ts`
+	- Paste your Firebase config object values there
+
+The API dashboard includes Firebase actions:
+
+- `Load Firebase Token` (reads token from signed-in Firebase user)
+- `REST AUTH /me` (calls backend protected endpoint with bearer token)

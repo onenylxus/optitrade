@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -100,7 +99,7 @@ class PortfolioSnapshotResponse(BaseModel):
 
 
 class PortfolioConnectRequest(BaseModel):
-    broker: PortfolioBrokerId
+    broker: PortfolioBrokerId = PortfolioBrokerId.IBKR
     host: str | None = None
     port: int | None = None
     clientId: int | None = None
@@ -113,6 +112,26 @@ class PortfolioConnectRequest(BaseModel):
 class PortfolioPaperRequest(BaseModel):
     name: str | None = None
     positions: list[dict[str, object]] | None = None
+
+
+class PortfolioEditablePosition(BaseModel):
+    id: str | None = None
+    symbol: str
+    quantity: float
+    avgPrice: float
+    currentPrice: float
+    sector: str | None = None
+
+
+class PortfolioEditableRequest(BaseModel):
+    name: str | None = None
+    positions: list[PortfolioEditablePosition] | None = None
+
+
+class PortfolioEditableResponse(BaseModel):
+    name: str
+    positions: list[PortfolioSnapshotPosition]
+    updatedAt: str
 
 
 class PortfolioPaperResponse(BaseModel):
