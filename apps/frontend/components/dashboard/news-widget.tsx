@@ -60,22 +60,58 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     [portfolioSymbols, selectedWatchlist],
   );
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/news');
-        if (!response.ok) throw new Error('Failed to fetch news');
-        const data: ApiResponse = await response.json();
-        setNewsData(data.news || []);
-      } catch (err) {
-        console.error('Failed to fetch news:', err);
-      } finally {
-        setLoading(false);
+  // useEffect(() => {
+  //   const fetchNews = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const response = await fetch('/api/news');
+  //       if (!response.ok) throw new Error('Failed to fetch news');
+  //       const data: ApiResponse = await response.json();
+  //       setNewsData(data.news || []);
+  //     } catch (err) {
+  //       console.error('Failed to fetch news:', err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchNews();
+  // }, []);
+
+   useEffect(() => {
+  const fetchNews = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/api/news');
+
+      if (response.status === 202) {
+        console.log("Pipeline is still running...");
+        setNewsData([]);
+        return;
       }
-    };
-    fetchNews();
-  }, []);
+
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      const data = await response.json();
+      console.log("🔍 Raw data received by the front end:", data);
+
+
+      if (data && Array.isArray(data.news)) {
+        setNewsData(data.news);
+      } else if (Array.isArray(data)) {
+
+        setNewsData(data);
+      } else {
+        setNewsData([]);
+      }
+
+    } catch (err) {
+      console.error('Failed to fetch news:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchNews();
+}, []);
 
   const matchesWatchlist = (headline: string, summary?: string): boolean => {
     const text = `${headline} ${summary ?? ''}`.toLowerCase();
@@ -126,10 +162,25 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     contextHeadlineList,
   ].join('\n');
 
+  // const formatSource = (source: string) => source === 'yahoo' ? 'Yahoo Finance' : 'Economic Times';
+  // const formatDate = (dateStr: string) => {
+  //   try { return new Date(dateStr).toLocaleDateString(); } catch { return 'Recent'; }
+  // };
   const formatSource = (source: string) => source === 'yahoo' ? 'Yahoo Finance' : 'Economic Times';
   const formatDate = (dateStr: string) => {
-    try { return new Date(dateStr).toLocaleDateString(); } catch { return 'Recent'; }
-  };
+      try {
+        return new Date(dateStr).toLocaleString(undefined, {
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false // 🎯 使用 24 小時制（如果你喜歡 12 小時制 AM/DM，可以改成 true）
+        });
+      } catch {
+        return 'Recent';
+      }
+    };
 
   const getSentimentLabel = (sentiment: number) => {
     if (sentiment > 0.2) return { text: 'Bullish', emoji: '📈', class: 'bullish' };
@@ -160,7 +211,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
   const selectAll = () => setTempSelectedWatchlist([...AVAILABLE_STOCKS]);
   const deselectAll = () => setTempSelectedWatchlist([]);
 
-  return (
+ return (
     <BaseWidget title={title} summary={summary} contextData={{ label: 'FinNews', text: contextText }}>
       {/* Filter Bar */}
       <div className="flex items-center justify-between gap-2 mb-3">
@@ -375,6 +426,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
       )}
     </BaseWidget>
   );
+
 };
 
 export default NewsWidget;
