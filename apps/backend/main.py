@@ -74,7 +74,7 @@ def run_rest_server(rest_port: int = 8000):
     import asyncio
     asyncio.run(server.serve())
 
-def run_news_pipeline_loop(limit: int = 10):
+def run_news_pipeline_loop(limit: int = 50):
     try:
         pipeline = NewsAnalysisPipeline(limit_per_source=limit)
         pipeline.start_automated_loop()
@@ -100,13 +100,12 @@ def main():
 
     # news_thread = threading.Thread(
     #     target=run_news_pipeline_loop,
-    #     args=(10,),
+    #     args=(50,),
     #     daemon=True,
     #     name="NewsPipelineThread"
     # )
     # news_thread.start()
     # print("Background news pipeline thread started")
-
     # Start REST server in main thread
     try:
         run_rest_server(8000)

@@ -3,6 +3,7 @@
 import json
 import os
 import threading
+import asyncio
 from collections.abc import Mapping
 from contextlib import asynccontextmanager
 from typing import Any
@@ -84,21 +85,27 @@ def get_current_user(
 
 @asynccontextmanager
 async def _rest_lifespan(app: FastAPI):
-    """Lifespan context manager for FastAPI startup and shutdown events."""
-    pipeline_thread = threading.Thread(target=start_analysis, daemon=True)
+    """Lifespan context manager for FastAPI"""
+
+    def run_pipeline_safely():
+        import time
+        time.sleep(2.0)
+        try:
+            start_analysis()
+        except Exception as e:
+            print(f"❌ Background pipeline crash: {e}")
+
+    pipeline_thread = threading.Thread(target=run_pipeline_safely, daemon=True)
     pipeline_thread.start()
 
-    """Shared HTTP client for OpenRouter (keep-alive)."""
     app.state.http_openrouter = httpx.AsyncClient(
         timeout=httpx.Timeout(90.0, connect=20.0),
         limits=httpx.Limits(max_keepalive_connections=8, max_connections=16),
     )
-
     try:
         yield
     finally:
         await app.state.http_openrouter.aclose()
-
 
 def create_app() -> FastAPI:
     """

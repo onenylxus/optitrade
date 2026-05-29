@@ -5,16 +5,28 @@ import { BaseWidget } from './base-widget';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
 
 interface NewsItem {
+  // id: string;
+  // headline: string;
+  // source: string;
+  // link: string;
+  // summary: string;
+  // highlights: string[];
+  // sentiment: number;
+  // risk_tag: string;
+  // reasoning: string;
+  // published_at: string;
   id: string;
-  headline: string;
   source: string;
+  headline: string;
   link: string;
+  published_at: string;
   summary: string;
   highlights: string[];
   sentiment: number;
   risk_tag: string;
   reasoning: string;
-  published_at: string;
+  analyzed_at: string;
+  related_symbols?: string[];
 }
 
 interface ApiResponse {
@@ -62,14 +74,26 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
   const [tempSelectedWatchlist, setTempSelectedWatchlist] = useState<string[]>([]);
   const { portfolio } = usePortfolioContext();
 
+  const portfolioPositions = useMemo(() => {
+    if (!portfolio) return [];
+    if (Array.isArray(portfolio)) return portfolio;
+    if (typeof portfolio === 'object' && 'stocks' in portfolio) {
+      return (portfolio as { stocks: Array<{ symbol: string; sector?: string }> }).stocks || [];
+    }
+    if (typeof portfolio === 'object' && 'positions' in portfolio) {
+      return (portfolio as { positions: Array<{ symbol: string; sector?: string }> }).positions || [];
+    }
+    return [];
+  }, [portfolio]);
+
   const portfolioSymbols = useMemo(
-    () => portfolio?.positions.map((position) => position.symbol.toUpperCase()) ?? [],
-    [portfolio],
+    () => portfolioPositions.map((pos) => String(pos.symbol || '').toUpperCase()).filter(Boolean),
+    [portfolioPositions],
   );
 
   const portfolioSectors = useMemo(
-    () => portfolio?.positions.map((position) => position.sector.toLowerCase()) ?? [],
-    [portfolio],
+    () => portfolioPositions.map((pos) => String(pos.sector || '').toLowerCase()).filter(Boolean),
+    [portfolioPositions],
   );
 
   const portfolioAwareWatchlist = useMemo(
@@ -77,58 +101,66 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     [portfolioSymbols, selectedWatchlist],
   );
 
-  // useEffect(() => {
-  //   const fetchNews = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const response = await fetch('/api/news');
-  //       if (!response.ok) throw new Error('Failed to fetch news');
-  //       const data: ApiResponse = await response.json();
-  //       setNewsData(data.news || []);
-  //     } catch (err) {
-  //       console.error('Failed to fetch news:', err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchNews();
-  // }, []);
+  const allInterestedSymbols = useMemo(() => {
+    const combined = new Set([...portfolioSymbols, ...selectedWatchlist]);
+    return Array.from(combined);
+  }, [portfolioSymbols, selectedWatchlist]);
 
-   useEffect(() => {
-  const fetchNews = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8000/api/news');
+  useEffect(() => {
+    const fetchNews = async () => {
+      setLoading(true);
+      try {
+        let url = 'http://localhost:8000/api/news';
 
-      if (response.status === 202) {
-        console.log("Pipeline is still running...");
-        setNewsData([]);
-        return;
+        if (allInterestedSymbols.length > 0) {
+          const symbolsParam = allInterestedSymbols.join(',');
+          url = `http://localhost:8000/api/news?symbols=${symbolsParam}`;
+        }
+
+        console.log(`[API Request] Fetching news using all stock symbols, URL: ${url}`);
+        const response = await fetch(url);
+
+        if (response.status === 202) {
+          console.log("Pipeline is still running...");
+          setNewsData([]);
+          return;
+        }
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+        console.log("[API Response] Frontend has received the full news data package:", data);
+        let rawNews: NewsItem[] = [];
+        if (data && Array.isArray(data.news)) {
+          rawNews = data.news;
+        } else if (Array.isArray(data)) {
+          rawNews = data;
+        }
+
+        const sortedNews = [...rawNews].sort((a, b) => {
+          const dateA = new Date(a.published_at).getTime();
+          const dateB = new Date(b.published_at).getTime();
+          return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
+        });
+
+        setNewsData(sortedNews);
+        // if (data && Array.isArray(data.news)) {
+        //   setNewsData(data.news);
+        // } else if (Array.isArray(data)) {
+        //   setNewsData(data);
+        // } else {
+        //   setNewsData([]);
+        // }
+
+      } catch (err) {
+        console.error('Failed to fetch news:', err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (!response.ok) throw new Error('Network response was not ok');
-
-      const data = await response.json();
-      console.log("🔍 Raw data received by the front end:", data);
-
-
-      if (data && Array.isArray(data.news)) {
-        setNewsData(data.news);
-      } else if (Array.isArray(data)) {
-
-        setNewsData(data);
-      } else {
-        setNewsData([]);
-      }
-
-    } catch (err) {
-      console.error('Failed to fetch news:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchNews();
-}, []);
+    fetchNews();
+  }, [allInterestedSymbols]);
 
   const matchesWatchlist = useCallback(
     (headline: string, summary?: string): boolean => {
@@ -138,20 +170,39 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     [selectedWatchlist],
   );
 
-  const matchesPortfolio = useCallback(
-    (item: NewsItem): boolean => {
-      if (portfolioSymbols.length === 0) {
-        return item.sentiment > 0;
+useEffect(() => {
+    if (portfolioSymbols.length > 0) {
+      console.log("==================================================");
+      console.log(`📊 [Portfolio core filter activated]:`, portfolioSymbols);
+      console.log(`Successfully identified a total of ${portfolioSymbols.length} holdings`);
+      console.log("==================================================");
+    } else {
+      console.log("⚠️ [Note] The current Portfolio is empty; the front-end will switch to a pre-emptive mechanism.");
+    }
+  }, [portfolioSymbols]);
+const matchesPortfolio = useCallback(
+  (item: NewsItem): boolean => {
+    if (portfolioSymbols.length === 0) {
+      return true;
+    }
+
+  if (item.related_symbols && Array.isArray(item.related_symbols)) {
+        const hasMatch = item.related_symbols.some((sym: string) =>
+          portfolioSymbols.includes(sym.toUpperCase())
+        );
+        if (hasMatch) return true;
       }
 
-      const text = `${item.headline} ${item.summary} ${item.highlights.join(' ')}`.toLowerCase();
-      const symbolMatch = portfolioSymbols.some((symbol) => text.includes(symbol.toLowerCase()));
-      const sectorMatch = portfolioSectors.some((sector) => text.includes(sector));
-      return symbolMatch || sectorMatch;
-    },
-    [portfolioSymbols, portfolioSectors],
-  );
+    const itemHeadline = item.headline || "";
+    const itemSummary = item.summary || "";
+    const text = `${itemHeadline} ${itemSummary}`.toLowerCase();
 
+    return portfolioSymbols.some((symbol) =>
+      text.includes(symbol.toLowerCase())
+    );
+  },
+  [portfolioSymbols],
+);
   const getFilteredNews = useCallback(() => {
     let filtered = [...newsData];
     if (currentFilter === 'watchlist') {
@@ -191,25 +242,21 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     contextHeadlineList,
   ].join('\n');
 
-  // const formatSource = (source: string) => source === 'yahoo' ? 'Yahoo Finance' : 'Economic Times';
-  // const formatDate = (dateStr: string) => {
-  //   try { return new Date(dateStr).toLocaleDateString(); } catch { return 'Recent'; }
-  // };
   const formatSource = (source: string) => source === 'yahoo' ? 'Yahoo Finance' : 'Economic Times';
   const formatDate = (dateStr: string) => {
-      try {
-        return new Date(dateStr).toLocaleString(undefined, {
-          year: 'numeric',
-          month: 'numeric',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false // 🎯 使用 24 小時制（如果你喜歡 12 小時制 AM/DM，可以改成 true）
-        });
-      } catch {
-        return 'Recent';
-      }
-    };
+    try {
+      return new Date(dateStr).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch {
+      return 'Recent';
+    }
+  };
 
   const getSentimentLabel = (sentiment: number) => {
     if (sentiment > 0.2) return { text: 'Bullish', emoji: '📈', class: 'bullish' };
@@ -240,7 +287,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
   const selectAll = () => setTempSelectedWatchlist([...AVAILABLE_STOCKS]);
   const deselectAll = () => setTempSelectedWatchlist([]);
 
- return (
+  return (
     <BaseWidget title={title} summary={summary} contextData={{ label: 'FinNews', text: contextText }}>
       {/* Filter Bar */}
       <div className="flex items-center justify-between gap-2 mb-3">
@@ -288,7 +335,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
             🌐 All News
           </button>
         </div>
-        <div className="flex items-center gap-1">
+        {/* <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentView('list')}
             className={`rounded px-1.5 py-0.5 text-xs transition-colors ${
@@ -311,7 +358,55 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
           >
             🃏
           </button>
-        </div>
+        </div> */}
+        <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentView('list')}
+              className={`group relative rounded px-1.5 py-0.5 text-xs transition-colors ${
+                currentView === 'list'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-secondary/50'
+              }`}
+              aria-label="List View"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              <span className="absolute -bottom-8 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white group-hover:block">
+                List View
+              </span>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('card')}
+              className={`group relative rounded px-1.5 py-0.5 text-xs transition-colors ${
+                currentView === 'card'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-secondary/50'
+              }`}
+              aria-label="Card View"
+            >
+
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+              </svg>
+              <span className="absolute -bottom-8 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white group-hover:block">
+                Card View
+              </span>
+            </button>
+          </div>
       </div>
 
       {/* Sentiment Dashboard */}
@@ -444,7 +539,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
                     </>
                   )}
 
-                  {/* List View 簡化內容 */}
+                  {/* List View  */}
                   {currentView === 'list' && (
                     <div className="mt-1 flex items-center gap-2 flex-wrap">
                       <span
@@ -552,7 +647,6 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
       )}
     </BaseWidget>
   );
-
 };
 
 export default NewsWidget;
