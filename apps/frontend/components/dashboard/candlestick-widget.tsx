@@ -197,9 +197,7 @@ function buildCandlestickChatContext(params: {
   const lines: string[] = [];
 
   const pricePart = last ? ` — $${fmt2(last.close)}` : '';
-  lines.push(
-    `Current Stock Focus: ${activeSymbol || '—'} (${timeframe}, ${interval})${pricePart}`,
-  );
+  lines.push(`Current Stock Focus: ${activeSymbol || '—'} (${timeframe}, ${interval})${pricePart}`);
   lines.push(`Watchlist: ${symbols.length ? symbols.join(', ') : '—'}`);
 
   if (first && last && data.length >= 2) {
@@ -496,9 +494,7 @@ export function CandlestickWidget({
   const chartContainerRef = React.useRef<HTMLDivElement | null>(null);
   const seriesRefs = React.useRef<SeriesRefs>(emptySeriesRefs());
   const chartCacheRef = React.useRef<Map<string, CandlestickData<Time>[]>>(new Map());
-  const aiCacheRef = React.useRef<Map<string, { analysis: string; modelId: string }>>(
-    new Map(),
-  );
+  const aiCacheRef = React.useRef<Map<string, { analysis: string; modelId: string }>>(new Map());
   const srCacheRef = React.useRef<
     Map<string, { support: number | null; resistance: number | null }>
   >(new Map());
@@ -535,44 +531,61 @@ export function CandlestickWidget({
   const [apiSrResistance, setApiSrResistance] = React.useState<number | null>(null);
 
   const timeframe = timeframeProp ?? internalTf;
-  const interval = intervalProp ?? internalIv;
 
-  const activeSymbol = symbols[activeSymbolIndex] ?? '';
+  const allowedIntervals = React.useMemo(
+    () => allowedIntervalsForTimeframe(timeframe),
+    [timeframe],
+  );
+
+  const resolvedInternalIv = React.useMemo(() => {
+    if (intervalProp !== undefined) {
+      return intervalProp;
+    }
+
+    return allowedIntervals.includes(internalIv) ? internalIv : (allowedIntervals[0] ?? internalIv);
+  }, [allowedIntervals, internalIv, intervalProp]);
+
+  const interval = intervalProp ?? resolvedInternalIv;
+
+  const activeSymbolIndexResolved =
+    symbols.length === 0 ? 0 : Math.min(activeSymbolIndex, symbols.length - 1);
+  const activeSymbol = symbols[activeSymbolIndexResolved] ?? '';
 
   const useGeneratedData = dataProp === undefined && !useStockApi;
   const showSymbolTabs = useStockApi && dataProp === undefined;
   const showControls =
     showControlsProp ??
-    (useGeneratedData || useStockApi || onTimeframeChange !== undefined || onIntervalChange !== undefined);
+    (useGeneratedData ||
+      useStockApi ||
+      onTimeframeChange !== undefined ||
+      onIntervalChange !== undefined);
 
   React.useEffect(() => {
-    setActiveSymbolIndex((i) => (symbols.length === 0 ? 0 : Math.min(i, symbols.length - 1)));
-  }, [symbols.length]);
-
-  React.useEffect(() => {
-    if (!useStockApi || dataProp !== undefined) {
-      return;
-    }
-    if (!activeSymbol) {
-      setApiCandles([]);
-      setApiError(null);
-      setApiLoading(false);
-      return;
-    }
-
-    const apiInterval = chartIntervalToApi(interval);
-    const q = chartTimeframeToApiQuery(timeframe);
-    const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
-    const cached = chartCacheRef.current.get(cacheKey);
-    if (cached && cached.length > 0) {
-      setApiCandles(cached);
-    }
-
     const ac = new AbortController();
-    setApiLoading(true);
-    setApiError(null);
 
     void (async () => {
+      if (!useStockApi || dataProp !== undefined) {
+        return;
+      }
+
+      if (!activeSymbol) {
+        setApiCandles([]);
+        setApiError(null);
+        setApiLoading(false);
+        return;
+      }
+
+      const apiInterval = chartIntervalToApi(interval);
+      const q = chartTimeframeToApiQuery(timeframe);
+      const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+      const cached = chartCacheRef.current.get(cacheKey);
+      if (cached && cached.length > 0) {
+        setApiCandles(cached);
+      }
+
+      setApiLoading(true);
+      setApiError(null);
+
       try {
         const res = await getStockChart({
           symbol: activeSymbol,
@@ -610,40 +623,42 @@ export function CandlestickWidget({
   }, [useStockApi, dataProp, activeSymbol, timeframe, interval]);
 
   React.useEffect(() => {
-    if (!useStockApi || dataProp !== undefined || !useAiAnalysis) {
-      setApiAiAnalysis(null);
-      setApiAiModel(null);
-      setApiAiLoading(false);
-      setApiAiError(null);
-      return undefined;
-    }
-    if (!activeSymbol) {
-      setApiAiAnalysis(null);
-      setApiAiModel(null);
-      setApiAiLoading(false);
-      setApiAiError(null);
-      return undefined;
-    }
-
-    const apiInterval = chartIntervalToApi(interval);
-    const q = chartTimeframeToApiQuery(timeframe);
-    const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
-    const cached = aiCacheRef.current.get(cacheKey);
-    if (cached) {
-      setApiAiAnalysis(cached.analysis);
-      setApiAiModel(cached.modelId);
-      setApiAiError(null);
-      setApiAiLoading(false);
-      return undefined;
-    }
-
-    setApiAiAnalysis(null);
-    setApiAiModel(null);
-    setApiAiError(null);
     const ac = new AbortController();
-    setApiAiLoading(true);
 
     void (async () => {
+      if (!useStockApi || dataProp !== undefined || !useAiAnalysis) {
+        setApiAiAnalysis(null);
+        setApiAiModel(null);
+        setApiAiLoading(false);
+        setApiAiError(null);
+        return;
+      }
+
+      if (!activeSymbol) {
+        setApiAiAnalysis(null);
+        setApiAiModel(null);
+        setApiAiLoading(false);
+        setApiAiError(null);
+        return;
+      }
+
+      const apiInterval = chartIntervalToApi(interval);
+      const q = chartTimeframeToApiQuery(timeframe);
+      const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+      const cached = aiCacheRef.current.get(cacheKey);
+      if (cached) {
+        setApiAiAnalysis(cached.analysis);
+        setApiAiModel(cached.modelId);
+        setApiAiError(null);
+        setApiAiLoading(false);
+        return;
+      }
+
+      setApiAiAnalysis(null);
+      setApiAiModel(null);
+      setApiAiError(null);
+      setApiAiLoading(true);
+
       try {
         const res = await getStockChartAnalysis({
           symbol: activeSymbol,
@@ -684,32 +699,34 @@ export function CandlestickWidget({
   }, [useStockApi, dataProp, useAiAnalysis, activeSymbol, timeframe, interval]);
 
   React.useEffect(() => {
-    if (!useStockApi || dataProp !== undefined) {
-      setApiSrSupport(null);
-      setApiSrResistance(null);
-      return undefined;
-    }
-    if (!activeSymbol) {
-      setApiSrSupport(null);
-      setApiSrResistance(null);
-      return undefined;
-    }
-
-    const apiInterval = chartIntervalToApi(interval);
-    const q = chartTimeframeToApiQuery(timeframe);
-    const cacheKey = `sr|${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
-    const cached = srCacheRef.current.get(cacheKey);
-    if (cached) {
-      setApiSrSupport(cached.support);
-      setApiSrResistance(cached.resistance);
-      return undefined;
-    }
-
-    setApiSrSupport(null);
-    setApiSrResistance(null);
     const ac = new AbortController();
 
     void (async () => {
+      if (!useStockApi || dataProp !== undefined) {
+        setApiSrSupport(null);
+        setApiSrResistance(null);
+        return;
+      }
+
+      if (!activeSymbol) {
+        setApiSrSupport(null);
+        setApiSrResistance(null);
+        return;
+      }
+
+      const apiInterval = chartIntervalToApi(interval);
+      const q = chartTimeframeToApiQuery(timeframe);
+      const cacheKey = `sr|${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+      const cached = srCacheRef.current.get(cacheKey);
+      if (cached) {
+        setApiSrSupport(cached.support);
+        setApiSrResistance(cached.resistance);
+        return;
+      }
+
+      setApiSrSupport(null);
+      setApiSrResistance(null);
+
       try {
         const res = await getStockChartSupportResistance({
           symbol: activeSymbol,
@@ -775,27 +792,14 @@ export function CandlestickWidget({
     [resolvedData],
   );
 
-  const allowedIntervals = React.useMemo(
-    () => allowedIntervalsForTimeframe(timeframe),
-    [timeframe],
-  );
-
   React.useEffect(() => {
-    const allowed = allowedIntervalsForTimeframe(timeframe);
     if (intervalProp !== undefined) {
-      const fallback = allowed[0];
-      if (fallback && !allowed.includes(intervalProp)) {
+      const fallback = allowedIntervals[0];
+      if (fallback && !allowedIntervals.includes(intervalProp)) {
         onIntervalChange?.(fallback);
       }
-      return;
     }
-    setInternalIv((iv) => {
-      if (allowed.includes(iv)) {
-        return iv;
-      }
-      return allowed[0] ?? iv;
-    });
-  }, [timeframe, intervalProp, onIntervalChange]);
+  }, [allowedIntervals, intervalProp, onIntervalChange]);
 
   const setTimeframe = React.useCallback(
     (next: ChartTimeframe) => {
@@ -1230,14 +1234,7 @@ export function CandlestickWidget({
         {ruleBasedInsight}
       </span>
     );
-  }, [
-    loadAiSummary,
-    ruleBasedInsight,
-    apiAiAnalysis,
-    apiAiModel,
-    apiAiLoading,
-    apiAiError,
-  ]);
+  }, [loadAiSummary, ruleBasedInsight, apiAiAnalysis, apiAiModel, apiAiLoading, apiAiError]);
 
   const showToolbar = showControls || showIndicatorToggles;
   const variantClasses = candlestickVariantClassNames(variant);
@@ -1285,7 +1282,7 @@ export function CandlestickWidget({
             {symbols.length < 3 ? (
               <div className="ml-1 flex items-center gap-1">
                 <input
-                  className={cn(selectClass, 'h-7 w-[5.5rem]')}
+                  className={cn(selectClass, 'h-7 w-22')}
                   placeholder="Ticker"
                   value={symbolDraft}
                   maxLength={12}
@@ -1422,9 +1419,7 @@ export function CandlestickWidget({
                   <Bot className="h-3.5 w-3.5 opacity-90" aria-hidden />
                   <span>
                     AI{' '}
-                    <span className={indicatorToggleSuffixClass(showAiSr)}>
-                      Support/Resistance
-                    </span>
+                    <span className={indicatorToggleSuffixClass(showAiSr)}>Support/Resistance</span>
                   </span>
                 </Button>
               ) : null}

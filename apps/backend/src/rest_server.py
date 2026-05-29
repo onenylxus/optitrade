@@ -23,6 +23,12 @@ from .api.routes.ai_routes import router as ai_router
 from .api.routes.portfolio_routes import router as portfolio_router
 from .api.routes.stock_routes import router as stock_router
 from .firebase_auth import verify_firebase_id_token
+from .firestore_store import (
+    get_authenticated_user as load_authenticated_user_profile,
+)
+from .firestore_store import (
+    upsert_authenticated_user,
+)
 from .services import GreeterService
 
 
@@ -55,6 +61,12 @@ class AuthenticatedUserResponse(BaseModel):
 
     uid: str
     email: str | None = None
+    display_name: str | None = None
+    photo_url: str | None = None
+    provider_id: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    last_login_at: str | None = None
 
 
 def get_current_user(
@@ -106,6 +118,50 @@ async def _rest_lifespan(app: FastAPI):
         yield
     finally:
         await app.state.http_openrouter.aclose()
+
+def _user_response_from_claims_or_profile(
+    user: Mapping[str, Any],
+    profile: Mapping[str, Any] | None,
+) -> AuthenticatedUserResponse:
+    uid = str(user.get("uid", ""))
+    if not uid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
+    payload = {
+        "uid": uid,
+        "email": user.get("email"),
+        "display_name": user.get("name"),
+        "photo_url": user.get("picture"),
+        "provider_id": None,
+        "created_at": None,
+        "updated_at": None,
+        "last_login_at": None,
+    }
+
+    firebase_claims = user.get("firebase")
+    if isinstance(firebase_claims, Mapping):
+        provider_id = firebase_claims.get("sign_in_provider")
+        if provider_id is not None:
+            payload["provider_id"] = str(provider_id)
+
+    if profile is not None:
+        payload.update(
+            {
+                "email": profile.get("email", payload["email"]),
+                "display_name": profile.get("display_name", payload["display_name"]),
+                "photo_url": profile.get("photo_url", payload["photo_url"]),
+                "provider_id": profile.get("provider_id", payload["provider_id"]),
+                "created_at": profile.get("created_at"),
+                "updated_at": profile.get("updated_at"),
+                "last_login_at": profile.get("last_login_at"),
+            }
+        )
+
+    return AuthenticatedUserResponse(**payload)
+
 
 def create_app() -> FastAPI:
     """
@@ -220,16 +276,20 @@ def create_app() -> FastAPI:
     async def get_authenticated_user(
         user: Mapping[str, Any] = Depends(get_current_user),
     ) -> AuthenticatedUserResponse:
-        """Return basic profile data for a verified Firebase-authenticated user."""
+        """Return the Firestore-backed profile for a verified Firebase user."""
         uid = str(user.get("uid", ""))
-        if not uid:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-            )
-        email_value = user.get("email")
-        email = str(email_value) if email_value is not None else None
-        return AuthenticatedUserResponse(uid=uid, email=email)
+        profile = load_authenticated_user_profile(uid)
+        if profile is None:
+            profile = upsert_authenticated_user(user)
+        return _user_response_from_claims_or_profile(user, profile)
+
+    @app.post("/api/v1/auth/session")
+    async def create_auth_session(
+        user: Mapping[str, Any] = Depends(get_current_user),
+    ) -> AuthenticatedUserResponse:
+        """Create or refresh the Firestore-backed profile for a signed-in user."""
+        profile = upsert_authenticated_user(user)
+        return _user_response_from_claims_or_profile(user, profile)
 
     @app.post("/api/paper-portfolio", status_code=201, tags=["portfolio"])
     def paper_portfolio_compat(payload: dict) -> dict:

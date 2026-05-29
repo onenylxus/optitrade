@@ -18,7 +18,9 @@ function StatusDot({ status }: { status: ReturnType<typeof useNanobot>['status']
   if (status === 'connected')
     return <Wifi className="size-3.5 text-emerald-500" aria-label="Connected" />;
   if (status === 'connecting')
-    return <Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-label="Connecting" />;
+    return (
+      <Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-label="Connecting" />
+    );
   return <WifiOff className="size-3.5 text-destructive" aria-label="Disconnected" />;
 }
 
@@ -46,9 +48,7 @@ const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
   thead: ({ children }) => <thead className="bg-muted/60">{children}</thead>,
   tbody: ({ children }) => <tbody>{children}</tbody>,
   tr: ({ children }) => <tr className="border-b border-border/50 last:border-0">{children}</tr>,
-  th: ({ children }) => (
-    <th className="px-2 py-1.5 text-left font-semibold">{children}</th>
-  ),
+  th: ({ children }) => <th className="px-2 py-1.5 text-left font-semibold">{children}</th>,
   td: ({ children }) => <td className="px-2 py-1.5">{children}</td>,
   blockquote: ({ children }) => (
     <blockquote className="my-1.5 border-l-2 border-primary/50 pl-3 opacity-80 italic">
@@ -57,7 +57,12 @@ const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
   ),
   hr: () => <hr className="my-2 border-border/50" />,
   a: ({ children, href }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="text-primary underline underline-offset-2"
+    >
       {children}
     </a>
   ),
@@ -110,7 +115,15 @@ function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: bool
   );
 }
 
-function MessageBubble({ role, text, isStreaming }: { role: string; text: string; isStreaming?: boolean }) {
+function MessageBubble({
+  role,
+  text,
+  isStreaming,
+}: {
+  role: string;
+  text: string;
+  isStreaming?: boolean;
+}) {
   const isUser = role === 'user';
   // Hide phantom empty assistant bubbles (e.g. whitespace-only streams or
   // reasoning/tool channels with no user-visible text). The global typing
@@ -124,15 +137,11 @@ function MessageBubble({ role, text, isStreaming }: { role: string; text: string
       <div
         className={`rounded-2xl px-3 py-2 text-sm leading-5 ${
           isUser
-            ? 'max-w-[80%] bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap break-words'
-            : 'w-full bg-card text-card-foreground border border-border rounded-bl-sm break-words overflow-hidden'
+            ? 'max-w-[80%] rounded-br-sm bg-primary text-primary-foreground whitespace-pre-wrap wrap-break-word'
+            : 'w-full rounded-bl-sm border border-border bg-card text-card-foreground overflow-hidden wrap-break-word'
         }`}
       >
-        {isUser ? (
-          text
-        ) : (
-          <SmartRenderer text={text} isStreaming={isStreaming} />
-        )}
+        {isUser ? text : <SmartRenderer text={text} isStreaming={isStreaming} />}
         {isStreaming && (
           <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse rounded-sm bg-current opacity-60" />
         )}
@@ -245,7 +254,7 @@ export function ChatPanel() {
               placeholder={isConnected ? 'Ask anything… (Enter to send)' : 'Connecting…'}
               rows={3}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={!isConnected}
               className="max-h-20 min-h-12 resize-none overflow-y-auto border-0 bg-transparent px-4 pt-4 pb-2 shadow-none focus-visible:border-0 focus-visible:ring-0"

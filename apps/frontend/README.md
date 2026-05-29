@@ -76,3 +76,9 @@ The API dashboard includes Firebase actions:
 
 - `Load Firebase Token` (reads token from signed-in Firebase user)
 - `REST AUTH /me` (calls backend protected endpoint with bearer token)
+
+The dedicated auth page lives at `/auth` and uses:
+
+- Firebase Auth for sign-in and registration
+- `apps/frontend/lib/api/auth.ts` for backend session sync and profile loading
+- Firestore-backed user profiles returned by `GET /api/v1/auth/me`

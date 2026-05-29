@@ -413,7 +413,7 @@ const matchesPortfolio = useCallback(
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-secondary/30 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-foreground/70">📊 Market Sentiment</span>
-          <div className="relative w-32 h-1.5 rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-emerald-500">
+          <div className="relative h-1.5 w-32 rounded-full bg-linear-to-r from-red-500 via-yellow-400 to-emerald-500">
             <div
               className="absolute -top-1.5 h-3 w-3 rounded-full bg-foreground shadow-sm transition-all duration-300"
               style={{ left: `${pointerPos}%`, transform: 'translateX(-50%)' }}
@@ -518,7 +518,7 @@ const matchesPortfolio = useCallback(
                         {/* AI Reason（hover 顯示） */}
                         <div className="relative group cursor-help">
                           <span className="text-[10px] text-muted-foreground">💡 AI</span>
-                          <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block bg-foreground text-background text-[10px] rounded px-2 py-1 whitespace-nowrap z-10 max-w-[250px] truncate">
+                          <div className="absolute bottom-full left-0 mb-1 hidden max-w-62.5 truncate rounded bg-foreground px-2 py-1 text-[10px] text-background whitespace-nowrap z-10 group-hover:block">
                             {news.reasoning || 'Analysis completed.'}
                           </div>
                         </div>
@@ -582,7 +582,7 @@ const matchesPortfolio = useCallback(
           onClick={cancelWatchlist}
         >
           <div
-            className="bg-background rounded-xl shadow-xl w-[480px] max-w-[90%] max-h-[80vh] flex flex-col"
+            className="flex max-h-[80vh] w-120 max-w-[90%] flex-col rounded-xl bg-background shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b">
