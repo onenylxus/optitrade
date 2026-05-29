@@ -234,13 +234,13 @@ export function EarningsWidget({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[90px] text-xs">Date</TableHead>
-                <TableHead className="w-[60px] text-xs">Ticker</TableHead>
+                <TableHead className="w-22.5 text-xs">Date</TableHead>
+                <TableHead className="w-15 text-xs">Ticker</TableHead>
                 <TableHead className="text-xs">Company</TableHead>
-                <TableHead className="w-[50px] text-xs text-center">Time</TableHead>
-                <TableHead className="w-[75px] text-xs text-right">Est. EPS</TableHead>
-                <TableHead className="w-[75px] text-xs text-right">Actual</TableHead>
-                <TableHead className="w-[75px] text-xs text-right">Surprise</TableHead>
+                <TableHead className="w-12.5 text-xs text-center">Time</TableHead>
+                <TableHead className="w-18.75 text-xs text-right">Est. EPS</TableHead>
+                <TableHead className="w-18.75 text-xs text-right">Actual</TableHead>
+                <TableHead className="w-18.75 text-xs text-right">Surprise</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -272,10 +272,7 @@ export function EarningsWidget({
                       <span className="font-mono text-xs font-bold">{item.ticker}</span>
                     </TableCell>
                     <TableCell>
-                      <span
-                        className="text-xs truncate max-w-[120px] block"
-                        title={item.companyName}
-                      >
+                      <span className="block max-w-30 truncate text-xs" title={item.companyName}>
                         {item.companyName}
                       </span>
                     </TableCell>

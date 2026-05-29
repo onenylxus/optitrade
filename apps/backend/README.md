@@ -156,10 +156,14 @@ Firebase Admin.
 
 ### Protected route
 
-`GET /api/v1/auth/me` expects:
+`POST /api/v1/auth/session` and `GET /api/v1/auth/me` expect:
 
+- Both routes verify the Firebase ID token and sync the user into Firestore.
 - Header: `Authorization: Bearer <firebase-id-token>`
-- Response: `{ "uid": "...", "email": "..." }`
+- Response: `{ "uid": "...", "email": "...", "display_name": "..." }`
+
+User profiles are stored in the Firestore `user_profiles` collection and keyed by Firebase `uid`.
+
 ## Portfolio API
 
 The portfolio widget API is available as a FastAPI service. Routes use `/api/...`

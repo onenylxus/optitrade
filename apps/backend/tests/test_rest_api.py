@@ -94,13 +94,36 @@ def test_auth_me_with_valid_firebase_token(client, monkeypatch):
     def fake_verify(_token: str):
         return {"uid": "user-123", "email": "user@example.com"}
 
+    def fake_load(uid: str):
+        assert uid == "user-123"
+        return {
+            "uid": uid,
+            "email": "user@example.com",
+            "display_name": "User Example",
+            "photo_url": "https://example.com/avatar.png",
+            "provider_id": "password",
+            "created_at": "2026-05-14T00:00:00+00:00",
+            "updated_at": "2026-05-14T00:01:00+00:00",
+            "last_login_at": "2026-05-14T00:01:00+00:00",
+        }
+
     monkeypatch.setattr(rest_server, "verify_firebase_id_token", fake_verify)
+    monkeypatch.setattr(rest_server, "load_authenticated_user_profile", fake_load)
 
     response = client.get(
         "/api/v1/auth/me", headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 200
-    assert response.json() == {"uid": "user-123", "email": "user@example.com"}
+    assert response.json() == {
+        "uid": "user-123",
+        "email": "user@example.com",
+        "display_name": "User Example",
+        "photo_url": "https://example.com/avatar.png",
+        "provider_id": "password",
+        "created_at": "2026-05-14T00:00:00+00:00",
+        "updated_at": "2026-05-14T00:01:00+00:00",
+        "last_login_at": "2026-05-14T00:01:00+00:00",
+    }
 
 
 def test_auth_me_with_invalid_firebase_token(client, monkeypatch):
@@ -116,3 +139,35 @@ def test_auth_me_with_invalid_firebase_token(client, monkeypatch):
     )
     assert response.status_code == 401
     assert response.json() == {"detail": "Invalid token"}
+
+
+def test_auth_session_syncs_firestore_profile(client, monkeypatch):
+    """Test the auth session endpoint persists a Firestore profile."""
+
+    def fake_verify(_token: str):
+        return {"uid": "user-456", "email": "trader@example.com"}
+
+    def fake_upsert(user):
+        assert user["uid"] == "user-456"
+        return {
+            "uid": "user-456",
+            "email": "trader@example.com",
+            "display_name": "trader",
+            "photo_url": None,
+            "provider_id": "password",
+            "created_at": "2026-05-14T00:00:00+00:00",
+            "updated_at": "2026-05-14T00:01:00+00:00",
+            "last_login_at": "2026-05-14T00:01:00+00:00",
+        }
+
+    monkeypatch.setattr(rest_server, "verify_firebase_id_token", fake_verify)
+    monkeypatch.setattr(rest_server, "upsert_authenticated_user", fake_upsert)
+
+    response = client.post(
+        "/api/v1/auth/session",
+        headers={"Authorization": "Bearer fake-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["uid"] == "user-456"
+    assert response.json()["display_name"] == "trader"

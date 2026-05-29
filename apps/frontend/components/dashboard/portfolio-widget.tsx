@@ -372,19 +372,21 @@ function BrokerConnectionPanel({
   const selectedOption = getBrokerOption(selectedBrokerState);
 
   useEffect(() => {
-    const settings = initialConnection?.settings ?? {};
-    const brokerId = initialConnection?.id ?? selectedBroker;
-    setSelectedBrokerState(brokerId);
-    setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
-    setPort(
-      String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)),
-    );
-    setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
-    setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
-    setApiKey('');
-    setApiSecret('');
-    setTestnet(Boolean(initialConnection?.testnet ?? settings.testnet ?? true));
-    setError(initialConnection?.lastError ?? null);
+    void (async () => {
+      const settings = initialConnection?.settings ?? {};
+      const brokerId = initialConnection?.id ?? selectedBroker;
+      setSelectedBrokerState(brokerId);
+      setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
+      setPort(
+        String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)),
+      );
+      setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
+      setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
+      setApiKey('');
+      setApiSecret('');
+      setTestnet(Boolean(initialConnection?.testnet ?? settings.testnet ?? true));
+      setError(initialConnection?.lastError ?? null);
+    })();
   }, [initialConnection, selectedBroker]);
 
   const handleConnect = async () => {
@@ -1170,7 +1172,9 @@ const PortfolioWidgetRoot = ({
   }, [setPortfolio]);
 
   useEffect(() => {
-    void loadPortfolio();
+    queueMicrotask(() => {
+      void loadPortfolio();
+    });
   }, [loadPortfolio]);
 
   const activatePaperPortfolio = async () => {

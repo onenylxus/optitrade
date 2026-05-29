@@ -92,7 +92,7 @@ export function BaseWidget({
                 sideOffset={4}
                 align="end"
                 className={cn(
-                  'z-50 min-w-[10rem] overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
+                  'z-50 min-w-40 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
                 )}
               >
                 <DropdownMenu.Item className={menuItemClass} onSelect={handleContextButtonClick}>

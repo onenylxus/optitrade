@@ -29,6 +29,12 @@ export interface HealthResponse {
 export interface AuthenticatedUserResponse {
   uid: string;
   email: string | null;
+  display_name: string | null;
+  photo_url: string | null;
+  provider_id: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  last_login_at: string | null;
 }
 
 export interface ApiError {
