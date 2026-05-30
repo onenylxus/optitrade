@@ -1,12 +1,8 @@
 'use client';
 
-<<<<<<< Updated upstream
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { HomeHeader } from '@/components/home/home-header';
-=======
-import { useState } from 'react';
->>>>>>> Stashed changes
 import { ChatPanel } from '@/components/home/chat-panel';
 import { EditWidgetDrawer } from '@/components/home/edit-widget-drawer';
 import { WidgetCanvas } from '@/components/home/widget-canvas';
@@ -21,7 +17,6 @@ import { cn } from '@/lib/utils';
 export default function HomePage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(true);
-<<<<<<< Updated upstream
   const [firebaseAuth] = useState<ReturnType<typeof getFirebaseAuth> | null>(() => {
     if (!isFirebaseConfigReady()) {
       return null;
@@ -69,8 +64,6 @@ export default function HomePage() {
     await signOut(firebaseAuth);
   }
 
-=======
->>>>>>> Stashed changes
   return (
     <PortfolioProvider>
       <ChatContextStoreProvider>

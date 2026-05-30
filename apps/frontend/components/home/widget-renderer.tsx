@@ -59,30 +59,22 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
     );
   }
 
-  if (widgetType === 'portfolio-pl-tile') {
-    return <PortfolioWidget title="Portfolio P/L Tile" variant="pl-tile" />;
-  }
-
-  if (widgetType === 'portfolio-top-mover-tile') {
-    return <PortfolioWidget title="Top Mover Tile" variant="top-mover-tile" />;
-  }
-
-  if (widgetType === 'portfolio-full') {
-    return <PortfolioWidget title="Portfolio Full" variant="full" />;
+  if (widgetType === 'portfolio-small') {
+    return <PortfolioWidget title="Portfolio" variant="small" />;
   }
 
   if (widgetType === 'portfolio-medium') {
-    return <PortfolioWidget title="Portfolio Medium" variant="medium" />;
+    return <PortfolioWidget title="Portfolio Snapshot" variant="medium" />;
+  }
+
+  if (widgetType === 'portfolio-large') {
+    return <PortfolioWidget title="Portfolio Snapshot" variant="large" />;
   }
 
   if (widgetType === 'news') {
-<<<<<<< Updated upstream
     return (
       <NewsWidget title="Financial News" summary="AI-powered sentiment analysis" variant="medium" />
     );
-=======
-   return <NewsWidget title="Financial News" summary="AI-powered sentiment analysis" />;
->>>>>>> Stashed changes
   }
 
   if (widgetType === 'earnings') {

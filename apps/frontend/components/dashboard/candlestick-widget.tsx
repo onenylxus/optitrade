@@ -1243,17 +1243,7 @@ export function CandlestickWidget({
     <BaseWidget
       {...props}
       summary={summaryContent}
-<<<<<<< Updated upstream
       contextData={{ label: props.title ?? 'Candlestick Chart', text: contextText }}
-=======
-      contextData={{
-        label: props.title ?? 'Candlestick Chart',
-        text:
-          typeof summaryContent === 'string'
-            ? `${props.title ?? 'Candlestick Chart'} — ${summaryContent}`
-            : props.title ?? 'Candlestick Chart',
-      }}
->>>>>>> Stashed changes
       className={cn(variantClasses.root, className)}
     >
       {showSymbolTabs ? (

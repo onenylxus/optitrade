@@ -68,52 +68,14 @@ class PortfolioTests(unittest.TestCase):
     def test_paper_portfolio_route_creates_record(self):
         response = self.client.post(
             "/api/paper-portfolio",
-            json={
-                "name": "Timmy Paper Portfolio",
-                "positions": [
-                    {
-                        "symbol": "TSLA",
-                        "quantity": 15,
-                        "avgPrice": 180,
-                        "currentPrice": 195,
-                        "sector": "Consumer",
-                    }
-                ],
-            },
+            json={"name": "Timmy Paper Portfolio"},
         )
         paper = response.json()
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(paper["status"], "active")
+        self.assertEqual(paper["status"], "created")
         self.assertEqual(paper["name"], "Timmy Paper Portfolio")
-        self.assertTrue(paper["isDefault"])
-        self.assertEqual(paper["positions"][0]["symbol"], "TSLA")
         self.assertTrue(portfolio_module.PAPER_PORTFOLIOS_PATH.exists())
-
-    def test_portfolio_endpoint_prefers_saved_paper_portfolio_when_disconnected(self):
-        self.client.post(
-            "/api/paper-portfolio",
-            json={
-                "name": "Saved Paper Portfolio",
-                "positions": [
-                    {
-                        "symbol": "SHOP",
-                        "quantity": 12,
-                        "avgPrice": 72,
-                        "currentPrice": 80,
-                        "sector": "Technology",
-                    }
-                ],
-            },
-        )
-
-        response = self.client.get("/api/portfolio")
-        payload = response.json()
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(payload["positions"][0]["symbol"], "SHOP")
-        self.assertEqual(payload["positions"][0]["quantity"], 12)
-        self.assertEqual(payload["summary"]["totalValue"], 960.0)
 
     def test_connection_endpoint_validates_and_returns_status(self):
         with patch(

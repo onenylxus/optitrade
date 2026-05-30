@@ -13,26 +13,26 @@ const meta: Meta<typeof PortfolioWidget> = {
 export default meta;
 type Story = StoryObj<typeof PortfolioWidget>;
 
-export const Full: Story = {
+export const Large: Story = {
   render: () => (
-    <div className="h-[52rem] w-[72rem]">
-      <PortfolioWidget title="Portfolio Full" variant="full" />
+    <div className="h-120 w-150">
+      <PortfolioWidget title="Portfolio Snapshot" variant="large" />
     </div>
   ),
 };
 
-export const PnlTile: Story = {
+export const Medium: Story = {
   render: () => (
-    <div className="h-64 w-64">
-      <PortfolioWidget title="Portfolio P/L Tile" variant="pl-tile" />
+    <div className="h-105 w-130">
+      <PortfolioWidget title="Portfolio Snapshot" variant="medium" />
     </div>
   ),
 };
 
-export const TopMoverTile: Story = {
+export const Small: Story = {
   render: () => (
-    <div className="h-64 w-64">
-      <PortfolioWidget title="Top Mover Tile" variant="top-mover-tile" />
+    <div className="h-80 w-80">
+      <PortfolioWidget title="Portfolio Snapshot" variant="small" />
     </div>
   ),
 };

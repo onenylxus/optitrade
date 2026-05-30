@@ -14,18 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-<<<<<<< Updated upstream
-=======
-from .api.controllers.portfolio_controller import PortfolioController
-from .api.deps import get_portfolio_service
-from .api.routes.ai_routes import router as ai_router
-from .api.routes.stock_routes import router as stock_router
-from .api.routes.portfolio_routes import router as portfolio_router
-from .firebase_auth import verify_firebase_id_token
-from .services import GreeterService
-
-from news_fetcher.run_news_pipeline import start_analysis
->>>>>>> Stashed changes
 from news_fetcher import OUTPUT_FILE
 from news_fetcher.run_news_pipeline import start_analysis
 
