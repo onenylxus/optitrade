@@ -74,6 +74,13 @@ class PortfolioSummary(BaseModel):
     buyingPower: float | None = None
 
 
+class PortfolioPaperMetadata(BaseModel):
+    id: str | None = None
+    name: str | None = None
+    updatedAt: str | None = None
+    isDefault: bool | None = None
+
+
 class PortfolioSectorValue(BaseModel):
     sector: str
     value: float
@@ -94,6 +101,7 @@ class PortfolioSnapshotResponse(BaseModel):
     broker: PortfolioBroker
     positions: list[PortfolioSnapshotPosition]
     summary: PortfolioSummary
+    paperPortfolio: PortfolioPaperMetadata | None = None
     sectorValues: list[PortfolioSectorValue]
     history: list[PortfolioHistoryPoint]
 
@@ -110,7 +118,9 @@ class PortfolioConnectRequest(BaseModel):
 
 
 class PortfolioPaperRequest(BaseModel):
+    id: str | None = None
     name: str | None = None
+    buyingPower: float | None = None
     positions: list[dict[str, object]] | None = None
 
 
@@ -138,8 +148,11 @@ class PortfolioPaperResponse(BaseModel):
     id: str
     name: str
     status: str
+    buyingPower: float | None = None
     positions: list[dict[str, object]]
     createdAt: str
+    updatedAt: str | None = None
+    isDefault: bool | None = None
 
 
 class PortfolioConnectionResponse(BaseModel):

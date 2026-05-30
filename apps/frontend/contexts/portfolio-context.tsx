@@ -21,6 +21,7 @@ export interface PortfolioChatSummary {
   dailyPnl: number;
   dailyPnlPercent: number;
   marginUsage: number;
+  buyingPower?: number;
 }
 
 export interface PortfolioChatContextValue {

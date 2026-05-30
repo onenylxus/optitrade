@@ -3,21 +3,27 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.api.controllers.ai_recommendation_controller import AIRecommendationController
 from src.api.controllers.stock_support_resistance_controller import (
     StockChartSupportResistanceController,
 )
 from src.api.deps import (
+    get_portfolio_analysis_service,
     get_stock_chart_analysis_service,
     get_stock_support_resistance_controller,
+)
+from src.api.schemas.ai_portfolio import (
+    PortfolioHealthAnalysisRequest,
+    PortfolioHealthAnalysisResponse,
 )
 from src.api.schemas.ai_stock_chart import (
     StockChartAnalysisResponse,
     StockChartSupportResistanceResponse,
 )
 from src.api.schemas.stock_chart import ChartInterval, ChartRange
+from src.services.portfolio_analysis_service import PortfolioAnalysisService
 from src.services.stock_chart_analysis_service import StockChartAnalysisService
 
 router = APIRouter()
@@ -93,6 +99,14 @@ async def ai_index() -> dict:
                     "(pivot clusters; deterministic, no LLM)."
                 ),
             },
+            {
+                "path": "/widget/portfolio-health",
+                "method": "POST",
+                "description": (
+                    "Portfolio health commentary from summary, holdings, and "
+                    "allocation data using the OpenRouter widget model."
+                ),
+            },
         ],
     }
 
@@ -138,3 +152,24 @@ async def ai_widget_stock_chart(
         from_date=from_date,
         to_date=to_date,
     )
+
+
+@router.post(
+    "/widget/portfolio-health",
+    response_model=PortfolioHealthAnalysisResponse,
+)
+async def ai_widget_portfolio_health(
+    payload: PortfolioHealthAnalysisRequest,
+    service: Annotated[
+        PortfolioAnalysisService,
+        Depends(get_portfolio_analysis_service),
+    ],
+) -> PortfolioHealthAnalysisResponse:
+    """Portfolio health commentary using the same OpenRouter model path as chart AI."""
+    try:
+        return await service.analyze(payload)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc

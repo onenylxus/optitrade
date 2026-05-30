@@ -5,6 +5,11 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+<<<<<<< Updated upstream
+=======
+from decimal import Decimal, InvalidOperation
+import json
+>>>>>>> Stashed changes
 from pathlib import Path
 from typing import Any
 
@@ -128,6 +133,7 @@ class PortfolioService:
                 )
                 connection = self._read_broker_connection()
 
+<<<<<<< Updated upstream
         positions = self.positions
         total_value = sum(position.market_value for position in positions)
         total_cost = sum(position.cost_basis for position in positions)
@@ -156,6 +162,28 @@ class PortfolioService:
             "sectorValues": self._build_sector_values(positions),
             "history": self._build_history(total_value),
         }
+=======
+        active_paper_record = self._read_active_paper_portfolio()
+        if active_paper_record is not None:
+            active_paper_positions = self._positions_from_records(
+                active_paper_record.get("positions", [])
+            )
+            snapshot = self._snapshot_from_positions(
+                active_paper_positions,
+                connection,
+                source="backend" if connection["status"] == "connected" else "demo",
+                buying_power=active_paper_record.get("buyingPower"),
+            )
+            snapshot["paperPortfolio"] = {
+                "id": active_paper_record.get("id"),
+                "name": active_paper_record.get("name"),
+                "updatedAt": active_paper_record.get("updatedAt"),
+                "isDefault": active_paper_record.get("isDefault", False),
+            }
+            return snapshot
+
+        return self._demo_snapshot(connection)
+>>>>>>> Stashed changes
 
     def validate_connection_request(self, payload: dict[str, Any]) -> dict[str, Any]:
         broker = str(payload.get("broker", "ibkr")).lower().strip()
@@ -253,12 +281,20 @@ class PortfolioService:
 
     def create_paper_portfolio(self, payload: dict[str, Any]) -> dict[str, Any]:
         name = str(payload.get("name", "Paper Portfolio")).strip() or "Paper Portfolio"
+<<<<<<< Updated upstream
         positions = self._normalize_positions_payload(payload.get("positions", []))
+=======
+        positions = self._normalize_positions(payload.get("positions", []))
+        buying_power = self._normalize_buying_power(payload.get("buyingPower"), positions)
+>>>>>>> Stashed changes
 
         records = self._read_paper_portfolios()
+        existing_id = payload.get("id")
+        timestamp = datetime.now(UTC).isoformat()
         record = {
-            "id": f"paper-{len(records) + 1}",
+            "id": str(existing_id).strip() if existing_id else f"paper-{len(records) + 1}",
             "name": name,
+<<<<<<< Updated upstream
             "status": "created",
             "positions": [self._position_payload(position) for position in positions],
             "createdAt": datetime.now(UTC).isoformat(),
@@ -295,16 +331,60 @@ class PortfolioService:
 
     def _editable_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
         positions = self._read_editable_positions()
+=======
+            "status": "active",
+            "buyingPower": buying_power,
+            "positions": positions,
+            "createdAt": timestamp,
+            "updatedAt": timestamp,
+            "isDefault": True,
+        }
+
+        updated_records = []
+        replaced = False
+        for existing in records:
+            if existing.get("id") == record["id"]:
+                record["createdAt"] = str(existing.get("createdAt") or timestamp)
+                updated_records.append(record)
+                replaced = True
+            else:
+                existing_copy = dict(existing)
+                existing_copy["isDefault"] = False
+                updated_records.append(existing_copy)
+
+        if not replaced:
+            updated_records.append(record)
+
+        self._write_paper_portfolios(updated_records)
+        return record
+
+    def _snapshot_from_positions(
+        self,
+        positions: tuple[Position, ...],
+        connection: dict[str, Any],
+        *,
+        source: str,
+        buying_power: float | None = None,
+    ) -> dict[str, Any]:
+>>>>>>> Stashed changes
         total_value = sum(position.market_value for position in positions)
         total_cost = sum(position.cost_basis for position in positions)
         pnl = total_value - total_cost
         pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
         daily_pnl = total_value * 0.012
+        resolved_buying_power = self._resolved_buying_power_value(
+            buying_power,
+            total_value,
+        )
 
         return {
             "asOf": datetime.now(UTC).isoformat(),
             "baseCurrency": "USD",
+<<<<<<< Updated upstream
             "source": "backend",
+=======
+            "source": source,
+>>>>>>> Stashed changes
             "broker": self._broker_connection_payload_dict(connection),
             "positions": [self._position_payload(position) for position in positions],
             "summary": {
@@ -315,11 +395,18 @@ class PortfolioService:
                 "dailyPnl": round(daily_pnl, 2),
                 "dailyPnlPercent": 1.2,
                 "marginUsage": round(total_value * 0.25, 2),
-                "buyingPower": round(total_value * 0.15, 2),
+                "buyingPower": round(resolved_buying_power, 2),
             },
             "sectorValues": self._build_sector_values(positions),
             "history": self._build_history(total_value),
         }
+
+    def _demo_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
+        return self._snapshot_from_positions(
+            self.positions,
+            connection,
+            source="backend" if connection["status"] == "connected" else "demo",
+        )
 
     def _position_payload(self, position: Position) -> dict[str, Any]:
         payload = asdict(position)
@@ -388,6 +475,106 @@ class PortfolioService:
         if not isinstance(data, list):
             raise ValueError("paper portfolio store must contain a list")
         return data
+
+    def _read_active_paper_positions(self) -> tuple[Position, ...] | None:
+        active_record = self._read_active_paper_portfolio()
+        if active_record is None:
+            return None
+        try:
+            return self._positions_from_records(active_record.get("positions", []))
+        except ValueError:
+            return None
+
+    def _read_active_paper_portfolio(self) -> dict[str, Any] | None:
+        records = self._read_paper_portfolios()
+        if not records:
+            return None
+
+        return next(
+            (record for record in records if record.get("isDefault") is True),
+            records[-1],
+        )
+
+    def _positions_from_records(self, positions: Any) -> tuple[Position, ...]:
+        normalized = self._normalize_positions(positions)
+        return tuple(
+            Position(
+                id=str(position["id"]),
+                symbol=str(position["symbol"]),
+                quantity=float(position["quantity"]),
+                avg_price=float(position["avgPrice"]),
+                current_price=float(position["currentPrice"]),
+                sector=str(position["sector"]),
+            )
+            for position in normalized
+        )
+
+    def _normalize_positions(self, positions: Any) -> list[dict[str, Any]]:
+        if not isinstance(positions, list):
+            raise ValueError("positions must be a list")
+
+        normalized: list[dict[str, Any]] = []
+        for index, raw_position in enumerate(positions, start=1):
+            if not isinstance(raw_position, dict):
+                raise ValueError("each position must be an object")
+
+            symbol = str(raw_position.get("symbol", "")).strip().upper()
+            if not symbol:
+                raise ValueError("position symbol is required")
+
+            quantity = self._coerce_decimal(raw_position.get("quantity"), "quantity")
+            avg_price = self._coerce_decimal(raw_position.get("avgPrice"), "avgPrice")
+            current_price = self._coerce_decimal(
+                raw_position.get("currentPrice", raw_position.get("avgPrice")),
+                "currentPrice",
+            )
+            sector = str(raw_position.get("sector", "Uncategorized")).strip() or "Uncategorized"
+
+            normalized.append(
+                {
+                    "id": str(raw_position.get("id") or f"paper-position-{index}"),
+                    "symbol": symbol,
+                    "quantity": float(quantity),
+                    "avgPrice": float(avg_price),
+                    "currentPrice": float(current_price),
+                    "sector": sector,
+                }
+            )
+
+        return normalized
+
+    @staticmethod
+    def _coerce_decimal(value: Any, field_name: str) -> Decimal:
+        try:
+            decimal_value = Decimal(str(value).strip())
+        except (InvalidOperation, AttributeError):
+            raise ValueError(f"{field_name} must be a number") from None
+
+        if decimal_value < 0:
+            raise ValueError(f"{field_name} must be zero or greater")
+        return decimal_value
+
+    def _normalize_buying_power(
+        self,
+        value: Any,
+        positions: list[dict[str, Any]],
+    ) -> float:
+        if value is None:
+            total_value = sum(
+                float(position["currentPrice"]) * float(position["quantity"])
+                for position in positions
+            )
+            return self._resolved_buying_power_value(None, total_value)
+        return float(self._coerce_decimal(value, "buyingPower"))
+
+    @staticmethod
+    def _resolved_buying_power_value(
+        buying_power: float | None,
+        total_value: float,
+    ) -> float:
+        if buying_power is None:
+            return total_value * 0.15
+        return max(0.0, float(buying_power))
 
     def _write_paper_portfolios(self, records: list[dict[str, Any]]) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)

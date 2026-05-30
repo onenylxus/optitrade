@@ -6,11 +6,17 @@ export type WidgetType =
   | 'table'
   | 'text'
   | 'candlestick'
-  | 'portfolio-small'
+  | 'portfolio-full'
   | 'portfolio-medium'
+<<<<<<< Updated upstream
   | 'portfolio-large'
   | 'news'
   | 'earnings';
+=======
+  | 'portfolio-pl-tile'
+  | 'portfolio-top-mover-tile'
+  | 'news';
+>>>>>>> Stashed changes
 
 export interface WidgetSpan {
   cols: number;
@@ -37,24 +43,45 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   chart: { cols: 5, rows: 5 },
   table: { cols: 5, rows: 5 },
   text: { cols: 5, rows: 5 },
+<<<<<<< Updated upstream
   candlestick: { cols: 11, rows: 7 },
   'portfolio-small': { cols: 5, rows: 5 },
   'portfolio-medium': { cols: 6, rows: 7 },
   'portfolio-large': { cols: 8, rows: 8 },
+=======
+  candlestick: { cols: 8, rows: 7 },
+  'portfolio-full': { cols: 8, rows: 10 },
+  'portfolio-medium': { cols: 5, rows: 5 },
+  'portfolio-pl-tile': { cols: 4, rows: 4 },
+  'portfolio-top-mover-tile': { cols: 4, rows: 4 },
+>>>>>>> Stashed changes
   news: { cols: 8, rows: 8 },
   earnings: { cols: 6, rows: 5 },
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
+<<<<<<< Updated upstream
   { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '5x5' },
   { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '6x7' },
   { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '8x8' },
+=======
+  { id: 'number', label: 'Number Widget', sizeLabel: '4x3' },
+  { id: 'chart', label: 'Chart Widget', sizeLabel: '5x5' },
+  { id: 'table', label: 'Table Widget', sizeLabel: '5x5' },
+  { id: 'text', label: 'Text Widget', sizeLabel: '5x5' },
+  { id: 'candlestick', label: 'Candlestick Widget', sizeLabel: '8x7' },
+  { id: 'portfolio-full', label: 'Portfolio Full', sizeLabel: '8x10' },
+  { id: 'portfolio-medium', label: 'Portfolio Medium', sizeLabel: '5x5' },
+  { id: 'portfolio-pl-tile', label: 'Portfolio P/L Tile', sizeLabel: '4x4' },
+  { id: 'portfolio-top-mover-tile', label: 'Top Mover Tile', sizeLabel: '4x4' },
+>>>>>>> Stashed changes
   { id: 'news', label: 'News Widget', sizeLabel: '8x8' },
   { id: 'earnings', label: 'Earnings Calendar', sizeLabel: '6x5' },
 ];
 
 export const initialPlacements: WidgetPlacement[] = [
   {
+<<<<<<< Updated upstream
     id: 'widget-portfolio-large-1',
     widgetType: 'portfolio-large',
     col: 0,
@@ -77,6 +104,38 @@ export const initialPlacements: WidgetPlacement[] = [
     row: 8,
     colSpan: 6,
     rowSpan: 5,
+=======
+    id: 'widget-portfolio-medium-1',
+    widgetType: 'portfolio-medium',
+    col: 13,
+    row: 5,
+    colSpan: 5,
+    rowSpan: 5,
+  },
+  {
+    id: 'widget-portfolio-pl-tile-1',
+    widgetType: 'portfolio-pl-tile',
+    col: 13,
+    row: 10,
+    colSpan: 4,
+    rowSpan: 4,
+  },
+  {
+    id: 'widget-portfolio-top-mover-tile-1',
+    widgetType: 'portfolio-top-mover-tile',
+    col: 9,
+    row: 10,
+    colSpan: 4,
+    rowSpan: 4,
+  },
+  {
+    id: 'widget-portfolio-full-1',
+    widgetType: 'portfolio-full',
+    col: 5,
+    row: 12,
+    colSpan: 8,
+    rowSpan: 10,
+>>>>>>> Stashed changes
   },
   {
     id: 'widget-portfolio-small-1',
