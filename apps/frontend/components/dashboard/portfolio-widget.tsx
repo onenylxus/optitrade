@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   ArrowLeft,
   Check,
   Loader2,
@@ -10,6 +11,7 @@ import {
   Plus,
   Save,
   Settings,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import { Area, AreaChart, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
@@ -63,6 +65,12 @@ interface PortfolioVariantProps {
   onOpenEditor: () => void;
 }
 
+interface PortfolioAiSignals {
+  insight: string;
+  riskLabel: string;
+  riskTone: 'low' | 'medium' | 'high';
+}
+
 interface PortfolioApiPosition extends Stock {
   marketValue?: number;
   costBasis?: number;
@@ -104,6 +112,7 @@ interface PortfolioApiSnapshot {
 interface PortfolioEditableResponse {
   name: string;
   positions: PortfolioApiPosition[];
+  history: PortfolioDerivedData['history'];
   updatedAt: string;
 }
 
@@ -223,6 +232,70 @@ function buildTopHoldings(stocks: Stock[]) {
     })
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
+}
+
+function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): PortfolioAiSignals {
+  if (stocks.length === 0 || data.totalValue <= 0) {
+    return {
+      insight: 'Add a few holdings to unlock AI insight on concentration and diversification.',
+      riskLabel: 'No active exposure yet',
+      riskTone: 'low',
+    };
+  }
+
+  const holdings = buildTopHoldings(stocks);
+  const largest = holdings[0];
+  const topTwoWeight = holdings.slice(0, 2).reduce((sum, holding) => sum + holding.weight, 0);
+  const profitableCount = stocks.filter((stock) => stock.currentPrice >= stock.avgPrice).length;
+  const profitableRatio = profitableCount / stocks.length;
+
+  let insight = `${largest.symbol} is the anchor holding at ${largest.weight.toFixed(0)}% of portfolio value.`;
+  if (topTwoWeight >= 55) {
+    insight = `The top two holdings make up ${topTwoWeight.toFixed(0)}% of the portfolio, so performance is being driven by a narrow core.`;
+  } else if (stocks.length >= 5 && profitableRatio >= 0.7) {
+    insight = `${profitableCount} of ${stocks.length} holdings are above cost basis, which suggests the mock portfolio currently has broad positive momentum.`;
+  } else if (data.pnlPercent < 0) {
+    insight = `The portfolio is below cost basis by ${Math.abs(data.pnlPercent).toFixed(1)}%, so a few weaker positions are outweighing current winners.`;
+  }
+
+  if (largest.weight >= 35) {
+    return { insight, riskLabel: `High concentration in ${largest.symbol}`, riskTone: 'high' };
+  }
+  if (topTwoWeight >= 55) {
+    return { insight, riskLabel: 'Top-two concentration is elevated', riskTone: 'medium' };
+  }
+  if (stocks.length <= 3) {
+    return { insight, riskLabel: 'Limited diversification across holdings', riskTone: 'medium' };
+  }
+  return { insight, riskLabel: 'Risk is relatively balanced', riskTone: 'low' };
+}
+
+function RiskFlag({ label, tone }: { label: string; tone: PortfolioAiSignals['riskTone'] }) {
+  const toneClasses =
+    tone === 'high'
+      ? 'border-rose-200 bg-rose-50 text-rose-700'
+      : tone === 'medium'
+        ? 'border-amber-200 bg-amber-50 text-amber-700'
+        : 'border-emerald-200 bg-emerald-50 text-emerald-700';
+
+  return (
+    <div className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${toneClasses}`}>
+      <AlertTriangle size={12} />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function PortfolioInsightCard({ insight }: { insight: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+      <div className="mb-1 flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-slate-500">
+        <Sparkles size={11} />
+        Portfolio Insight
+      </div>
+      <div className="text-[10px] leading-4 text-slate-700">{insight}</div>
+    </div>
+  );
 }
 
 function buildPaperChatContext(
@@ -740,7 +813,7 @@ function PortfolioEditorPanel({
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 <label className="space-y-1">
                   <span className="text-[10px] uppercase text-slate-400">Symbol</span>
                   <input
@@ -777,15 +850,6 @@ function PortfolioEditorPanel({
                         avgPrice: event.target.value === '' ? 0 : Number(event.target.value),
                       })
                     }
-                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-[10px] uppercase text-slate-400">Sector</span>
-                  <input
-                    type="text"
-                    value={stock.sector}
-                    onChange={(event) => updateStock(stock.id, { sector: event.target.value })}
                     className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
                   />
                 </label>
@@ -880,6 +944,8 @@ function PortfolioWidgetMedium({
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
+  const aiSignals = buildPortfolioAiSignals(stocks, data);
+
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <div className="flex items-center justify-between py-2.5">
@@ -910,6 +976,13 @@ function PortfolioWidgetMedium({
         <div className="w-24">
           <PerformanceChart data={data.history} height={32} />
         </div>
+      </div>
+
+      <div className="border-b border-slate-50 py-3">
+        <div className="mb-2">
+          <RiskFlag label={aiSignals.riskLabel} tone={aiSignals.riskTone} />
+        </div>
+        <PortfolioInsightCard insight={aiSignals.insight} />
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -965,6 +1038,7 @@ function PortfolioWidgetLarge({
       },
     ]),
   );
+  const aiSignals = buildPortfolioAiSignals(stocks, data);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
@@ -988,31 +1062,39 @@ function PortfolioWidgetLarge({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 border-b border-slate-50 bg-slate-50/40 px-1 py-4">
-        {[
-          { label: 'Net Liq', val: formatCurrency(data.totalValue) },
-          {
-            label: 'Daily P/L',
-            val: formatCurrency(data.dailyPnl),
-            class: percentClass(data.dailyPnl),
-          },
-          {
-            label: 'Unrealized',
-            val: `${data.pnlPercent.toFixed(2)}%`,
-            class: percentClass(data.pnl),
-          },
-        ].map((metric) => (
-          <div key={metric.label}>
-            <div className="mb-0.5 text-[9px] uppercase tracking-wide text-slate-400">
-              {metric.label}
+      <div className="relative overflow-hidden border-b border-slate-50 bg-slate-50/40 px-1 py-3">
+        <div className="pointer-events-none absolute inset-x-0 top-2 bottom-0 opacity-30">
+          <PerformanceChart data={data.history} height={64} showAxis />
+        </div>
+        <div className="relative grid grid-cols-3 gap-3">
+          {[
+            { label: 'Net Liq', val: formatCurrency(data.totalValue) },
+            {
+              label: 'Daily P/L',
+              val: formatCurrency(data.dailyPnl),
+              class: percentClass(data.dailyPnl),
+            },
+            {
+              label: 'Unrealized',
+              val: `${data.pnlPercent.toFixed(2)}%`,
+              class: percentClass(data.pnl),
+            },
+          ].map((metric) => (
+            <div key={metric.label}>
+              <div className="mb-0.5 text-[8px] uppercase tracking-wide text-slate-400">
+                {metric.label}
+              </div>
+              <div className={`text-xs font-semibold ${metric.class || ''}`}>{metric.val}</div>
             </div>
-            <div className={`text-xs font-semibold ${metric.class || ''}`}>{metric.val}</div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="border-b border-slate-50 bg-white py-2">
-        <PerformanceChart data={data.history} height={60} showAxis />
+      <div className="grid grid-cols-[auto,1fr] items-start gap-3 border-b border-slate-50 bg-white py-2">
+        <div>
+          <RiskFlag label={aiSignals.riskLabel} tone={aiSignals.riskTone} />
+        </div>
+        <PortfolioInsightCard insight={aiSignals.insight} />
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -1138,6 +1220,7 @@ const PortfolioWidgetRoot = ({
   const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
   const [editablePortfolioName, setEditablePortfolioName] = useState('Portfolio Widget Portfolio');
   const [editableStocks, setEditableStocks] = useState<Stock[]>([]);
+  const [editableHistory, setEditableHistory] = useState<PortfolioDerivedData['history']>([]);
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState<PortfolioWidgetSource>('paper');
   const [sourceLabel, setSourceLabel] = useState('Paper Portfolio');
@@ -1195,9 +1278,11 @@ const PortfolioWidgetRoot = ({
         const editable = (await editableResponse.json()) as PortfolioEditableResponse;
         setEditablePortfolioName(editable.name);
         setEditableStocks(mapPositionsToStocks(editable.positions));
+        setEditableHistory(editable.history);
       } else {
         setEditablePortfolioName('Portfolio Widget Portfolio');
         setEditableStocks(mappedSnapshot.stocks);
+        setEditableHistory(mappedSnapshot.data.history);
       }
     } catch {
       const emptyData = buildPortfolioData([]);
@@ -1205,6 +1290,7 @@ const PortfolioWidgetRoot = ({
       setBackendData(emptyData);
       setEditablePortfolioName('Portfolio Widget Portfolio');
       setEditableStocks([]);
+      setEditableHistory([]);
       setBrokerConnection({
         id: 'mock',
         status: 'disconnected',
@@ -1249,7 +1335,7 @@ const PortfolioWidgetRoot = ({
       const response = await fetch(portfolioApiUrl('/api/portfolio/editable'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, history: editableHistory }),
       });
       if (!response.ok) {
         const errorPayload = (await response.json().catch(() => null)) as {
@@ -1266,6 +1352,7 @@ const PortfolioWidgetRoot = ({
       const editable = (await response.json()) as PortfolioEditableResponse;
       setEditablePortfolioName(editable.name);
       setEditableStocks(mapPositionsToStocks(editable.positions));
+      setEditableHistory(editable.history);
       await loadPortfolio();
       setSaveStatus('saved');
       window.setTimeout(() => setSaveStatus('idle'), 1600);

@@ -126,11 +126,13 @@ class PortfolioEditablePosition(BaseModel):
 class PortfolioEditableRequest(BaseModel):
     name: str | None = None
     positions: list[PortfolioEditablePosition] | None = None
+    history: list[PortfolioHistoryPoint] | None = None
 
 
 class PortfolioEditableResponse(BaseModel):
     name: str
     positions: list[PortfolioSnapshotPosition]
+    history: list[PortfolioHistoryPoint]
     updatedAt: str
 
 

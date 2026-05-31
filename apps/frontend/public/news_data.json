@@ -1,12 +1,48 @@
 {
   "metadata": {
     "total_news": 50,
-    "yahoo_count": 19,
-    "et_count": 31,
-    "analyzed_at": "2026-05-31T23:06:09.968388",
+    "yahoo_count": 22,
+    "et_count": 28,
+    "analyzed_at": "2026-05-31T23:36:24.583092",
     "model": "openrouter/free"
   },
   "news": [
+    {
+      "id": "yahoo_1780241776_23",
+      "source": "yahoo",
+      "headline": "Greg Abel Just Sold Both Visa and Mastercard Stock but Kept This Top Buffett Favorite",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/greg-abel-just-sold-both-151200157.html",
+      "published_at": "2026-05-31T15:12:00Z",
+      "summary": "Greg Abel Just Sold Both Visa and Mastercard Stock but Kept This Top Buffett Favorite",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-05-31T23:36:19.536113"
+    },
+    {
+      "id": "yahoo_1780241776_33",
+      "source": "yahoo",
+      "headline": "Morgan Stanley revisits NetApp stock price target after earnings",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/morgan-stanley-revisits-netapp-stock-150700720.html",
+      "published_at": "2026-05-31T15:07:00Z",
+      "summary": "Morgan Stanley revisits NetApp stock price target after earnings",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-05-31T23:36:22.074569"
+    },
     {
       "id": "et_1780239886_1",
       "source": "economic_times",
@@ -294,6 +330,24 @@
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
       "related_symbols": [],
       "analyzed_at": "2026-05-31T23:05:17.191256"
+    },
+    {
+      "id": "yahoo_1780241776_4",
+      "source": "yahoo",
+      "headline": "Market concentration is creating 'fragility':  Only 60% of S&P 500 stocks are above their 200-day average",
+      "link": "https://finance.yahoo.com/markets/article/market-concentration-is-creating-fragility-only-60-of-sp-500-stocks-are-above-their-200-day-average-135336513.html",
+      "published_at": "2026-05-31T13:53:36Z",
+      "summary": "Market concentration is creating 'fragility':  Only 60% of S&P 500 stocks are above their 200-day average",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-05-31T23:36:16.992815"
     },
     {
       "id": "yahoo_1780239886_42",
@@ -870,60 +924,6 @@
       "reasoning": "The analysis highlights substantial returns and double‑digit sales and profit growth, indicating strong momentum. Positive performance suggests limited downside risk.",
       "related_symbols": [],
       "analyzed_at": "2026-05-30T01:26:14.026379"
-    },
-    {
-      "id": "et_1780076339_17",
-      "source": "economic_times",
-      "headline": "PC Jeweller shares soar 14% on Q4 PAT jumps 58% YoY, strong management commentary",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/pc-jeweller-shares-soar-14-on-q4-pat-jumps-58-yoy-strong-management-commentary/articleshow/131384891.cms",
-      "published_at": "Fri, 29 May 2026 13:14:20 +0530",
-      "summary": "Shares of PC Jeweller surged 14% after the company reported a 58% year-on-year rise in Q4 net profit to Rs 150 crore. Strong consumer demand and steady sales momentum boosted performance, with quarter",
-      "highlights": [
-        "Q4 net profit up 58% YoY to Rs 150 crore",
-        "Quarterly revenue rose 33% to Rs 927 crore",
-        "FY26 revenue projected up 49% to Rs 3,353 crore"
-      ],
-      "sentiment": 0.78,
-      "risk_tag": "Low Risk",
-      "reasoning": "The news highlights a sharp profit surge and strong revenue growth, indicating robust business performance. Positive management commentary further reinforces investor confidence.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:41:54.792160"
-    },
-    {
-      "id": "et_1780076339_18",
-      "source": "economic_times",
-      "headline": "Nomura downgrades Cummins India shares to Neutral despite raising target price by 25%. Here’s why",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nomura-downgrades-cummins-india-shares-to-neutral-despite-raising-target-price-by-25-heres-why/articleshow/131384323.cms",
-      "published_at": "Fri, 29 May 2026 12:39:53 +0530",
-      "summary": "Nomura downgraded Cummins India to “Neutral” despite raising its target price by 25%, citing stretched valuations and near-term margin pressure from rising commodity costs. While the brokerage remains",
-      "highlights": [
-        "Target price raised by 25%",
-        "Rating downgraded to Neutral",
-        "Margin pressure from rising commodity costs"
-      ],
-      "sentiment": -0.4,
-      "risk_tag": "Medium Risk",
-      "reasoning": "Nomura lowers rating to Neutral citing near‑term margin pressure, despite a 25% target price increase. The mixed outlook creates moderate uncertainty for investors.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:42:08.193973"
-    },
-    {
-      "id": "et_1780075350_19",
-      "source": "economic_times",
-      "headline": "Vedanta shares jump 2% to hit fresh 52-week high. What’s behind the surge?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/vedanta-shares-jump-2-to-hit-fresh-52-week-high-whats-behind-the-surge/articleshow/131383904.cms",
-      "published_at": "Fri, 29 May 2026 12:14:29 +0530",
-      "summary": "Vedanta shares hit a fresh record high after ICRA upgraded the company’s long-term credit rating to AA+ with a stable outlook, marking its highest domestic rating in over a decade. The upgrade reflect",
-      "highlights": [
-        "ICRA upgrades Vedanta to AA+",
-        "Shares hit fresh 52‑week high",
-        "Improved profitability and leverage metrics"
-      ],
-      "sentiment": 0.5,
-      "risk_tag": "Low Risk",
-      "reasoning": "ICRA upgrade signals strong fundamentals and positive outlook, driving share price rally.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:26:40.346084"
     }
   ]
 }

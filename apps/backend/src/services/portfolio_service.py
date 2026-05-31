@@ -227,6 +227,10 @@ class PortfolioService:
     def create_paper_portfolio(self, payload: dict[str, Any]) -> dict[str, Any]:
         name = str(payload.get("name", "Paper Portfolio")).strip() or "Paper Portfolio"
         positions = self._normalize_positions_payload(payload.get("positions", []))
+        total_value = sum(position.market_value for position in positions)
+        history = self._normalize_history_payload(
+            payload.get("history"), default_total_value=total_value
+        )
 
         records = self._read_paper_portfolios()
         record = {
@@ -234,6 +238,7 @@ class PortfolioService:
             "name": name,
             "status": "created",
             "positions": [self._position_payload(position) for position in positions],
+            "history": history,
             "createdAt": datetime.now(UTC).isoformat(),
         }
         records.append(record)
@@ -244,6 +249,7 @@ class PortfolioService:
                 "positions": [
                     self._position_payload(position) for position in positions
                 ],
+                "history": history,
                 "updatedAt": datetime.now(UTC).isoformat(),
             }
         )
@@ -258,21 +264,36 @@ class PortfolioService:
             or "Portfolio Widget Portfolio"
         )
         positions = self._normalize_positions_payload(payload.get("positions", []))
+        total_value = sum(position.market_value for position in positions)
+        existing = self._read_editable_portfolio()
+        history = self._normalize_history_payload(
+            payload.get("history") or existing.get("history"),
+            default_total_value=total_value,
+        )
         record = {
             "name": name,
             "positions": [self._position_payload(position) for position in positions],
+            "history": history,
             "updatedAt": datetime.now(UTC).isoformat(),
         }
         self._write_editable_portfolio(record)
         return record
 
     def _editable_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
-        positions = self._read_editable_positions()
+        editable_record = self._read_editable_portfolio()
+        positions = self._normalize_positions_payload(editable_record.get("positions", []))
         total_value = sum(position.market_value for position in positions)
         total_cost = sum(position.cost_basis for position in positions)
         pnl = total_value - total_cost
         pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
-        daily_pnl = total_value * 0.012
+        history = self._normalize_history_payload(
+            editable_record.get("history"), default_total_value=total_value
+        )
+        opening_value = history[0]["value"] if history else total_value
+        daily_pnl = total_value - opening_value
+        daily_pnl_percent = (
+            (daily_pnl / opening_value) * 100 if opening_value else 0.0
+        )
 
         return {
             "asOf": datetime.now(UTC).isoformat(),
@@ -288,12 +309,12 @@ class PortfolioService:
                 "pnl": round(pnl, 2),
                 "pnlPercent": round(pnl_percent, 4),
                 "dailyPnl": round(daily_pnl, 2),
-                "dailyPnlPercent": 1.2,
+                "dailyPnlPercent": round(daily_pnl_percent, 4),
                 "marginUsage": round(total_value * 0.25, 2),
                 "buyingPower": round(total_value * 0.15, 2),
             },
             "sectorValues": self._build_sector_values(positions),
-            "history": self._build_history(total_value),
+            "history": history,
         }
 
     def _position_payload(self, position: Position) -> dict[str, Any]:
@@ -377,12 +398,16 @@ class PortfolioService:
             if not isinstance(payload, dict):
                 raise ValueError("editable portfolio store must contain an object")
             positions = self._normalize_positions_payload(payload.get("positions", []))
+            total_value = sum(position.market_value for position in positions)
             return {
                 "name": str(payload.get("name", "Portfolio Widget Portfolio")).strip()
                 or "Portfolio Widget Portfolio",
                 "positions": [
                     self._position_payload(position) for position in positions
                 ],
+                "history": self._normalize_history_payload(
+                    payload.get("history"), default_total_value=total_value
+                ),
                 "updatedAt": str(
                     payload.get("updatedAt") or datetime.now(UTC).isoformat()
                 ),
@@ -398,6 +423,12 @@ class PortfolioService:
                 "positions": [
                     self._position_payload(position) for position in positions
                 ],
+                "history": self._normalize_history_payload(
+                    latest.get("history"),
+                    default_total_value=sum(
+                        position.market_value for position in positions
+                    ),
+                ),
                 "updatedAt": str(
                     latest.get("createdAt")
                     or latest.get("updatedAt")
@@ -412,6 +443,12 @@ class PortfolioService:
             "positions": [
                 self._position_payload(position) for position in self.positions
             ],
+            "history": self._normalize_history_payload(
+                None,
+                default_total_value=sum(
+                    position.market_value for position in self.positions
+                ),
+            ),
             "updatedAt": datetime.now(UTC).isoformat(),
         }
         self._write_editable_portfolio(seeded)
@@ -506,6 +543,29 @@ class PortfolioService:
             {"time": time_label, "value": round(total_value * multiplier, 2)}
             for time_label, multiplier in multipliers
         ]
+
+    def _normalize_history_payload(
+        self, raw_history: Any, *, default_total_value: float
+    ) -> list[dict[str, float | str]]:
+        if raw_history is None:
+            return self._build_history(default_total_value)
+        if not isinstance(raw_history, list):
+            raise ValueError("history must be a list")
+
+        history: list[dict[str, float | str]] = []
+        for item in raw_history:
+            if not isinstance(item, dict):
+                raise ValueError("each history point must be an object")
+            time_label = str(item.get("time", "")).strip()
+            if not time_label:
+                raise ValueError("history time is required")
+            history.append(
+                {
+                    "time": time_label,
+                    "value": round(self._safe_float(item.get("value"), "history.value"), 2),
+                }
+            )
+        return history
 
     def _ibkr_settings(self, connection: dict[str, Any]) -> IbkrConnectionSettings:
         settings = connection.get("settings", {})

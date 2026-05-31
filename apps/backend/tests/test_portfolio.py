@@ -100,6 +100,11 @@ class PortfolioTests(unittest.TestCase):
                         "sector": "Communication",
                     },
                 ],
+                "history": [
+                    {"time": "09:30", "value": 3600},
+                    {"time": "12:00", "value": 3725},
+                    {"time": "15:30", "value": 3900},
+                ],
             },
         )
 
@@ -116,6 +121,9 @@ class PortfolioTests(unittest.TestCase):
         self.assertEqual(snapshot["positions"][0]["symbol"], "TSLA")
         self.assertEqual(snapshot["positions"][1]["symbol"], "META")
         self.assertEqual(snapshot["summary"]["totalValue"], 3900.0)
+        self.assertEqual(snapshot["history"][0]["value"], 3600)
+        self.assertEqual(snapshot["history"][-1]["value"], 3900)
+        self.assertEqual(snapshot["summary"]["dailyPnl"], 300.0)
 
     def test_connection_endpoint_validates_and_returns_status(self):
         with patch(
