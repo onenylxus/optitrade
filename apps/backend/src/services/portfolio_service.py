@@ -66,7 +66,7 @@ class PortfolioService:
         self.broker_connection_path = self.data_dir / "broker_connection.json"
 
     def build_portfolio_snapshot(self) -> dict[str, Any]:
-        connection = self._default_broker_connection()
+        connection = self._read_broker_connection()
         if connection["id"] == "ibkr" and connection["status"] == "connected":
             try:
                 return portfolio_module.fetch_ibkr_portfolio_snapshot(
@@ -128,34 +128,7 @@ class PortfolioService:
                 )
                 connection = self._read_broker_connection()
 
-        positions = self.positions
-        total_value = sum(position.market_value for position in positions)
-        total_cost = sum(position.cost_basis for position in positions)
-        pnl = total_value - total_cost
-        pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
-
-        daily_pnl_percent = 1.2
-        daily_pnl = total_value * daily_pnl_percent / 100
-
-        return {
-            "asOf": datetime.now(UTC).isoformat(),
-            "baseCurrency": "USD",
-            "source": "backend",
-            "broker": self._broker_connection_payload(connection),
-            "positions": [self._position_payload(position) for position in positions],
-            "summary": {
-                "totalValue": round(total_value, 2),
-                "totalCost": round(total_cost, 2),
-                "pnl": round(pnl, 2),
-                "pnlPercent": round(pnl_percent, 4),
-                "dailyPnl": round(daily_pnl, 2),
-                "dailyPnlPercent": round(daily_pnl_percent, 4),
-                "marginUsage": round(total_value * 0.25, 2),
-                "buyingPower": round(total_value * 0.15, 2),
-            },
-            "sectorValues": self._build_sector_values(positions),
-            "history": self._build_history(total_value),
-        }
+        return self._editable_snapshot(connection)
 
     def validate_connection_request(self, payload: dict[str, Any]) -> dict[str, Any]:
         broker = str(payload.get("broker", "ibkr")).lower().strip()
@@ -304,7 +277,9 @@ class PortfolioService:
         return {
             "asOf": datetime.now(UTC).isoformat(),
             "baseCurrency": "USD",
-            "source": "backend",
+            "source": "backend"
+            if connection["status"] == "connected" and connection["id"] != "mock"
+            else "paper",
             "broker": self._broker_connection_payload_dict(connection),
             "positions": [self._position_payload(position) for position in positions],
             "summary": {

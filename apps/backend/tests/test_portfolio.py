@@ -77,6 +77,46 @@ class PortfolioTests(unittest.TestCase):
         self.assertEqual(paper["name"], "Timmy Paper Portfolio")
         self.assertTrue(portfolio_module.PAPER_PORTFOLIOS_PATH.exists())
 
+    def test_editable_portfolio_persists_and_drives_snapshot(self):
+        save_response = self.client.put(
+            "/api/portfolio/editable",
+            json={
+                "name": "Widget Portfolio",
+                "positions": [
+                    {
+                        "id": "custom-1",
+                        "symbol": "TSLA",
+                        "quantity": 10,
+                        "avgPrice": 150,
+                        "currentPrice": 180,
+                        "sector": "Consumer",
+                    },
+                    {
+                        "id": "custom-2",
+                        "symbol": "META",
+                        "quantity": 5,
+                        "avgPrice": 400,
+                        "currentPrice": 420,
+                        "sector": "Communication",
+                    },
+                ],
+            },
+        )
+
+        self.assertEqual(save_response.status_code, 200)
+        editable_payload = save_response.json()
+        self.assertEqual(editable_payload["name"], "Widget Portfolio")
+        self.assertEqual(len(editable_payload["positions"]), 2)
+
+        reload_response = self.client.get("/api/portfolio")
+        snapshot = reload_response.json()
+
+        self.assertEqual(reload_response.status_code, 200)
+        self.assertEqual(snapshot["source"], "paper")
+        self.assertEqual(snapshot["positions"][0]["symbol"], "TSLA")
+        self.assertEqual(snapshot["positions"][1]["symbol"], "META")
+        self.assertEqual(snapshot["summary"]["totalValue"], 3900.0)
+
     def test_connection_endpoint_validates_and_returns_status(self):
         with patch(
             "src.portfolio.validate_ibkr_connection",

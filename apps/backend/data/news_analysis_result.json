@@ -1,19 +1,35 @@
 {
   "metadata": {
+<<<<<<< Updated upstream
     "total_news": 12,
     "yahoo_count": 5,
     "et_count": 7,
     "analyzed_at": "2026-05-24T08:39:17.092994",
+=======
+    "total_news": 13,
+    "yahoo_count": 7,
+    "et_count": 6,
+    "analyzed_at": "2026-05-31T22:58:27.189904",
+>>>>>>> Stashed changes
     "model": "openrouter/free"
   },
   "news": [
     {
+<<<<<<< Updated upstream
       "id": "yahoo_1779583147_3",
       "source": "yahoo",
       "headline": "Morgan Stanley resets PANW stock price target on demand trends",
       "link": "https://finance.yahoo.com/markets/stocks/articles/morgan-stanley-resets-panw-stock-223300963.html",
       "published_at": "2026-05-22T22:33:00Z",
       "summary": "Morgan Stanley resets PANW stock price target on demand trends",
+=======
+      "id": "yahoo_1780239499_3",
+      "source": "yahoo",
+      "headline": "Another company shuts down Bitcoin treasury",
+      "link": "https://finance.yahoo.com/markets/crypto/articles/another-company-shuts-down-bitcoin-160000343.html",
+      "published_at": "2026-05-30T16:00:00Z",
+      "summary": "Another company shuts down Bitcoin treasury",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -22,6 +38,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:08.184391"
     },
     {
@@ -31,6 +48,16 @@
       "link": "https://finance.yahoo.com/markets/stocks/articles/music-catalogs-strike-chord-private-182231783.html",
       "published_at": "2026-05-22T18:22:31Z",
       "summary": "Music catalogs strike a chord with private capital—but investors want more than just royalties",
+=======
+      "analyzed_at": "2026-05-31T22:58:19.891550"
+    },
+    {
+      "id": "yahoo_1780239499_4",
+      "source": "yahoo",
+      "headline": "Is Morgan Stanley Stock Outperforming the Nasdaq?",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/morgan-stanley-stock-outperforming-nasdaq-132509094.html",
+      "published_at": "2026-05-30T13:25:09Z",
+      "summary": "Is Morgan Stanley Stock Outperforming the Nasdaq?",
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -39,6 +66,25 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-31T22:58:20.419985"
+    },
+    {
+      "id": "yahoo_1780239499_5",
+      "source": "yahoo",
+      "headline": "Is Philip Morris Stock Underperforming the Dow?",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/philip-morris-stock-underperforming-dow-132905915.html",
+      "published_at": "2026-05-30T13:29:05Z",
+      "summary": "Is Philip Morris Stock Underperforming the Dow?",
+>>>>>>> Stashed changes
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:08.989495"
     },
     {
@@ -48,6 +94,17 @@
       "link": "https://finance.yahoo.com/markets/stocks/articles/softbank-stock-spikes-openai-prepares-182405426.html",
       "published_at": "2026-05-22T18:24:05Z",
       "summary": "SoftBank Stock Spikes as OpenAI Prepares for Historic IPO",
+=======
+      "analyzed_at": "2026-05-31T22:58:20.956774"
+    },
+    {
+      "id": "yahoo_1780239499_7",
+      "source": "yahoo",
+      "headline": "A Giant Short Squeeze Could Be Brewing in Wolfspeed Stock",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/giant-short-squeeze-could-brewing-131502798.html",
+      "published_at": "2026-05-30T13:15:02Z",
+      "summary": "A Giant Short Squeeze Could Be Brewing in Wolfspeed Stock",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -56,6 +113,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:09.734523"
     },
     {
@@ -99,6 +157,17 @@
       "link": "https://economictimes.indiatimes.com/markets/stocks/news/long-term-investing-ecosystem-with-an-edge-called-india-12-large-mid-and-small-cap-stocks-with-upside-potential-of-up-to-34/articleshow/131283072.cms",
       "published_at": "Sat, 23 May 2026 22:24:34 +0530",
       "summary": "Tactical investing should not be confused with long-term investing. In a world where geopolitical risk, commodity shocks, and uncertainty are likely to stay high, investors need to think in terms of e",
+=======
+      "analyzed_at": "2026-05-31T22:58:21.493441"
+    },
+    {
+      "id": "yahoo_1780239499_8",
+      "source": "yahoo",
+      "headline": "Warren Buffett's Berkshire dumps entire stake in dividend stock",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/warren-buffetts-berkshire-dumps-entire-203300760.html",
+      "published_at": "2026-05-30T20:33:00Z",
+      "summary": "Warren Buffett's Berkshire dumps entire stake in dividend stock",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -107,6 +176,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:12.012955"
     },
     {
@@ -116,6 +186,17 @@
       "link": "https://economictimes.indiatimes.com/markets/stocks/news/vedanta-mcx-among-10-stocks-that-saw-highest-increase-in-retail-shareholding-in-q4-do-you-own-any/slideshow/131276400.cms",
       "published_at": "Sat, 23 May 2026 14:01:58 +0530",
       "summary": "Vedanta, MCX, among 10 stocks that saw highest increase in retail shareholding in Q4. Do you own any?",
+=======
+      "analyzed_at": "2026-05-31T22:58:22.035790"
+    },
+    {
+      "id": "yahoo_1780239499_9",
+      "source": "yahoo",
+      "headline": "Stock Market Week Ahead: Chipmaker Aims For 9th Straight Triple-Digit Gain",
+      "link": "https://www.investors.com/research/investing-action-plan/stock-market-week-ahead-chipmaker-aims-for-9th-straight-triple-digit-gain/?src=A00220&yptr=yahoo",
+      "published_at": "2026-05-30T13:15:56Z",
+      "summary": "Stock Market Week Ahead: Chipmaker Aims For 9th Straight Triple-Digit Gain",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -124,6 +205,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:12.748455"
     },
     {
@@ -133,6 +215,17 @@
       "link": "https://economictimes.indiatimes.com/markets/stocks/news/explained-modus-operandi-and-how-sebi-cracked-whip-in-alleged-pump-and-dump-scheme-involving-82-stocks/articleshow/131276202.cms",
       "published_at": "Sat, 23 May 2026 13:58:23 +0530",
       "summary": "Sebi has exposed a stock manipulation network that used social media platforms like Telegram, WhatsApp, and X to artificially inflate SME stock prices. The accused allegedly employed a pump-and-dump s",
+=======
+      "analyzed_at": "2026-05-31T22:58:22.574885"
+    },
+    {
+      "id": "yahoo_1780239499_10",
+      "source": "yahoo",
+      "headline": "Comcast Stock: Is CMCSA Underperforming the Communication Sector?",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/comcast-stock-cmcsa-underperforming-communication-133348990.html",
+      "published_at": "2026-05-30T13:33:48Z",
+      "summary": "Comcast Stock: Is CMCSA Underperforming the Communication Sector?",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -141,6 +234,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:13.510088"
     },
     {
@@ -150,6 +244,17 @@
       "link": "https://economictimes.indiatimes.com/markets/stocks/news/concurrent-losers-13-stocks-decline-for-5-consecutive-sessions/slideshow/131273840.cms",
       "published_at": "Sat, 23 May 2026 12:42:39 +0530",
       "summary": "Even as the Sensex posted modest gains during the week ending May 22, 13 BSE 500 stocks declined in every trading session. Afcons Infrastructure and Alok Industries led the losses with 11% declines, w",
+=======
+      "analyzed_at": "2026-05-31T22:58:23.109337"
+    },
+    {
+      "id": "et_1780239499_1",
+      "source": "economic_times",
+      "headline": "Ahead of Market: 10 things that will decide stock market action on Monday",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ahead-of-market-10-things-that-will-decide-stock-market-action-on-monday/articleshow/131421251.cms",
+      "published_at": "Sun, 31 May 2026 15:06:13 +0530",
+      "summary": "Indian equity markets ended sharply lower on May 29 amid broad-based selling, MSCI-driven flows and rising volatility. Technical indicators suggest a bearish bias with key support zones in focus. Glob",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -158,6 +263,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:14.379409"
     },
     {
@@ -167,6 +273,17 @@
       "link": "https://economictimes.indiatimes.com/markets/stocks/news/nomura-picks-6-stocks-with-up-to-49-upside-potential-that-can-benefit-from-indias-ev-push/slideshow/131273685.cms",
       "published_at": "Sat, 23 May 2026 12:35:24 +0530",
       "summary": "Nomura said India’s EV adoption is nearing an inflection point amid rising fuel prices and supportive policies. The brokerage identified six stocks, including M&amp;M, TVS Motor and UNO Minda, as key ",
+=======
+      "analyzed_at": "2026-05-31T22:58:23.651684"
+    },
+    {
+      "id": "et_1780239499_2",
+      "source": "economic_times",
+      "headline": "Market Trading Guide: YES Bank among two stock picks for Monday with up to 10% upside scope",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/market-trading-guide-yes-bank-among-two-stock-picks-for-monday-with-up-to-10-upside-scope/articleshow/131421232.cms",
+      "published_at": "Sun, 31 May 2026 15:03:08 +0530",
+      "summary": "Equity markets saw broad-based selling pressure after weak monsoon forecasts raised concerns over food inflation, though falling crude oil prices and easing bond yields helped limit downside risks. In",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -175,6 +292,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:15.097312"
     },
     {
@@ -184,6 +302,17 @@
       "link": "https://economictimes.indiatimes.com/markets/stocks/news/why-organized-players-like-titan-company-could-emerge-bigger-winners-in-indias-evolving-gold-market/articleshow/131273387.cms",
       "published_at": "Sat, 23 May 2026 12:15:06 +0530",
       "summary": "India's gold market is rapidly formalizing despite high prices and tax hikes. Resilient consumer demand, especially for investment, favours organized players like Titan. Titan, leveraging Tanishq's br",
+=======
+      "analyzed_at": "2026-05-31T22:58:24.196637"
+    },
+    {
+      "id": "et_1780239499_4",
+      "source": "economic_times",
+      "headline": "More macro headwinds on the cards? Tackle them with core principles: 6 pharma stocks with upside potential of up to 28%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/more-macro-headwinds-on-the-cards-tackle-them-with-core-principles-6-pharma-stocks-with-upside-potential-of-up-to-28/articleshow/131420377.cms",
+      "published_at": "Sun, 31 May 2026 13:34:32 +0530",
+      "summary": "There was a time when the Indian pharma story in the US was almost entirely about inspection risk. The US FDA would inspect a plant, a warning letter would follow, shipments would stall. Managements w",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -192,6 +321,7 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:15.867977"
     },
     {
@@ -201,6 +331,17 @@
       "link": "https://economictimes.indiatimes.com/markets/stocks/news/reliance-industries-tcs-among-10-stocks-with-sharpest-decrease-in-retail-shareholding-in-q4/slideshow/131273170.cms",
       "published_at": "Sat, 23 May 2026 11:27:53 +0530",
       "summary": "Ten major stocks, including HDFC Bank, Reliance Industries, and ITC, experienced the sharpest decrease in retail shareholding value, corresponding with significant stock price declines during the quar",
+=======
+      "analyzed_at": "2026-05-31T22:58:24.739980"
+    },
+    {
+      "id": "et_1780239499_5",
+      "source": "economic_times",
+      "headline": "9 Midcap stocks with massive upside potential of up to 45%! Do you own any?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/9-midcap-stocks-with-massive-upside-potential-of-up-to-45-do-you-own-any/slideshow/131420463.cms",
+      "published_at": "Sun, 31 May 2026 13:29:34 +0530",
+      "summary": "Nifty Mid-Cap 100 stocks are showing strong upside potential, with analyst consensus estimates suggesting 25% to 45% gains over the next 12 months. Based on Trendlyne data, several mid-cap companies a",
+>>>>>>> Stashed changes
       "highlights": [
         "Monitor developments",
         "Watch for confirmation",
@@ -209,7 +350,45 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+<<<<<<< Updated upstream
       "analyzed_at": "2026-05-24T08:39:16.588023"
+=======
+      "analyzed_at": "2026-05-31T22:58:25.287068"
+    },
+    {
+      "id": "et_1780239499_7",
+      "source": "economic_times",
+      "headline": "14 penny stocks plunge up to 55% in 2 months. Are you affected?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/14-penny-stocks-plunge-up-to-55-in-2-months-are-you-affected/slideshow/131419717.cms",
+      "published_at": "Sun, 31 May 2026 11:33:51 +0530",
+      "summary": "​Fourteen penny stocks have declined sharply over the past two months, with losses of up to 55%, highlighting the risks associated with low-priced equities. While such stocks attract investors seeking",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-31T22:58:26.135514"
+    },
+    {
+      "id": "et_1780239499_9",
+      "source": "economic_times",
+      "headline": "Two Trades for Today: A realty major for an 8.3% upmove, a large-cap IT stock for a gain of almost 6%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/two-trades-for-today-a-realty-major-for-an-8-3-upmove-a-large-cap-it-stock-for-a-gain-of-almost-6/articleshow/131419310.cms",
+      "published_at": "Sun, 31 May 2026 11:12:28 +0530",
+      "summary": "Our technical analysts identify select stocks every trading day that may gain momentum even in volatile markets. Here are the technical calls for today.",
+      "highlights": [
+        "Monitor developments",
+        "Watch for confirmation",
+        "Risk assessment advised"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "analyzed_at": "2026-05-31T22:58:26.686757"
+>>>>>>> Stashed changes
     }
   ]
 }

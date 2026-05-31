@@ -12,7 +12,7 @@ import {
   Settings,
   Trash2,
 } from 'lucide-react';
-import { Area, AreaChart, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type {
@@ -123,6 +123,8 @@ interface BrokerOptionConfig {
 const PORTFOLIO_API_BASE_URL =
   process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ?? 'http://127.0.0.1:8000';
 
+const HOLDING_CHART_COLORS = ['#0f172a', '#334155', '#64748b', '#94a3b8', '#cbd5e1'];
+
 const BROKER_OPTIONS: BrokerOptionConfig[] = [
   { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
   { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
@@ -207,6 +209,22 @@ function buildPortfolioData(stocks: Stock[]): PortfolioDerivedData {
   };
 }
 
+function buildTopHoldings(stocks: Stock[]) {
+  const totalValue = stocks.reduce((sum, stock) => sum + stock.currentPrice * stock.quantity, 0);
+  return stocks
+    .map((stock) => {
+      const value = stock.currentPrice * stock.quantity;
+      return {
+        id: stock.id,
+        symbol: stock.symbol,
+        value,
+        weight: totalValue > 0 ? (value / totalValue) * 100 : 0,
+      };
+    })
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+}
+
 function buildPaperChatContext(
   stocks: Stock[],
   broker?: PortfolioApiSnapshot['broker'],
@@ -246,6 +264,9 @@ function buildPaperChatContext(
 
 function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSnapshot {
   const source = snapshot.source === 'backend' ? 'backend' : 'paper';
+  const sectorValues = snapshot.sectorValues.filter(
+    (sector) => sector.sector.trim() && sector.sector !== 'Uncategorized',
+  );
   return {
     stocks: mapPositionsToStocks(snapshot.positions),
     data: {
@@ -255,7 +276,7 @@ function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSn
       dailyPnl: snapshot.summary.dailyPnl,
       dailyPnlPercent: snapshot.summary.dailyPnlPercent,
       marginUsage: snapshot.summary.marginUsage,
-      sectorValues: snapshot.sectorValues,
+      sectorValues,
       history: snapshot.history,
     },
     chatContext: {
@@ -283,7 +304,7 @@ function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSn
             ? 0
             : ((position.currentPrice - position.avgPrice) / position.avgPrice) * 100),
       })),
-      sectorValues: snapshot.sectorValues,
+      sectorValues,
     },
   };
 }
@@ -719,7 +740,7 @@ function PortfolioEditorPanel({
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <label className="space-y-1">
                   <span className="text-[10px] uppercase text-slate-400">Symbol</span>
                   <input
@@ -754,21 +775,6 @@ function PortfolioEditorPanel({
                     onChange={(event) =>
                       updateStock(stock.id, {
                         avgPrice: event.target.value === '' ? 0 : Number(event.target.value),
-                      })
-                    }
-                    className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-[10px] uppercase text-slate-400">Current Price</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={stock.currentPrice}
-                    onChange={(event) =>
-                      updateStock(stock.id, {
-                        currentPrice: event.target.value === '' ? 0 : Number(event.target.value),
                       })
                     }
                     className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs outline-none focus:border-slate-900"
@@ -949,6 +955,17 @@ function PortfolioWidgetLarge({
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
+  const topHoldings = buildTopHoldings(stocks);
+  const chartConfig = Object.fromEntries(
+    topHoldings.map((holding, index) => [
+      holding.symbol,
+      {
+        label: holding.symbol,
+        color: HOLDING_CHART_COLORS[index % HOLDING_CHART_COLORS.length],
+      },
+    ]),
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between border-b border-slate-50 py-3">
@@ -971,7 +988,7 @@ function PortfolioWidgetLarge({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 border-b border-slate-50 bg-slate-50/40 px-1 py-4">
+      <div className="grid grid-cols-3 gap-4 border-b border-slate-50 bg-slate-50/40 px-1 py-4">
         {[
           { label: 'Net Liq', val: formatCurrency(data.totalValue) },
           {
@@ -984,7 +1001,6 @@ function PortfolioWidgetLarge({
             val: `${data.pnlPercent.toFixed(2)}%`,
             class: percentClass(data.pnl),
           },
-          { label: 'Buying Power', val: formatCurrency(data.totalValue * 0.15) },
         ].map((metric) => (
           <div key={metric.label}>
             <div className="mb-0.5 text-[9px] uppercase tracking-wide text-slate-400">
@@ -1047,34 +1063,66 @@ function PortfolioWidgetLarge({
           )}
         </div>
 
-        <div className="w-2/5 overflow-y-auto border-l border-slate-50 bg-slate-50/30 p-3">
-          <div className="mb-3 border-b border-slate-100 pb-1 text-[8px] font-bold uppercase tracking-widest text-slate-400">
-            Allocation
-          </div>
-          <div className="space-y-4">
-            {data.sectorValues.map((sector) => (
-              <div key={sector.sector} className="group">
-                <div className="mb-1 flex items-center justify-between text-[8px] font-bold uppercase tracking-tighter text-slate-500">
-                  <span className="truncate pr-1 transition-colors group-hover:text-slate-900">
-                    {sector.sector}
-                  </span>
-                  <span className="font-mono">{sector.percent.toFixed(0)}%</span>
-                </div>
-                <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200/60">
-                  <div
-                    className="h-full bg-slate-400 transition-all group-hover:bg-slate-700"
-                    style={{ width: `${sector.percent}%` }}
+        {topHoldings.length > 0 && (
+          <div className="w-2/5 overflow-hidden border-l border-slate-50 bg-slate-50/30 px-3 py-2">
+            <div className="mb-2 border-b border-slate-100 pb-1 text-[8px] font-bold uppercase tracking-widest text-slate-400">
+              Top Holdings
+            </div>
+            <div>
+              <ChartContainer
+                config={chartConfig}
+                className="w-full"
+                style={{ height: 190 }}
+              >
+                <PieChart>
+                  <Pie
+                    data={topHoldings}
+                    dataKey="weight"
+                    nameKey="symbol"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={74}
+                    paddingAngle={0}
+                    strokeWidth={0}
+                  >
+                    {topHoldings.map((holding, index) => (
+                      <Cell
+                        key={holding.id}
+                        fill={HOLDING_CHART_COLORS[index % HOLDING_CHART_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        hideLabel
+                        formatter={(value, name, item) => {
+                          const payload = item?.payload as
+                            | { symbol?: string; value?: number; weight?: number }
+                            | undefined;
+                          const symbol =
+                            typeof payload?.symbol === 'string' ? payload.symbol : String(name);
+                          const holdingValue =
+                            typeof payload?.value === 'number' ? payload.value : 0;
+                          const holdingWeight =
+                            typeof payload?.weight === 'number' ? payload.weight : Number(value);
+                          return (
+                            <div className="space-y-0.5">
+                              <div className="font-semibold text-slate-900">{symbol}</div>
+                              <div>{formatCurrency(holdingValue)}</div>
+                              <div>{holdingWeight.toFixed(1)}%</div>
+                            </div>
+                          );
+                        }}
+                      />
+                    }
                   />
-                </div>
-              </div>
-            ))}
-            {data.sectorValues.length === 0 && (
-              <div className="text-[10px] text-slate-400">
-                Sector allocation will appear after you add positions.
-              </div>
-            )}
+                </PieChart>
+              </ChartContainer>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
