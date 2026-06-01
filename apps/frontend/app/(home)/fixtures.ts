@@ -46,6 +46,7 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
+  { id: 'candlestick', label: 'Candlestick Chart', sizeLabel: '11x7' },
   { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '5x5' },
   { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '6x7' },
   { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '8x8' },
