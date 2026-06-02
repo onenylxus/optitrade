@@ -3,7 +3,6 @@
 import json
 import os
 import threading
-import asyncio
 from collections.abc import Mapping
 from contextlib import asynccontextmanager
 from typing import Any
@@ -23,12 +22,8 @@ from .api.routes.ai_routes import router as ai_router
 from .api.routes.portfolio_routes import router as portfolio_router
 from .api.routes.stock_routes import router as stock_router
 from .firebase_auth import verify_firebase_id_token
-from .firestore_store import (
-    get_authenticated_user as load_authenticated_user_profile,
-)
-from .firestore_store import (
-    upsert_authenticated_user,
-)
+from .firestore_store import get_authenticated_user as load_authenticated_user_profile
+from .firestore_store import upsert_authenticated_user
 from .services import GreeterService
 
 

@@ -29,10 +29,6 @@ interface NewsItem {
   related_symbols?: string[];
 }
 
-interface ApiResponse {
-  news: NewsItem[];
-}
-
 interface NewsWidgetProps {
   title?: string;
   summary?: string;
@@ -88,11 +84,6 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
 
   const portfolioSymbols = useMemo(
     () => portfolioPositions.map((pos) => String(pos.symbol || '').toUpperCase()).filter(Boolean),
-    [portfolioPositions],
-  );
-
-  const portfolioSectors = useMemo(
-    () => portfolioPositions.map((pos) => String(pos.sector || '').toLowerCase()).filter(Boolean),
     [portfolioPositions],
   );
 

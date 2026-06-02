@@ -281,7 +281,9 @@ class PortfolioService:
 
     def _editable_snapshot(self, connection: dict[str, Any]) -> dict[str, Any]:
         editable_record = self._read_editable_portfolio()
-        positions = self._normalize_positions_payload(editable_record.get("positions", []))
+        positions = self._normalize_positions_payload(
+            editable_record.get("positions", [])
+        ) or self.positions
         total_value = sum(position.market_value for position in positions)
         total_cost = sum(position.cost_basis for position in positions)
         pnl = total_value - total_cost
@@ -562,7 +564,9 @@ class PortfolioService:
             history.append(
                 {
                     "time": time_label,
-                    "value": round(self._safe_float(item.get("value"), "history.value"), 2),
+                    "value": round(
+                        self._safe_float(item.get("value"), "history.value"), 2
+                    ),
                 }
             )
         return history
