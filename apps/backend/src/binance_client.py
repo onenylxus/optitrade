@@ -193,7 +193,9 @@ def _binance_server_time(testnet: bool) -> int:
     try:
         return int(payload["serverTime"])
     except (KeyError, TypeError, ValueError) as error:
-        raise RuntimeError("Binance time response did not include serverTime") from error
+        raise RuntimeError(
+            "Binance time response did not include serverTime"
+        ) from error
 
 
 def _asset_price_usd(asset: str, price_map: dict[str, float]) -> float:
@@ -230,18 +232,24 @@ def _position_payload(
     }
 
 
-def _sector_values(positions: list[dict[str, Any]], total_value: float) -> list[dict[str, Any]]:
+def _sector_values(
+    positions: list[dict[str, Any]], total_value: float
+) -> list[dict[str, Any]]:
     grouped: dict[str, float] = {}
     for position in positions:
         sector = str(position.get("sector") or "Uncategorized")
-        grouped[sector] = grouped.get(sector, 0.0) + float(position.get("marketValue", 0.0))
+        grouped[sector] = grouped.get(sector, 0.0) + float(
+            position.get("marketValue", 0.0)
+        )
 
     return sorted(
         [
             {
                 "sector": sector,
                 "value": round(value, 2),
-                "percent": round((value / total_value) * 100, 4) if total_value else 0.0,
+                "percent": round((value / total_value) * 100, 4)
+                if total_value
+                else 0.0,
             }
             for sector, value in grouped.items()
         ],

@@ -1,8 +1,8 @@
-"""Clustered pivot-based support/resistance from OHLC series (education / visualization)."""
+"""Clustered pivot-based support/resistance from OHLC series."""
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from src.api.schemas.stock_chart import ChartCandle
 
@@ -51,7 +51,9 @@ def _cluster_sorted_pivots(
     return clusters
 
 
-def _cluster_score(cluster: Sequence[tuple[float, int]], n_bars: int) -> tuple[float, float]:
+def _cluster_score(
+    cluster: Sequence[tuple[float, int]], n_bars: int
+) -> tuple[float, float]:
     scores = [(bar_index + 1) / n_bars for _, bar_index in cluster]
     strength = sum(scores)
     centroid = sum(p for p, _ in cluster) / len(cluster)
@@ -84,11 +86,13 @@ def _pick_level_from_pivots(
     return round(best[1], 4)
 
 
-def compute_support_resistance(candles: list[ChartCandle]) -> tuple[float | None, float | None]:
+def compute_support_resistance(
+    candles: list[ChartCandle],
+) -> tuple[float | None, float | None]:
     """
     Pivot highs/lows with price clustering — intended for SR overlay display.
 
-    Returns (support, resistance) anchored to bars below / above last close where possible.
+    Returns (support, resistance) anchored below / above the last close when possible.
     """
     n = len(candles)
     if n < 6:
@@ -100,10 +104,7 @@ def compute_support_resistance(candles: list[ChartCandle]) -> tuple[float | None
     last = closes[-1]
 
     atr_window = max(2, min(14, n - 1))
-    tr_tail = [
-        highs[i] - lows[i]
-        for i in range(max(0, n - atr_window), n)
-    ]
+    tr_tail = [highs[i] - lows[i] for i in range(max(0, n - atr_window), n)]
     atr = sum(tr_tail) / len(tr_tail)
     tol = max(atr * 0.5, last * 0.0025)
 
@@ -127,7 +128,9 @@ def compute_support_resistance(candles: list[ChartCandle]) -> tuple[float | None
         else:
             support = None
 
-    resistance = _pick_level_from_pivots(highs_p, tol=tol, n_bars=n, below=None, above=last)
+    resistance = _pick_level_from_pivots(
+        highs_p, tol=tol, n_bars=n, below=None, above=last
+    )
 
     trail_h = highs[max(0, n - min(35, max(15, n // 3))) :]
     if resistance is None or resistance <= last:

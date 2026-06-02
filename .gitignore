@@ -48,3 +48,6 @@ project-graph.json
 # Local env files
 .env
 .env.*
+
+
+.dw_local/

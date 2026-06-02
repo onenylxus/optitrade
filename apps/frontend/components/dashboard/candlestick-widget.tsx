@@ -163,6 +163,91 @@ function buildCandlestickInsight(
   return parts.join(' ');
 }
 
+function buildCandlestickChatContext(params: {
+  activeSymbol: string;
+  symbols: string[];
+  timeframe: ChartTimeframe;
+  interval: ChartInterval;
+  data: CandlestickData<Time>[];
+  showMA: boolean;
+  showBB: boolean;
+  showRSI: boolean;
+  indicators: IndicatorBundle;
+  showAiSr: boolean;
+  apiSrSupport: number | null;
+  apiSrResistance: number | null;
+}): string {
+  const {
+    activeSymbol,
+    symbols,
+    timeframe,
+    interval,
+    data,
+    showMA,
+    showBB,
+    showRSI,
+    indicators,
+    showAiSr,
+    apiSrSupport,
+    apiSrResistance,
+  } = params;
+
+  const first = data[0];
+  const last = data[data.length - 1];
+  const lines: string[] = [];
+
+  const pricePart = last ? ` — $${fmt2(last.close)}` : '';
+  lines.push(`Current Stock Focus: ${activeSymbol || '—'} (${timeframe}, ${interval})${pricePart}`);
+  lines.push(`Watchlist: ${symbols.length ? symbols.join(', ') : '—'}`);
+
+  if (first && last && data.length >= 2) {
+    const pct = first.close !== 0 ? ((last.close - first.close) / first.close) * 100 : 0;
+    const sign = pct >= 0 ? '+' : '';
+    const tone = pct > 0.05 ? 'up' : pct < -0.05 ? 'down' : 'flat';
+    lines.push(`Momentum: ${sign}${pct.toFixed(2)}% (${tone}) over ${timeframe}`);
+  } else {
+    lines.push('Momentum: —');
+  }
+
+  const indicatorParts: string[] = [];
+  if (showMA && indicators.ma.length > 0) {
+    const ma = indicators.ma[indicators.ma.length - 1];
+    if (ma && last) {
+      const rel = last.close >= ma.value ? 'above' : 'below';
+      indicatorParts.push(`MA(${MA_PERIOD}) ${fmt2(ma.value)} (${rel})`);
+    }
+  }
+  if (showBB && indicators.bb.lower.length > 0) {
+    const lo = indicators.bb.lower[indicators.bb.lower.length - 1];
+    const up = indicators.bb.upper[indicators.bb.upper.length - 1];
+    if (lo && up) {
+      indicatorParts.push(`BB ${fmt2(lo.value)}–${fmt2(up.value)}`);
+    }
+  }
+  if (showRSI && indicators.rsi.length > 0) {
+    const rsi = indicators.rsi[indicators.rsi.length - 1];
+    if (rsi) {
+      indicatorParts.push(`RSI(${RSI_PERIOD}) ${fmt2(rsi.value)}`);
+    }
+  }
+  lines.push(`Indicators: ${indicatorParts.length ? indicatorParts.join(', ') : 'none active'}`);
+
+  if (showAiSr && (apiSrSupport != null || apiSrResistance != null)) {
+    const levels: string[] = [];
+    if (apiSrSupport != null) {
+      levels.push(`support $${fmt2(apiSrSupport)}`);
+    }
+    if (apiSrResistance != null) {
+      levels.push(`resistance $${fmt2(apiSrResistance)}`);
+    }
+    lines.push(`Key Levels: ${levels.join(', ')}`);
+  } else {
+    lines.push('Key Levels: —');
+  }
+
+  return lines.join('\n');
+}
+
 const selectClass = cn(
   'h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground',
   'shadow-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
@@ -409,9 +494,7 @@ export function CandlestickWidget({
   const chartContainerRef = React.useRef<HTMLDivElement | null>(null);
   const seriesRefs = React.useRef<SeriesRefs>(emptySeriesRefs());
   const chartCacheRef = React.useRef<Map<string, CandlestickData<Time>[]>>(new Map());
-  const aiCacheRef = React.useRef<Map<string, { analysis: string; modelId: string }>>(
-    new Map(),
-  );
+  const aiCacheRef = React.useRef<Map<string, { analysis: string; modelId: string }>>(new Map());
   const srCacheRef = React.useRef<
     Map<string, { support: number | null; resistance: number | null }>
   >(new Map());
@@ -448,44 +531,61 @@ export function CandlestickWidget({
   const [apiSrResistance, setApiSrResistance] = React.useState<number | null>(null);
 
   const timeframe = timeframeProp ?? internalTf;
-  const interval = intervalProp ?? internalIv;
 
-  const activeSymbol = symbols[activeSymbolIndex] ?? '';
+  const allowedIntervals = React.useMemo(
+    () => allowedIntervalsForTimeframe(timeframe),
+    [timeframe],
+  );
+
+  const resolvedInternalIv = React.useMemo(() => {
+    if (intervalProp !== undefined) {
+      return intervalProp;
+    }
+
+    return allowedIntervals.includes(internalIv) ? internalIv : (allowedIntervals[0] ?? internalIv);
+  }, [allowedIntervals, internalIv, intervalProp]);
+
+  const interval = intervalProp ?? resolvedInternalIv;
+
+  const activeSymbolIndexResolved =
+    symbols.length === 0 ? 0 : Math.min(activeSymbolIndex, symbols.length - 1);
+  const activeSymbol = symbols[activeSymbolIndexResolved] ?? '';
 
   const useGeneratedData = dataProp === undefined && !useStockApi;
   const showSymbolTabs = useStockApi && dataProp === undefined;
   const showControls =
     showControlsProp ??
-    (useGeneratedData || useStockApi || onTimeframeChange !== undefined || onIntervalChange !== undefined);
+    (useGeneratedData ||
+      useStockApi ||
+      onTimeframeChange !== undefined ||
+      onIntervalChange !== undefined);
 
   React.useEffect(() => {
-    setActiveSymbolIndex((i) => (symbols.length === 0 ? 0 : Math.min(i, symbols.length - 1)));
-  }, [symbols.length]);
-
-  React.useEffect(() => {
-    if (!useStockApi || dataProp !== undefined) {
-      return;
-    }
-    if (!activeSymbol) {
-      setApiCandles([]);
-      setApiError(null);
-      setApiLoading(false);
-      return;
-    }
-
-    const apiInterval = chartIntervalToApi(interval);
-    const q = chartTimeframeToApiQuery(timeframe);
-    const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
-    const cached = chartCacheRef.current.get(cacheKey);
-    if (cached && cached.length > 0) {
-      setApiCandles(cached);
-    }
-
     const ac = new AbortController();
-    setApiLoading(true);
-    setApiError(null);
 
     void (async () => {
+      if (!useStockApi || dataProp !== undefined) {
+        return;
+      }
+
+      if (!activeSymbol) {
+        setApiCandles([]);
+        setApiError(null);
+        setApiLoading(false);
+        return;
+      }
+
+      const apiInterval = chartIntervalToApi(interval);
+      const q = chartTimeframeToApiQuery(timeframe);
+      const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+      const cached = chartCacheRef.current.get(cacheKey);
+      if (cached && cached.length > 0) {
+        setApiCandles(cached);
+      }
+
+      setApiLoading(true);
+      setApiError(null);
+
       try {
         const res = await getStockChart({
           symbol: activeSymbol,
@@ -523,40 +623,42 @@ export function CandlestickWidget({
   }, [useStockApi, dataProp, activeSymbol, timeframe, interval]);
 
   React.useEffect(() => {
-    if (!useStockApi || dataProp !== undefined || !useAiAnalysis) {
-      setApiAiAnalysis(null);
-      setApiAiModel(null);
-      setApiAiLoading(false);
-      setApiAiError(null);
-      return undefined;
-    }
-    if (!activeSymbol) {
-      setApiAiAnalysis(null);
-      setApiAiModel(null);
-      setApiAiLoading(false);
-      setApiAiError(null);
-      return undefined;
-    }
-
-    const apiInterval = chartIntervalToApi(interval);
-    const q = chartTimeframeToApiQuery(timeframe);
-    const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
-    const cached = aiCacheRef.current.get(cacheKey);
-    if (cached) {
-      setApiAiAnalysis(cached.analysis);
-      setApiAiModel(cached.modelId);
-      setApiAiError(null);
-      setApiAiLoading(false);
-      return undefined;
-    }
-
-    setApiAiAnalysis(null);
-    setApiAiModel(null);
-    setApiAiError(null);
     const ac = new AbortController();
-    setApiAiLoading(true);
 
     void (async () => {
+      if (!useStockApi || dataProp !== undefined || !useAiAnalysis) {
+        setApiAiAnalysis(null);
+        setApiAiModel(null);
+        setApiAiLoading(false);
+        setApiAiError(null);
+        return;
+      }
+
+      if (!activeSymbol) {
+        setApiAiAnalysis(null);
+        setApiAiModel(null);
+        setApiAiLoading(false);
+        setApiAiError(null);
+        return;
+      }
+
+      const apiInterval = chartIntervalToApi(interval);
+      const q = chartTimeframeToApiQuery(timeframe);
+      const cacheKey = `${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+      const cached = aiCacheRef.current.get(cacheKey);
+      if (cached) {
+        setApiAiAnalysis(cached.analysis);
+        setApiAiModel(cached.modelId);
+        setApiAiError(null);
+        setApiAiLoading(false);
+        return;
+      }
+
+      setApiAiAnalysis(null);
+      setApiAiModel(null);
+      setApiAiError(null);
+      setApiAiLoading(true);
+
       try {
         const res = await getStockChartAnalysis({
           symbol: activeSymbol,
@@ -597,32 +699,34 @@ export function CandlestickWidget({
   }, [useStockApi, dataProp, useAiAnalysis, activeSymbol, timeframe, interval]);
 
   React.useEffect(() => {
-    if (!useStockApi || dataProp !== undefined) {
-      setApiSrSupport(null);
-      setApiSrResistance(null);
-      return undefined;
-    }
-    if (!activeSymbol) {
-      setApiSrSupport(null);
-      setApiSrResistance(null);
-      return undefined;
-    }
-
-    const apiInterval = chartIntervalToApi(interval);
-    const q = chartTimeframeToApiQuery(timeframe);
-    const cacheKey = `sr|${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
-    const cached = srCacheRef.current.get(cacheKey);
-    if (cached) {
-      setApiSrSupport(cached.support);
-      setApiSrResistance(cached.resistance);
-      return undefined;
-    }
-
-    setApiSrSupport(null);
-    setApiSrResistance(null);
     const ac = new AbortController();
 
     void (async () => {
+      if (!useStockApi || dataProp !== undefined) {
+        setApiSrSupport(null);
+        setApiSrResistance(null);
+        return;
+      }
+
+      if (!activeSymbol) {
+        setApiSrSupport(null);
+        setApiSrResistance(null);
+        return;
+      }
+
+      const apiInterval = chartIntervalToApi(interval);
+      const q = chartTimeframeToApiQuery(timeframe);
+      const cacheKey = `sr|${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+      const cached = srCacheRef.current.get(cacheKey);
+      if (cached) {
+        setApiSrSupport(cached.support);
+        setApiSrResistance(cached.resistance);
+        return;
+      }
+
+      setApiSrSupport(null);
+      setApiSrResistance(null);
+
       try {
         const res = await getStockChartSupportResistance({
           symbol: activeSymbol,
@@ -688,27 +792,14 @@ export function CandlestickWidget({
     [resolvedData],
   );
 
-  const allowedIntervals = React.useMemo(
-    () => allowedIntervalsForTimeframe(timeframe),
-    [timeframe],
-  );
-
   React.useEffect(() => {
-    const allowed = allowedIntervalsForTimeframe(timeframe);
     if (intervalProp !== undefined) {
-      const fallback = allowed[0];
-      if (fallback && !allowed.includes(intervalProp)) {
+      const fallback = allowedIntervals[0];
+      if (fallback && !allowedIntervals.includes(intervalProp)) {
         onIntervalChange?.(fallback);
       }
-      return;
     }
-    setInternalIv((iv) => {
-      if (allowed.includes(iv)) {
-        return iv;
-      }
-      return allowed[0] ?? iv;
-    });
-  }, [timeframe, intervalProp, onIntervalChange]);
+  }, [allowedIntervals, intervalProp, onIntervalChange]);
 
   const setTimeframe = React.useCallback(
     (next: ChartTimeframe) => {
@@ -1075,6 +1166,38 @@ export function CandlestickWidget({
 
   const loadAiSummary = useStockApi && dataProp === undefined && useAiAnalysis;
 
+  const contextText = React.useMemo(
+    () =>
+      buildCandlestickChatContext({
+        activeSymbol,
+        symbols,
+        timeframe,
+        interval,
+        data: resolvedData,
+        showMA,
+        showBB,
+        showRSI,
+        indicators: indicatorLines,
+        showAiSr,
+        apiSrSupport,
+        apiSrResistance,
+      }),
+    [
+      activeSymbol,
+      symbols,
+      timeframe,
+      interval,
+      resolvedData,
+      showMA,
+      showBB,
+      showRSI,
+      indicatorLines,
+      showAiSr,
+      apiSrSupport,
+      apiSrResistance,
+    ],
+  );
+
   const summaryContent = React.useMemo(() => {
     if (!loadAiSummary) {
       return (
@@ -1111,20 +1234,18 @@ export function CandlestickWidget({
         {ruleBasedInsight}
       </span>
     );
-  }, [
-    loadAiSummary,
-    ruleBasedInsight,
-    apiAiAnalysis,
-    apiAiModel,
-    apiAiLoading,
-    apiAiError,
-  ]);
+  }, [loadAiSummary, ruleBasedInsight, apiAiAnalysis, apiAiModel, apiAiLoading, apiAiError]);
 
   const showToolbar = showControls || showIndicatorToggles;
   const variantClasses = candlestickVariantClassNames(variant);
 
   return (
-    <BaseWidget {...props} summary={summaryContent} contextData={{ label: props.title ?? 'Candlestick Chart', text: `${props.title ?? 'Candlestick Chart'} — ${summaryContent}` }} className={cn(variantClasses.root, className)}>
+    <BaseWidget
+      {...props}
+      summary={summaryContent}
+      contextData={{ label: props.title ?? 'Candlestick Chart', text: contextText }}
+      className={cn(variantClasses.root, className)}
+    >
       {showSymbolTabs ? (
         <div className="mb-2 flex flex-col gap-2">
           <div
@@ -1161,7 +1282,7 @@ export function CandlestickWidget({
             {symbols.length < 3 ? (
               <div className="ml-1 flex items-center gap-1">
                 <input
-                  className={cn(selectClass, 'h-7 w-[5.5rem]')}
+                  className={cn(selectClass, 'h-7 w-22')}
                   placeholder="Ticker"
                   value={symbolDraft}
                   maxLength={12}
@@ -1298,9 +1419,7 @@ export function CandlestickWidget({
                   <Bot className="h-3.5 w-3.5 opacity-90" aria-hidden />
                   <span>
                     AI{' '}
-                    <span className={indicatorToggleSuffixClass(showAiSr)}>
-                      Support/Resistance
-                    </span>
+                    <span className={indicatorToggleSuffixClass(showAiSr)}>Support/Resistance</span>
                   </span>
                 </Button>
               ) : null}

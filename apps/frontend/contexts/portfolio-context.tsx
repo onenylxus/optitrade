@@ -26,7 +26,7 @@ export interface PortfolioChatSummary {
 export interface PortfolioChatContextValue {
   asOf: string;
   baseCurrency: string;
-  source: 'backend' | 'demo';
+  source: 'backend' | 'paper';
   broker: {
     id?: PortfolioBrokerOption;
     status: 'connected' | 'configured' | 'disconnected';

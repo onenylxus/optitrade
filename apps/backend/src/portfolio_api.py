@@ -6,7 +6,6 @@ import uvicorn
 
 from src.rest_server import create_app
 
-
 app = create_app()
 
 

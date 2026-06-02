@@ -4,7 +4,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.deps import get_stock_chart_service
-from src.api.schemas.stock_chart import ChartCandle, StockChartParams, StockChartResponse
+from src.api.schemas.stock_chart import (
+    ChartCandle,
+    StockChartParams,
+    StockChartResponse,
+)
 from src.rest_server import create_app
 from src.services.stock_support_resistance import compute_support_resistance
 
@@ -80,7 +84,9 @@ class _SrFakeStockChartService:
 @pytest.fixture
 def client_sr_override():
     app = create_app()
-    app.dependency_overrides[get_stock_chart_service] = lambda: _SrFakeStockChartService()
+    app.dependency_overrides[get_stock_chart_service] = lambda: (
+        _SrFakeStockChartService()
+    )
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

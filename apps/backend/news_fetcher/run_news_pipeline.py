@@ -11,12 +11,9 @@ from news_fetcher import NewsAnalysisPipeline, OUTPUT_FILE
 
 
 def start_analysis():
-    print("="*60)
-    print("OptiTrade News Analysis System")
-    print("="*60)
-
-    pipeline = NewsAnalysisPipeline(limit_per_source=10)
-    results = pipeline.run()
+    pipeline = NewsAnalysisPipeline(limit_per_source=50)
+    results = pipeline.start_automated_loop(interval_seconds=900)
+    # results = pipeline.run_once()
 
     print(f"\n✅ Analysis completed!")
     print(f"📁 Results saved to: {OUTPUT_FILE}")

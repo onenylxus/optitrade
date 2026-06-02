@@ -5,12 +5,13 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 
+from src import portfolio as portfolio_module
 from src.api.controllers.stock_support_resistance_controller import (
     StockChartSupportResistanceController,
 )
+from src.services.portfolio_service import PortfolioService
 from src.services.stock_chart_analysis_service import StockChartAnalysisService
 from src.services.stock_chart_service import StockChartService
-from src.services.portfolio_service import PortfolioService
 
 
 def get_stock_chart_service() -> StockChartService:
@@ -52,5 +53,6 @@ def get_stock_chart_analysis_service(
         http_async_client=http,
     )
 
+
 def get_portfolio_service() -> PortfolioService:
-    return PortfolioService()
+    return PortfolioService(data_dir=portfolio_module.DATA_DIR)

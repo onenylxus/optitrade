@@ -10,7 +10,7 @@ import { useChatContextStore } from '@/contexts/chat-context-store';
 
 interface BaseWidgetProps extends ComponentProps<typeof Card> {
   title: string;
-  summary?: string;
+  summary?: ReactNode;
   children: ReactNode;
   contextData?: { label: string; text: string };
   contextButtonLabel?: string;
@@ -21,36 +21,38 @@ interface BaseWidgetProps extends ComponentProps<typeof Card> {
 const menuItemClass =
   'flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground';
 
-  export function BaseWidget({
-    title,
-    summary,
-    children,
-    className,
-    contextData,
-    contextButtonLabel = 'Add to Context',
-    contextButtonActiveLabel = 'Added to Context',
-    contextButtonActive = false,
-    onContextButtonClick,
-    ...props
-  }: BaseWidgetProps) {
-    const { isEditMode, onDelete, widgetId } = useWidgetContext();
-    const { contexts, addContext, removeContext } = useChatContextStore();
-  
-    const isActive = widgetId ? contexts.some((c) => c.widgetId === widgetId) : false;
-  
-    const handleContextButtonClick = () => {
-      if (onContextButtonClick) {
-        onContextButtonClick();
-        return;
-      }
-      if (!contextData || !widgetId) return;
-  
-      if (isActive) {
-        removeContext(widgetId);
-      } else {
-        addContext({ widgetId, label: contextData.label, text: contextData.text });
-      }
-    };
+export function BaseWidget({
+  title,
+  summary,
+  children,
+  className,
+  contextData,
+  contextButtonLabel = 'Add to Context',
+  contextButtonActiveLabel = 'Added to Context',
+  contextButtonActive = false,
+  onContextButtonClick,
+  ...props
+}: BaseWidgetProps) {
+  const { isEditMode, onDelete, widgetId } = useWidgetContext();
+  const { contexts, addContext, removeContext } = useChatContextStore();
+
+  const isActive = widgetId ? contexts.some((c) => c.widgetId === widgetId) : false;
+  const isContextActive = contextButtonActive || isActive;
+  const contextButtonText = isContextActive ? contextButtonActiveLabel : contextButtonLabel;
+
+  const handleContextButtonClick = () => {
+    if (onContextButtonClick) {
+      onContextButtonClick();
+      return;
+    }
+    if (!contextData || !widgetId) return;
+
+    if (isActive) {
+      removeContext(widgetId);
+    } else {
+      addContext({ widgetId, label: contextData.label, text: contextData.text });
+    }
+  };
   const showDelete = Boolean(isEditMode && onDelete);
 
   return (
@@ -90,18 +92,21 @@ const menuItemClass =
                 sideOffset={4}
                 align="end"
                 className={cn(
-                  'z-50 min-w-[10rem] overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
+                  'z-50 min-w-40 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
                 )}
               >
                 <DropdownMenu.Item className={menuItemClass} onSelect={handleContextButtonClick}>
                   <Plus className="size-3.5" />
-                  Add to Context
+                  {contextButtonText}
                 </DropdownMenu.Item>
                 {showDelete ? (
                   <>
                     <DropdownMenu.Separator className="-mx-1 my-1 h-px bg-border" />
                     <DropdownMenu.Item
-                      className={cn(menuItemClass, 'text-destructive data-highlighted:bg-destructive/15')}
+                      className={cn(
+                        menuItemClass,
+                        'text-destructive data-highlighted:bg-destructive/15',
+                      )}
                       onSelect={() => onDelete?.()}
                     >
                       <Trash2 className="size-3.5" />
@@ -116,7 +121,9 @@ const menuItemClass =
 
         <Separator className="shrink-0" />
 
-        <CardContent className="min-h-0 shrink-0 overflow-visible px-0 py-1">{children}</CardContent>
+        <CardContent className="relative flex min-h-0 flex-1 flex-col overflow-visible px-0 py-1">
+          {children}
+        </CardContent>
       </div>
     </Card>
   );

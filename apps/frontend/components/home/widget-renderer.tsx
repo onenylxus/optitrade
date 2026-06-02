@@ -5,6 +5,7 @@ import { PortfolioWidget } from '@/components/dashboard/portfolio-widget';
 import { TableWidget } from '@/components/dashboard/table-widget';
 import { TextWidget } from '@/components/dashboard/text-widget';
 import { NewsWidget } from '@/components/dashboard/news-widget';
+import { EarningsWidget } from '@/components/dashboard/earnings-widget';
 import { lineConfig, lineData } from '@/app/(home)/fixtures';
 import type { WidgetType } from '@/app/(home)/fixtures';
 
@@ -71,8 +72,15 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
   }
 
   if (widgetType === 'news') {
-   return <NewsWidget title="Financial News" summary="AI-powered sentiment analysis" variant="medium" />;
+    return (
+      <NewsWidget title="Financial News" summary="AI-powered sentiment analysis" variant="medium" />
+    );
   }
+
+  if (widgetType === 'earnings') {
+    return <EarningsWidget title="Earnings Calendar" summary="Upcoming earnings & results" />;
+  }
+
   return (
     <TextWidget
       title="AI Insight"
