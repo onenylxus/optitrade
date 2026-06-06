@@ -9,18 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from src.binance_client import (
-    fetch_binance_portfolio_snapshot,
-    validate_binance_connection,
-)
-from src.futu_client import fetch_futu_portfolio_snapshot, validate_futu_connection
-from src.ibkr_client import (
-    IbkrConnectionSettings,
-    fetch_ibkr_portfolio_snapshot,
-    validate_ibkr_connection,
-)
-
-
 @dataclass(frozen=True)
 class Position:
     id: str
@@ -165,7 +153,9 @@ def _public_broker_settings(connection: BrokerConnection) -> dict[str, Any]:
     return settings
 
 
-def _ibkr_settings(connection: BrokerConnection) -> IbkrConnectionSettings:
+def _ibkr_settings(connection: BrokerConnection):
+    from src.ibkr_client import IbkrConnectionSettings
+
     host = str(connection.settings.get("host", "127.0.0.1")).strip() or "127.0.0.1"
     port = _safe_int(connection.settings.get("port"), 7497)
     client_id = _safe_int(connection.settings.get("clientId"), 1)
@@ -256,6 +246,8 @@ def build_portfolio_snapshot(
 ) -> dict[str, Any]:
     connection = _default_broker_connection()
     if connection.id == "ibkr" and connection.status == "connected":
+        from src.ibkr_client import fetch_ibkr_portfolio_snapshot
+
         try:
             return fetch_ibkr_portfolio_snapshot(_ibkr_settings(connection))
         except RuntimeError as error:
@@ -271,6 +263,8 @@ def build_portfolio_snapshot(
             _write_broker_connection(configured)
             connection = configured
     elif connection.id == "futu" and connection.status == "connected":
+        from src.futu_client import fetch_futu_portfolio_snapshot
+
         try:
             return fetch_futu_portfolio_snapshot(
                 host=str(connection.settings.get("host", "127.0.0.1")),
@@ -290,6 +284,8 @@ def build_portfolio_snapshot(
             _write_broker_connection(configured)
             connection = configured
     elif connection.id == "binance" and connection.status == "connected":
+        from src.binance_client import fetch_binance_portfolio_snapshot
+
         try:
             return fetch_binance_portfolio_snapshot(
                 api_key=str(connection.settings.get("apiKey", "")),
@@ -347,6 +343,8 @@ def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
         return _broker_connection_payload(connection)
 
     if broker_id == "ibkr":
+        from src.ibkr_client import IbkrConnectionSettings, validate_ibkr_connection
+
         host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
         port = int(payload.get("port", 7497))
         client_id = int(payload.get("clientId", 1))
@@ -376,6 +374,8 @@ def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
         return _broker_connection_payload(connection)
 
     if broker_id == "futu":
+        from src.futu_client import validate_futu_connection
+
         host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
         port = int(payload.get("port", 11111))
         market = str(payload.get("market", "US")).strip().upper() or "US"
@@ -409,6 +409,8 @@ def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("apiKey is required for Binance")
     if not api_secret:
         raise ValueError("apiSecret is required for Binance")
+
+    from src.binance_client import validate_binance_connection
 
     validated = validate_binance_connection(api_key, api_secret, testnet=testnet)
     connection = _configured_broker_connection(

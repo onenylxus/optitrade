@@ -48,6 +48,7 @@ project-graph.json
 # Local env files
 .env
 .env.*
+apps/backend/optitrade-hku-firebase-adminsdk.json
 
 
 .dw_local/

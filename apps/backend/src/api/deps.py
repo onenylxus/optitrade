@@ -6,9 +6,11 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, Request, status
 
 from src import portfolio as portfolio_module
+from src.api.controllers.portfolio_ai_controller import PortfolioAIController
 from src.api.controllers.stock_support_resistance_controller import (
     StockChartSupportResistanceController,
 )
+from src.services.portfolio_analysis_service import PortfolioAnalysisService
 from src.services.portfolio_service import PortfolioService
 from src.services.stock_chart_analysis_service import StockChartAnalysisService
 from src.services.stock_chart_service import StockChartService
@@ -56,3 +58,30 @@ def get_stock_chart_analysis_service(
 
 def get_portfolio_service() -> PortfolioService:
     return PortfolioService(data_dir=portfolio_module.DATA_DIR)
+
+
+def get_portfolio_analysis_service(
+    request: Request,
+    portfolio: Annotated[PortfolioService, Depends(get_portfolio_service)],
+) -> PortfolioAnalysisService:
+    or_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if not or_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OPENROUTER_API_KEY is not configured",
+        )
+    http = getattr(request.app.state, "http_openrouter", None)
+    return PortfolioAnalysisService(
+        portfolio,
+        openrouter_api_key=or_key,
+        http_async_client=http,
+    )
+
+
+def get_portfolio_ai_controller(
+    service: Annotated[
+        PortfolioAnalysisService,
+        Depends(get_portfolio_analysis_service),
+    ],
+) -> PortfolioAIController:
+    return PortfolioAIController(service)

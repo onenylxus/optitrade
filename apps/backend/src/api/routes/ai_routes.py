@@ -6,13 +6,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from src.api.controllers.ai_recommendation_controller import AIRecommendationController
+from src.api.controllers.portfolio_ai_controller import PortfolioAIController
 from src.api.controllers.stock_support_resistance_controller import (
     StockChartSupportResistanceController,
 )
 from src.api.deps import (
+    get_portfolio_ai_controller,
     get_stock_chart_analysis_service,
     get_stock_support_resistance_controller,
 )
+from src.api.schemas.ai_portfolio import PortfolioAnalysisResponse
 from src.api.schemas.ai_stock_chart import (
     StockChartAnalysisResponse,
     StockChartSupportResistanceResponse,
@@ -81,6 +84,11 @@ async def ai_index() -> dict:
         "service": "optitrade-ai",
         "widgets": [
             {
+                "path": "/widget/portfolio",
+                "method": "GET",
+                "description": "Portfolio snapshot commentary and risk label from OpenRouter.",
+            },
+            {
                 "path": "/widget/stock-chart",
                 "method": "GET",
                 "description": "OHLC-driven momentum, indicators, and LLM commentary.",
@@ -95,6 +103,21 @@ async def ai_index() -> dict:
             },
         ],
     }
+
+
+@router.get(
+    "/widget/portfolio",
+    response_model=PortfolioAnalysisResponse,
+    response_model_by_alias=True,
+)
+async def ai_widget_portfolio(
+    controller: Annotated[
+        PortfolioAIController,
+        Depends(get_portfolio_ai_controller),
+    ],
+) -> PortfolioAnalysisResponse:
+    """Portfolio widget AI commentary grounded in the current backend snapshot."""
+    return await controller.analyze_portfolio()
 
 
 @router.get(

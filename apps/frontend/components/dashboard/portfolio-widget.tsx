@@ -17,6 +17,7 @@ import {
 import { Area, AreaChart, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { getPortfolioAnalysis } from '@/lib/api/client';
 import type {
   PortfolioBrokerOption,
   PortfolioChatContextValue,
@@ -61,6 +62,7 @@ interface PortfolioVariantProps {
   data: PortfolioDerivedData;
   source: PortfolioWidgetSource;
   sourceLabel: string;
+  aiSignals: PortfolioAiSignals;
   onOpenSettings: () => void;
   onOpenEditor: () => void;
 }
@@ -941,11 +943,10 @@ function PortfolioWidgetMedium({
   data,
   source,
   sourceLabel,
+  aiSignals,
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
-  const aiSignals = buildPortfolioAiSignals(stocks, data);
-
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <div className="flex items-center justify-between py-2.5">
@@ -1025,6 +1026,7 @@ function PortfolioWidgetLarge({
   data,
   source,
   sourceLabel,
+  aiSignals,
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
@@ -1038,8 +1040,6 @@ function PortfolioWidgetLarge({
       },
     ]),
   );
-  const aiSignals = buildPortfolioAiSignals(stocks, data);
-
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between border-b border-slate-50 py-3">
@@ -1367,12 +1367,41 @@ const PortfolioWidgetRoot = ({
     () => backendData ?? buildPortfolioData(stocks),
     [backendData, stocks],
   );
+  const fallbackAiSignals = useMemo(
+    () => buildPortfolioAiSignals(stocks, portfolioData),
+    [stocks, portfolioData],
+  );
+  const [aiSignals, setAiSignals] = useState<PortfolioAiSignals>(fallbackAiSignals);
+
+  useEffect(() => {
+    setAiSignals(fallbackAiSignals);
+
+    if (stocks.length === 0 || portfolioData.totalValue <= 0) {
+      return;
+    }
+
+    const controller = new AbortController();
+    void getPortfolioAnalysis(controller.signal)
+      .then((response) => {
+        setAiSignals({
+          insight: response.insight,
+          riskLabel: response.riskLabel,
+          riskTone: response.riskTone,
+        });
+      })
+      .catch(() => {
+        setAiSignals(fallbackAiSignals);
+      });
+
+    return () => controller.abort();
+  }, [fallbackAiSignals, stocks.length, portfolioData.totalValue]);
 
   const variantProps: PortfolioVariantProps = {
     stocks,
     data: portfolioData,
     source,
     sourceLabel,
+    aiSignals,
     onOpenSettings: () => setPanelMode('broker'),
     onOpenEditor: () => setPanelMode('editor'),
   };
@@ -1381,6 +1410,8 @@ const PortfolioWidgetRoot = ({
     `Total Value: $${portfolioData.totalValue.toFixed(2)}`,
     `Unrealized PnL: ${portfolioData.pnlPercent >= 0 ? '+' : ''}${portfolioData.pnlPercent.toFixed(2)}%`,
     `Daily PnL: $${portfolioData.dailyPnl.toFixed(2)}`,
+    `Risk: ${aiSignals.riskLabel}`,
+    `Insight: ${aiSignals.insight}`,
     `Positions: ${
       stocks.length > 0
         ? stocks

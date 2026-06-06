@@ -1,12 +1,905 @@
 {
   "metadata": {
     "total_news": 50,
-    "yahoo_count": 22,
-    "et_count": 28,
-    "analyzed_at": "2026-05-31T23:36:24.583092",
+    "yahoo_count": 14,
+    "et_count": 36,
+    "analyzed_at": "2026-06-06T15:20:50.675907",
     "model": "openrouter/free"
   },
   "news": [
+    {
+      "id": "et_1780728973_2",
+      "source": "economic_times",
+      "headline": "Concurrent Losers: 15 stocks decline for 5 consecutive sessions",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/concurrent-losers-15-stocks-decline-for-5-consecutive-sessions/slideshow/131545949.cms",
+      "published_at": "Sat, 06 Jun 2026 11:43:32 +0530",
+      "summary": "Amid a weak broader market, 15 BSE 500 stocks including Hindustan Zinc, PB Fintech and NTPC declined in each of the last five trading sessions, falling up to 10%.",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:56:27.069898"
+    },
+    {
+      "id": "et_1780728973_3",
+      "source": "economic_times",
+      "headline": "GIFT Nifty tumbles 1.5% as US stock market plunges. Will Dalal Street crash on Monday?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/gift-nifty-tumbles-1-5-as-us-stock-market-plunges-will-dalal-street-crash-on-monday/articleshow/131545625.cms",
+      "published_at": "Sat, 06 Jun 2026 11:31:40 +0530",
+      "summary": "GIFT Nifty plunged over 1.5% after a sharp selloff on Wall Street, signalling a weak start for Dalal Street on Monday. Strong US jobs data fuelled fears of prolonged higher interest rates, pushing Tre",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:56:29.674216"
+    },
+    {
+      "id": "et_1780728973_5",
+      "source": "economic_times",
+      "headline": "FPIs get tax relief on gilts, ease of Investment",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/fpis-get-tax-relief-on-gilts-ease-of-investment/articleshow/131544766.cms",
+      "published_at": "Sat, 06 Jun 2026 10:23:23 +0530",
+      "summary": "In a strategic step to lure foreign investment, India has eliminated taxes on capital gains and interest for overseas investors in its government bonds. This change, set to take effect on April 1, is ",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "RELIANCE"
+      ],
+      "analyzed_at": "2026-06-06T14:56:32.303227"
+    },
+    {
+      "id": "et_1780728973_7",
+      "source": "economic_times",
+      "headline": "Stock picks of the week: 6 stocks with consistent score improvement and upside potential of up to 29%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/stock-picks-of-the-week-6-stocks-with-consistent-score-improvement-and-upside-potential-of-up-to-29/articleshow/131543004.cms",
+      "published_at": "Sat, 06 Jun 2026 06:56:11 +0530",
+      "summary": "At a time when there are so many headwinds for the markets, it is tough to imagine that things can get better. But sentiment is a fickle thing and can change before you know it. And by the time you fi",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:34.908631"
+    },
+    {
+      "id": "et_1780728973_8",
+      "source": "economic_times",
+      "headline": "Rs 5,750 crore Adani block deal: SBI Mutual Fund picks stake from GQG",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/gqg-trims-adani-exposure-in-rs-5750-crore-block-deal-sell-shares-in-two-group-stocks/articleshow/131535087.cms",
+      "published_at": "Fri, 05 Jun 2026 20:38:09 +0530",
+      "summary": "GQG Partners sold stakes in Adani Enterprises and Adani Energy Solutions worth about Rs 5,750 crore through block deals, with SBI Mutual Fund acquiring the shares. The transactions are seen as portfol",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:37.543395"
+    },
+    {
+      "id": "et_1780728973_9",
+      "source": "economic_times",
+      "headline": "Adani Enterprises, Vodafone Idea among 6 stocks to hit 52-week high, rally up to 40% in a month",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/adani-enterprises-vodafone-idea-among-6-stocks-to-hit-52-week-high-rally-up-to-40-in-a-month/slideshow/131531803.cms",
+      "published_at": "Fri, 05 Jun 2026 17:51:31 +0530",
+      "summary": "Even as the Sensex fell 117 points to close at 74,243 on Friday, six BSE 200 stocks touched fresh 52-week highs. Vodafone Idea, Adani Enterprises, CG Power, Polycab India, Adani Energy Solutions and F",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:56:40.157288"
+    },
+    {
+      "id": "et_1780728973_10",
+      "source": "economic_times",
+      "headline": "Retail investors' picks: 11 high-margin stocks surge up to 40% in CY26",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/retail-investors-picks-11-high-margin-stocks-surge-up-to-40-in-cy26/slideshow/131528161.cms",
+      "published_at": "Fri, 05 Jun 2026 15:11:41 +0530",
+      "summary": "Retail investors increased their holdings in several fundamentally strong companies during the March quarter, even as broader market sentiment remained weak. Among stocks with net profit margins above",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:42.772891"
+    },
+    {
+      "id": "et_1780728973_12",
+      "source": "economic_times",
+      "headline": "LIC buys Maruti Suzuki shares worth Rs 68 crore, insurer's stake in automaker crosses 5%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/lic-buys-maruti-suzuki-shares-worth-rs-68-crore-insurers-stake-in-automaker-crosses-5/articleshow/131527163.cms",
+      "published_at": "Fri, 05 Jun 2026 14:40:38 +0530",
+      "summary": "Life Insurance Corporation of India (LIC) has increased its stake in Maruti Suzuki above the 5% threshold after purchasing 51,750 shares through a market transaction. The move comes amid a decline in ",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:45.393902"
+    },
+    {
+      "id": "et_1780728973_13",
+      "source": "economic_times",
+      "headline": "Tata Steel shares fall 3% after fire breaks out at UK’s Port Talbot plant",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/tata-steel-shares-fall-3-after-fire-breaks-out-at-uks-port-talbot-plant/articleshow/131526036.cms",
+      "published_at": "Fri, 05 Jun 2026 13:46:34 +0530",
+      "summary": "Tata Steel shares dropped nearly 3% after a fire at its Port Talbot plant in the UK forced a temporary halt to operations. While emergency services extinguished the blaze, the extent of operational im",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:48.028571"
+    },
+    {
+      "id": "et_1780728973_14",
+      "source": "economic_times",
+      "headline": "India makes big moves to attract foreign investments in bonds: How will this impact stock market?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/india-takes-big-moves-to-attract-foreign-investments-in-bonds-how-will-this-impact-stock-market/articleshow/131525767.cms",
+      "published_at": "Fri, 05 Jun 2026 13:30:02 +0530",
+      "summary": "India has unveiled significant measures to attract foreign investment, including tax exemptions on government securities and increased investment limits for overseas investors in equities. These moves",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:50.648795"
+    },
+    {
+      "id": "et_1780728973_15",
+      "source": "economic_times",
+      "headline": "Titan Company shares gain 2%.  Why JPMorgan, others see up to 28% upside after analyst call?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/titan-company-shares-gain-2-why-jpmorgan-others-see-up-to-28-upside-after-analyst-call/articleshow/131525736.cms",
+      "published_at": "Fri, 05 Jun 2026 13:26:14 +0530",
+      "summary": "Titan shares are seeing gains as brokerages maintain a positive outlook. The company has outlined ambitious growth plans for the coming years.  Key businesses like Tanishq are expected to see signific",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:53.258767"
+    },
+    {
+      "id": "et_1780728973_17",
+      "source": "economic_times",
+      "headline": "Hindustan Zinc shares tumble 5% to 6-week low after report of govt's plan to sell 2% stake for Rs 5,000 crore",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hindustan-zinc-shares-tumble-5-to-6-week-low-after-report-of-govts-plan-to-sell-2-stake-for-rs-5000-crore/articleshow/131523747.cms",
+      "published_at": "Fri, 05 Jun 2026 11:59:54 +0530",
+      "summary": "Hindustan Zinc shares fell sharply on Friday after a report said the government may sell up to a 2% stake in the company to raise around Rs 5,000 crore. The proposed divestment comes amid broader disi",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:55.885000"
+    },
+    {
+      "id": "et_1780728973_19",
+      "source": "economic_times",
+      "headline": "Go Digit Insurance shares jump 9% after Rs 100 crore block deal attracts MFs, global investor",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/go-digit-insurance-shares-jump-9-after-rs-100-crore-block-deal-attracts-mfs-global-investor/articleshow/131522939.cms",
+      "published_at": "Fri, 05 Jun 2026 11:15:20 +0530",
+      "summary": "Go Digit General Insurance shares saw a significant jump. This surge followed a Rs 100-crore block deal. Aditya Birla Sun Life Mutual Fund and JPMorgan Taiwan Eastern Technology Fund acquired shares. ",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:58.512991"
+    },
+    {
+      "id": "et_1780728973_20",
+      "source": "economic_times",
+      "headline": "Adani Power shares gain 3%, snap two-day losing streak. Why are Jefferies, Bernstein bullish on the stock?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/adani-power-shares-gain-3-snap-two-day-losing-streak-why-are-jefferies-bernstein-bullish-on-the-stock/articleshow/131522535.cms",
+      "published_at": "Fri, 05 Jun 2026 10:58:19 +0530",
+      "summary": "Adani Power shares are climbing on strong prospects for India's power demand and the booming data centre sector. Analysts see the Adani Group well-positioned to capitalize on this growth. India's data",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:01.127643"
+    },
+    {
+      "id": "et_1780728973_21",
+      "source": "economic_times",
+      "headline": "Wipro plunges 8% after shares turn ex-record date for Rs 15,000 crore buyback",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/wipro-shares-crash-8-despite-overall-market-optimism-heres-why/articleshow/131522416.cms",
+      "published_at": "Fri, 05 Jun 2026 10:51:07 +0530",
+      "summary": "Wipro shares fell sharply on Friday after turning ex-record date for its Rs 15,000 crore buyback, despite broader market gains in the early trading hours.  The share buyback marks the first such actio",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [
+        "WIPRO"
+      ],
+      "analyzed_at": "2026-06-06T14:57:03.760159"
+    },
+    {
+      "id": "et_1780728973_22",
+      "source": "economic_times",
+      "headline": "BPCL, Wipro, ITC among list of 15 high dividend yield stocks. Do you own any?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/bpcl-wipro-itc-among-list-of-15-high-dividend-yield-stocks-do-you-own-any/slideshow/131522435.cms",
+      "published_at": "Fri, 05 Jun 2026 10:44:41 +0530",
+      "summary": "Amid market volatility, investors are capitalizing on dividends from Indian companies. IDBI Capital identified 15 high dividend yield stocks from the NSE 500 index, including BPCL, Wipro, and ITC, off",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY",
+        "WIPRO"
+      ],
+      "analyzed_at": "2026-06-06T14:57:06.379224"
+    },
+    {
+      "id": "et_1780728973_23",
+      "source": "economic_times",
+      "headline": "Did this L&amp;T-backed AI stock actually crash 90% in one day? Here's all you need to know",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/did-this-lt-backed-ai-stock-actually-crash-90-in-one-day-heres-all-you-need-to-know/articleshow/131522017.cms",
+      "published_at": "Fri, 05 Jun 2026 10:19:20 +0530",
+      "summary": "E2E Networks appeared to plunge nearly 90% in a day after its 1:10 stock split took effect, but the move was purely a price adjustment. The AI-focused cloud computing company actually hit the 5% upper",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:09.007233"
+    },
+    {
+      "id": "et_1780728973_25",
+      "source": "economic_times",
+      "headline": "Adani Ports shares snap 2-day fall, rise over 1% after Goldman Sachs raises target price",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/adani-ports-shares-snap-2-day-fall-rise-over-1-after-goldman-sachs-raises-target-price/articleshow/131521558.cms",
+      "published_at": "Fri, 05 Jun 2026 09:59:42 +0530",
+      "summary": "Shares of Adani Ports saw an uptick on Friday after Goldman Sachs reaffirmed its ‘Buy’ rating and raised the target price to Rs 1,870. Strong cargo volume growth, recovery in thermal coal volumes, Viz",
+      "highlights": [
+        "Positive indicators noted",
+        "Growth keywords detected",
+        "Market expectations upbeat"
+      ],
+      "sentiment": 0.45,
+      "risk_tag": "Low Risk",
+      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:11.609083"
+    },
+    {
+      "id": "et_1780728973_26",
+      "source": "economic_times",
+      "headline": "Market wrap: Sensex falls 117 points, Nifty closes below 23,400 after RBI MPC meeting outcome. What lies ahead?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/sensex-rises-over-200-points-nifty-above-23400-as-investors-eye-rbi-mpc-meet-outcome/articleshow/131082553.cms",
+      "published_at": "Fri, 05 Jun 2026 09:27:50 +0530",
+      "summary": "Indian stock markets erased morning gains, with Sensex and Nifty closing lower following the RBI's hawkish stance and a wait-and-watch approach. Despite falling oil prices and Treasury yields, the cen",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:57:14.239671"
+    },
+    {
+      "id": "et_1780728973_27",
+      "source": "economic_times",
+      "headline": "Rajesh Exports shares hit 5% lower circuit for 2nd day; firm cites 'communication gap' after Sebi order",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/rajesh-exports-shares-hit-5-lower-circuit-for-2nd-day-firm-cites-communication-gap-after-sebi-order/articleshow/131521134.cms",
+      "published_at": "Fri, 05 Jun 2026 09:27:09 +0530",
+      "summary": "Rajesh Exports shares tumbled for a second consecutive session on Friday, taking the two-day decline to about 10%, after Sebi's interim order alleged large-scale financial irregularities. The regulato",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:57:16.855830"
+    },
+    {
+      "id": "et_1780728973_28",
+      "source": "economic_times",
+      "headline": "ICICI Bank shares in focus after lender receives Sebi’s warning letter. Here's why",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/icici-bank-shares-in-focus-after-lender-receives-sebis-warning-letter-heres-why/articleshow/131521037.cms",
+      "published_at": "Fri, 05 Jun 2026 09:20:22 +0530",
+      "summary": "ICICI Bank shares are under scrutiny after Sebi issued a warning for a custodian violation related to FPI fund repatriation. Despite this, the bank stated no material impact on its financials. Meanwhi",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:19.478818"
+    },
+    {
+      "id": "et_1780728973_29",
+      "source": "economic_times",
+      "headline": "Nippon Life among 5 F&amp;O stocks with sharp rise in futures open interest",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nippon-life-among-5-fampo-stocks-with-sharp-rise-in-futures-open-interest/slideshow/131520973.cms",
+      "published_at": "Fri, 05 Jun 2026 09:08:01 +0530",
+      "summary": "Five stocks from the NSE F&amp;O segment witnessed a sharp rise in futures open interest on June 4, indicating increased trading activity and fresh position build-up. The rise in open interest reflect",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:57:22.092712"
+    },
+    {
+      "id": "et_1780728973_30",
+      "source": "economic_times",
+      "headline": "Groww shares gain 3% as Goldman Sachs buys stake in Rs 210-crore block deal",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/groww-shares-in-focus-as-goldman-sachs-buys-stake-in-rs-210-crore-block-deal/articleshow/131520578.cms",
+      "published_at": "Fri, 05 Jun 2026 08:53:40 +0530",
+      "summary": "Billionbrain Garage Ventures, parent of Groww, saw its shares rally 3% after Goldman Sachs acquired over 1.13 crore shares for Rs 210.43 crore. The company reported a strong Q4 with net profit up 122%",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:24.726765"
+    },
+    {
+      "id": "et_1780728973_31",
+      "source": "economic_times",
+      "headline": "IndiGo shares snap 3-day rally, fall over 1% as airline suspends flights to 6 countries amid soaring operational costs",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/indigo-shares-in-focus-as-airline-suspends-flights-to-6-countries-amid-soaring-operational-costs/articleshow/131520539.cms",
+      "published_at": "Fri, 05 Jun 2026 08:47:21 +0530",
+      "summary": "IndiGo's parent company, InterGlobe Aviation, saw its shares dip as the airline announced temporary flight suspensions to six international destinations from July 1, 2026. This strategic network optim",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:27.356704"
+    },
+    {
+      "id": "et_1780728973_32",
+      "source": "economic_times",
+      "headline": "Page Industries among 3 stocks flashing bullish signals, hinting at a possible uptrend",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/page-industries-among-3-stocks-flashing-bullish-signals-hinting-at-a-possible-uptrend/slideshow/131520461.cms",
+      "published_at": "Fri, 05 Jun 2026 08:40:28 +0530",
+      "summary": "Three Nifty200 stocks appeared on the White Marubozu bullish scanner on June 04, signalling strong buying momentum across select counters. The candlestick pattern reflects sustained bullish sentiment ",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:57:29.964140"
+    },
+    {
+      "id": "et_1780728973_33",
+      "source": "economic_times",
+      "headline": "Eternal among 6 stocks showing bullish RSI upswing",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/eternal-among-6-stocks-showing-bullish-rsi-upswing/slideshow/131520516.cms",
+      "published_at": "Fri, 05 Jun 2026 08:38:35 +0530",
+      "summary": "On June 4, six Nifty500 stocks that gained more than 3% were highlighted in the RSI Trending Up scan based on data from StockEdge.com. The signal is generated when RSI crosses above 50 from lower leve",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:57:32.584742"
+    },
+    {
+      "id": "et_1780728973_34",
+      "source": "economic_times",
+      "headline": "Positive Breakout: These 11 stocks cross above their 200 DMAs",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/positive-breakout-these-11-stocks-cross-above-their-200-dmas/slideshow/131519546.cms",
+      "published_at": "Fri, 05 Jun 2026 07:34:47 +0530",
+      "summary": "As long as the stock is priced above the 200-day SMA on the daily time frame, it is generally considered to be an overall uptrend.",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:35.207339"
+    },
+    {
+      "id": "et_1780728973_35",
+      "source": "economic_times",
+      "headline": "Markets poised for a cautious start as GIFT Nifty ticks higher",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/pre-market-action-heres-the-trade-setup-for-todays-session/articleshow/131519174.cms",
+      "published_at": "Fri, 05 Jun 2026 06:41:17 +0530",
+      "summary": "Indian markets traded positively on Thursday, buoyed by potential tax benefits for foreign portfolio investments. Analysts anticipate a range-bound trading session ahead of the RBI's Monetary Policy C",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:57:37.841719"
+    },
+    {
+      "id": "et_1780728973_36",
+      "source": "economic_times",
+      "headline": "Stocks in news: Tata Steel, ICICI Bank, Tata Motors, Vedanta, Maruti Suzuki",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/stocks-in-news-tata-steel-icici-bank-tata-motors-vedanta-maruti-suzuki/articleshow/131519160.cms",
+      "published_at": "Fri, 05 Jun 2026 06:36:01 +0530",
+      "summary": "Indian markets traded cautiously on Thursday's weekly expiry, with analysts observing a continued tussle for direction in the Nifty. Key companies like Tata Steel, Tata Motors, ICICI Bank, Vedanta, an",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-06T14:57:40.454383"
+    },
+    {
+      "id": "et_1780728973_37",
+      "source": "economic_times",
+      "headline": "Hidden AI Winners: Little-known D-Street stocks soar up to 530%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/a-little-known-indian-stocks-530-rally-shows-hidden-ai-winners/articleshow/131519131.cms",
+      "published_at": "Fri, 05 Jun 2026 06:31:37 +0530",
+      "summary": "Indian industrial companies are experiencing significant growth by supplying components for data centers. These firms are crucial for building and powering the infrastructure needed for artificial int",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:43.070150"
+    },
+    {
+      "id": "et_1780728973_40",
+      "source": "economic_times",
+      "headline": "FPI exodus from financials cools, but foreign investors remain net sellers",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/fpi-exodus-from-financials-cools-but-foreign-investors-remain-net-sellers/articleshow/131518960.cms",
+      "published_at": "Fri, 05 Jun 2026 05:41:25 +0530",
+      "summary": "Global investors reduced their equity stake in India's financial services sector in the latter half of May, selling shares worth ₹5,181 crore. This pace of selling was significantly lower than the fir",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "META"
+      ],
+      "analyzed_at": "2026-06-06T14:57:45.693357"
+    },
+    {
+      "id": "yahoo_1780729568_34",
+      "source": "yahoo",
+      "headline": "Is Bloom Energy (BE) One of the Best Renewable Energy Stocks to Buy According to Billionaires?",
+      "link": "https://finance.yahoo.com/sectors/energy/articles/bloom-energy-one-best-renewable-032853504.html",
+      "published_at": "2026-06-05T03:28:53Z",
+      "summary": "Is Bloom Energy (BE) One of the Best Renewable Energy Stocks to Buy According to Billionaires?",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T15:06:22.319895"
+    },
+    {
+      "id": "yahoo_1780729568_33",
+      "source": "yahoo",
+      "headline": "NextEra Energy (NEE) – Among the 10 Best Renewable Energy Stocks to Buy According to Billionaires",
+      "link": "https://finance.yahoo.com/sectors/energy/articles/nextera-energy-nee-among-10-032805700.html",
+      "published_at": "2026-06-05T03:28:05Z",
+      "summary": "NextEra Energy (NEE) – Among the 10 Best Renewable Energy Stocks to Buy According to Billionaires",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T15:06:19.754935"
+    },
+    {
+      "id": "yahoo_1780730406_41",
+      "source": "yahoo",
+      "headline": "Costco stock price shocks market despite major blowout quarter",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/costco-stock-price-shocks-market-024700965.html",
+      "published_at": "2026-06-05T02:47:00Z",
+      "summary": "Costco stock price shocks market despite major blowout quarter",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T15:20:48.172986"
+    },
+    {
+      "id": "yahoo_1780729568_12",
+      "source": "yahoo",
+      "headline": "Rollins (ROL) – Among the 10 Oversold Dividend Growth Stocks to Buy",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/rollins-rol-among-10-oversold-023643275.html",
+      "published_at": "2026-06-05T02:36:43Z",
+      "summary": "Rollins (ROL) – Among the 10 Oversold Dividend Growth Stocks to Buy",
+      "highlights": [
+        "Positive indicators noted",
+        "Growth keywords detected",
+        "Market expectations upbeat"
+      ],
+      "sentiment": 0.45,
+      "risk_tag": "Low Risk",
+      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T15:06:14.239352"
+    },
+    {
+      "id": "yahoo_1780729568_10",
+      "source": "yahoo",
+      "headline": "Is Tyson Foods (TSN) One of the 10 Oversold Dividend Growth Stocks to Buy?",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/tyson-foods-tsn-one-10-023336721.html",
+      "published_at": "2026-06-05T02:33:36Z",
+      "summary": "Is Tyson Foods (TSN) One of the 10 Oversold Dividend Growth Stocks to Buy?",
+      "highlights": [
+        "Positive indicators noted",
+        "Growth keywords detected",
+        "Market expectations upbeat"
+      ],
+      "sentiment": 0.45,
+      "risk_tag": "Low Risk",
+      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T15:06:11.624862"
+    },
+    {
+      "id": "yahoo_1780729568_26",
+      "source": "yahoo",
+      "headline": "How To Earn $500 A Month From Medtronic Stock After Q4 Earnings",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/earn-500-month-medtronic-stock-023104019.html",
+      "published_at": "2026-06-05T02:31:04Z",
+      "summary": "How To Earn $500 A Month From Medtronic Stock After Q4 Earnings",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T15:06:17.191506"
+    },
+    {
+      "id": "yahoo_1780729568_8",
+      "source": "yahoo",
+      "headline": "2 Tech Stocks I Would Buy Before SpaceX",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/2-tech-stocks-buy-spacex-022000312.html",
+      "published_at": "2026-06-05T02:20:00Z",
+      "summary": "2 Tech Stocks I Would Buy Before SpaceX",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T15:06:09.005924"
+    },
+    {
+      "id": "yahoo_1780728973_16",
+      "source": "yahoo",
+      "headline": "Why PVH Stock Plunged Today",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/why-pvh-stock-plunged-today-235709688.html",
+      "published_at": "2026-06-04T23:57:09Z",
+      "summary": "Why PVH Stock Plunged Today",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:16.574156"
+    },
+    {
+      "id": "yahoo_1780728973_21",
+      "source": "yahoo",
+      "headline": "Will Broadcom Stock Recover After Its Guidance Disappointment, Or Should You Cut Your Losses?",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/broadcom-stock-recover-guidance-disappointment-235555646.html",
+      "published_at": "2026-06-04T23:55:55Z",
+      "summary": "Will Broadcom Stock Recover After Its Guidance Disappointment, Or Should You Cut Your Losses?",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:19.190820"
+    },
+    {
+      "id": "yahoo_1780728973_26",
+      "source": "yahoo",
+      "headline": "Why Visa Stock Topped the Market on Thursday",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/why-visa-stock-topped-market-235310083.html",
+      "published_at": "2026-06-04T23:53:10Z",
+      "summary": "Why Visa Stock Topped the Market on Thursday",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:21.815802"
+    },
+    {
+      "id": "yahoo_1780728973_40",
+      "source": "yahoo",
+      "headline": "5 Top Artificial Intelligence (AI) Stocks to Buy With $5,000 Right Now",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/5-top-artificial-intelligence-ai-234100682.html",
+      "published_at": "2026-06-04T23:41:00Z",
+      "summary": "5 Top Artificial Intelligence (AI) Stocks to Buy With $5,000 Right Now",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:24.430240"
+    },
+    {
+      "id": "yahoo_1780728973_7",
+      "source": "yahoo",
+      "headline": "UnitedHealth Just Raised Its Dividend 5%. Why You Should Buy UNH Stock Here.",
+      "link": "https://finance.yahoo.com/sectors/healthcare/articles/unitedhealth-just-raised-dividend-5-233002973.html",
+      "published_at": "2026-06-04T23:30:02Z",
+      "summary": "UnitedHealth Just Raised Its Dividend 5%. Why You Should Buy UNH Stock Here.",
+      "highlights": [
+        "Positive indicators noted",
+        "Growth keywords detected",
+        "Market expectations upbeat"
+      ],
+      "sentiment": 0.45,
+      "risk_tag": "Low Risk",
+      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:56:13.951962"
+    },
+    {
+      "id": "et_1780728973_44",
+      "source": "economic_times",
+      "headline": "These large- and mid-cap stocks may give more than 25% return in 1 year, according to analysts",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/these-large-and-mid-cap-stocks-may-give-more-than-25-return-in-1-year-according-to-analysts/articleshow/131511474.cms",
+      "published_at": "Thu, 04 Jun 2026 21:43:43 +0530",
+      "summary": "For the last few earnings seasons, the message has been: “Show me growth, I have the money.” Stocks with better-than-expected earnings saw an uptick. The question today is: Are we going to see a phase",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:48.311859"
+    },
+    {
+      "id": "et_1780728973_45",
+      "source": "economic_times",
+      "headline": "Ahead of Market: 10 things that will decide stock market action on Friday",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ahead-of-market-10-things-that-will-decide-stock-market-action-on-friday/articleshow/131511250.cms",
+      "published_at": "Thu, 04 Jun 2026 21:23:47 +0530",
+      "summary": "Indian equities ended largely unchanged as West Asia tensions tempered risk appetite. Broader markets outperformed despite recent corrections, while investors awaited the RBI policy decision and GDP d",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:50.943369"
+    },
+    {
+      "id": "et_1780728973_48",
+      "source": "economic_times",
+      "headline": "Two Trades for Today: A top PSU bank for a 5.2% gain, a mid-cap asset management stock for an almost 7% upmove",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/two-trades-for-today-a-top-psu-bank-for-a-5-2-gain-a-mid-cap-asset-management-stock-for-an-almost-7-upmove/articleshow/131508250.cms",
+      "published_at": "Thu, 04 Jun 2026 18:50:54 +0530",
+      "summary": "Our technical analysts identify select stocks every trading day that may gain momentum even in volatile markets. Here are the technical calls for today.",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:53.556757"
+    },
+    {
+      "id": "et_1780728973_49",
+      "source": "economic_times",
+      "headline": "Marcellus launches global equities fund in GIFT City, targets AI, defence and luxury themes",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/marcellus-launches-global-equities-fund-in-gift-city-targets-ai-defence-and-luxury-themes/articleshow/131508257.cms",
+      "published_at": "Thu, 04 Jun 2026 18:48:54 +0530",
+      "summary": "Marcellus Investment Managers has launched a global equities fund through GIFT City, offering Indian investors access to overseas stocks. The fund targets defence, power, AI-led infrastructure and lux",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:56.179334"
+    },
+    {
+      "id": "et_1780728973_50",
+      "source": "economic_times",
+      "headline": "Vodafone Idea among 4 stocks hit a 52-week high, rally up to 45% in a month",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/vodafone-idea-among-4-stocks-hit-a-52-week-high-rally-up-to-45-in-a-month/slideshow/131506446.cms",
+      "published_at": "Thu, 04 Jun 2026 17:29:29 +0530",
+      "summary": "The Great Wealth Shift: Where India’s Next Fortunes Will Be MadeVodafone Idea, Polycab India, CG Power and Federal Bank hit fresh 52-week highs, with Vodafone Idea leading the pack after a 45% rally i",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-06T14:57:58.795007"
+    },
     {
       "id": "yahoo_1780241776_23",
       "source": "yahoo",
@@ -42,888 +935,6 @@
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
       "related_symbols": [],
       "analyzed_at": "2026-05-31T23:36:22.074569"
-    },
-    {
-      "id": "et_1780239886_1",
-      "source": "economic_times",
-      "headline": "Ahead of Market: 10 things that will decide stock market action on Monday",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ahead-of-market-10-things-that-will-decide-stock-market-action-on-monday/articleshow/131421251.cms",
-      "published_at": "Sun, 31 May 2026 15:06:13 +0530",
-      "summary": "Indian equity markets ended sharply lower on May 29 amid broad-based selling, MSCI-driven flows and rising volatility. Technical indicators suggest a bearish bias with key support zones in focus. Glob",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:29.370048"
-    },
-    {
-      "id": "et_1780239886_2",
-      "source": "economic_times",
-      "headline": "Market Trading Guide: YES Bank among two stock picks for Monday with up to 10% upside scope",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/market-trading-guide-yes-bank-among-two-stock-picks-for-monday-with-up-to-10-upside-scope/articleshow/131421232.cms",
-      "published_at": "Sun, 31 May 2026 15:03:08 +0530",
-      "summary": "Equity markets saw broad-based selling pressure after weak monsoon forecasts raised concerns over food inflation, though falling crude oil prices and easing bond yields helped limit downside risks. In",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:31.908182"
-    },
-    {
-      "id": "yahoo_1780239886_4",
-      "source": "yahoo",
-      "headline": "Is Visa (V) One of the Best Long-Term Dividend Stocks to Invest In According to Billionaires?",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/visa-v-one-best-long-145131772.html",
-      "published_at": "2026-05-31T14:51:31Z",
-      "summary": "Is Visa (V) One of the Best Long-Term Dividend Stocks to Invest In According to Billionaires?",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:04:46.518229"
-    },
-    {
-      "id": "yahoo_1780239886_5",
-      "source": "yahoo",
-      "headline": "Applied Materials (AMAT) – Among the 10 Best Long-Term Dividend Stocks to Invest In According to Billionaires",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/applied-materials-amat-among-10-144737834.html",
-      "published_at": "2026-05-31T14:47:37Z",
-      "summary": "Applied Materials (AMAT) – Among the 10 Best Long-Term Dividend Stocks to Invest In According to Billionaires",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:04:49.237170"
-    },
-    {
-      "id": "yahoo_1780239886_23",
-      "source": "yahoo",
-      "headline": "Xometry's (XMTR) CEO Recently Sold 50K Shares. Should You Follow?",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/xometrys-xmtr-ceo-recently-sold-144403447.html",
-      "published_at": "2026-05-31T14:44:03Z",
-      "summary": "Xometry's (XMTR) CEO Recently Sold 50K Shares. Should You Follow?",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:04.482615"
-    },
-    {
-      "id": "yahoo_1780239886_33",
-      "source": "yahoo",
-      "headline": "Peleton's (PTON) Chief Commercial Officer Sold All Their Shares for $584,000",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/peletons-pton-chief-commercial-officer-144311372.html",
-      "published_at": "2026-05-31T14:43:11Z",
-      "summary": "Peleton's (PTON) Chief Commercial Officer Sold All Their Shares for $584,000",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:12.105696"
-    },
-    {
-      "id": "yahoo_1780239886_43",
-      "source": "yahoo",
-      "headline": "An Oruka Therapeutics (ORKA) Insider Sold 105,000 Shares Worth $6.2 Million",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/oruka-therapeutics-orka-insider-sold-144154809.html",
-      "published_at": "2026-05-31T14:41:54Z",
-      "summary": "An Oruka Therapeutics (ORKA) Insider Sold 105,000 Shares Worth $6.2 Million",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:24.289397"
-    },
-    {
-      "id": "yahoo_1780239886_9",
-      "source": "yahoo",
-      "headline": "Is Liberty Capital Corporation (GLIBA) among the Best Growth Stocks to Buy with Low P/E Ratios?",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/liberty-capital-corporation-gliba-among-144047770.html",
-      "published_at": "2026-05-31T14:40:47Z",
-      "summary": "Is Liberty Capital Corporation (GLIBA) among the Best Growth Stocks to Buy with Low P/E Ratios?",
-      "highlights": [
-        "Positive indicators noted",
-        "Growth keywords detected",
-        "Market expectations upbeat"
-      ],
-      "sentiment": 0.45,
-      "risk_tag": "Low Risk",
-      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:04:54.331381"
-    },
-    {
-      "id": "yahoo_1780239886_10",
-      "source": "yahoo",
-      "headline": "Here is why OptimumBank Holdings, Inc. (OPHC) is among the Best Growth Stocks to Buy with Low P/E Ratios",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/why-optimumbank-holdings-inc-ophc-144038484.html",
-      "published_at": "2026-05-31T14:40:38Z",
-      "summary": "Here is why OptimumBank Holdings, Inc. (OPHC) is among the Best Growth Stocks to Buy with Low P/E Ratios",
-      "highlights": [
-        "Positive indicators noted",
-        "Growth keywords detected",
-        "Market expectations upbeat"
-      ],
-      "sentiment": 0.45,
-      "risk_tag": "Low Risk",
-      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:04:56.873708"
-    },
-    {
-      "id": "yahoo_1780239886_48",
-      "source": "yahoo",
-      "headline": "Franklin Electric's (FELE) President Sold 1,900 Shares. Should You Follow His Lead?",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/franklin-electrics-fele-president-sold-144030941.html",
-      "published_at": "2026-05-31T14:40:30Z",
-      "summary": "Franklin Electric's (FELE) President Sold 1,900 Shares. Should You Follow His Lead?",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:26.826601"
-    },
-    {
-      "id": "yahoo_1780239886_11",
-      "source": "yahoo",
-      "headline": "Euroseas Ltd. (ESEA): 10 Best Growth Stocks to Buy with Low P/E Ratios",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/euroseas-ltd-esea-10-best-144028101.html",
-      "published_at": "2026-05-31T14:40:28Z",
-      "summary": "Euroseas Ltd. (ESEA): 10 Best Growth Stocks to Buy with Low P/E Ratios",
-      "highlights": [
-        "Positive indicators noted",
-        "Growth keywords detected",
-        "Market expectations upbeat"
-      ],
-      "sentiment": 0.45,
-      "risk_tag": "Low Risk",
-      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:04:59.409679"
-    },
-    {
-      "id": "yahoo_1780239886_22",
-      "source": "yahoo",
-      "headline": "Is Olaplex Holdings, Inc. (OLPX) among the Best Up and Coming Penny Stocks to Buy Now?",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/olaplex-holdings-inc-olpx-among-143903981.html",
-      "published_at": "2026-05-31T14:39:03Z",
-      "summary": "Is Olaplex Holdings, Inc. (OLPX) among the Best Up and Coming Penny Stocks to Buy Now?",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:01.945079"
-    },
-    {
-      "id": "yahoo_1780239886_24",
-      "source": "yahoo",
-      "headline": "Here is why Blaize Holdings, Inc. (BZAI) is among the Best Up and Coming Penny Stocks to Buy Now",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/why-blaize-holdings-inc-bzai-143853772.html",
-      "published_at": "2026-05-31T14:38:53Z",
-      "summary": "Here is why Blaize Holdings, Inc. (BZAI) is among the Best Up and Coming Penny Stocks to Buy Now",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:07.022951"
-    },
-    {
-      "id": "yahoo_1780239886_25",
-      "source": "yahoo",
-      "headline": "Zevia PBC (ZVIA): 8 Best Up and Coming Penny Stocks to Buy Now",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/zevia-pbc-zvia-8-best-143842015.html",
-      "published_at": "2026-05-31T14:38:42Z",
-      "summary": "Zevia PBC (ZVIA): 8 Best Up and Coming Penny Stocks to Buy Now",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:09.562355"
-    },
-    {
-      "id": "yahoo_1780239886_37",
-      "source": "yahoo",
-      "headline": "The Gap (GAP) – Among the Top 10 High Dividend Stocks to Invest In According to Analysts",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/gap-gap-among-top-10-142102637.html",
-      "published_at": "2026-05-31T14:21:02Z",
-      "summary": "The Gap (GAP) – Among the Top 10 High Dividend Stocks to Invest In According to Analysts",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:14.644766"
-    },
-    {
-      "id": "yahoo_1780239886_40",
-      "source": "yahoo",
-      "headline": "Is Chord Energy (CHRD) One of the Top 10 High Dividend Stocks to Invest In According to Analysts?",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/chord-energy-chrd-one-top-140929821.html",
-      "published_at": "2026-05-31T14:09:29Z",
-      "summary": "Is Chord Energy (CHRD) One of the Top 10 High Dividend Stocks to Invest In According to Analysts?",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:17.191256"
-    },
-    {
-      "id": "yahoo_1780241776_4",
-      "source": "yahoo",
-      "headline": "Market concentration is creating 'fragility':  Only 60% of S&P 500 stocks are above their 200-day average",
-      "link": "https://finance.yahoo.com/markets/article/market-concentration-is-creating-fragility-only-60-of-sp-500-stocks-are-above-their-200-day-average-135336513.html",
-      "published_at": "2026-05-31T13:53:36Z",
-      "summary": "Market concentration is creating 'fragility':  Only 60% of S&P 500 stocks are above their 200-day average",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:36:16.992815"
-    },
-    {
-      "id": "yahoo_1780239886_42",
-      "source": "yahoo",
-      "headline": "Market concentration is creating 'fragility': Wall Street weighs 'narrow leadership' as stocks hit all-time high",
-      "link": "https://finance.yahoo.com/markets/article/market-concentration-is-creating-fragility-wall-street-weighs-narrow-leadership-as-stocks-hit-all-time-high-135336610.html",
-      "published_at": "2026-05-31T13:53:36Z",
-      "summary": "Market concentration is creating 'fragility': Wall Street weighs 'narrow leadership' as stocks hit all-time high",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:21.753020"
-    },
-    {
-      "id": "et_1780239886_4",
-      "source": "economic_times",
-      "headline": "More macro headwinds on the cards? Tackle them with core principles: 6 pharma stocks with upside potential of up to 28%",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/more-macro-headwinds-on-the-cards-tackle-them-with-core-principles-6-pharma-stocks-with-upside-potential-of-up-to-28/articleshow/131420377.cms",
-      "published_at": "Sun, 31 May 2026 13:34:32 +0530",
-      "summary": "There was a time when the Indian pharma story in the US was almost entirely about inspection risk. The US FDA would inspect a plant, a warning letter would follow, shipments would stall. Managements w",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:34.435321"
-    },
-    {
-      "id": "et_1780239886_5",
-      "source": "economic_times",
-      "headline": "9 Midcap stocks with massive upside potential of up to 45%! Do you own any?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/9-midcap-stocks-with-massive-upside-potential-of-up-to-45-do-you-own-any/slideshow/131420463.cms",
-      "published_at": "Sun, 31 May 2026 13:29:34 +0530",
-      "summary": "Nifty Mid-Cap 100 stocks are showing strong upside potential, with analyst consensus estimates suggesting 25% to 45% gains over the next 12 months. Based on Trendlyne data, several mid-cap companies a",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "NIFTY"
-      ],
-      "analyzed_at": "2026-05-31T23:05:36.974401"
-    },
-    {
-      "id": "et_1780239886_7",
-      "source": "economic_times",
-      "headline": "14 penny stocks plunge up to 55% in 2 months. Are you affected?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/14-penny-stocks-plunge-up-to-55-in-2-months-are-you-affected/slideshow/131419717.cms",
-      "published_at": "Sun, 31 May 2026 11:33:51 +0530",
-      "summary": "​Fourteen penny stocks have declined sharply over the past two months, with losses of up to 55%, highlighting the risks associated with low-priced equities. While such stocks attract investors seeking",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:39.526682"
-    },
-    {
-      "id": "et_1780239886_9",
-      "source": "economic_times",
-      "headline": "Two Trades for Today: A realty major for an 8.3% upmove, a large-cap IT stock for a gain of almost 6%",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/two-trades-for-today-a-realty-major-for-an-8-3-upmove-a-large-cap-it-stock-for-a-gain-of-almost-6/articleshow/131419310.cms",
-      "published_at": "Sun, 31 May 2026 11:12:28 +0530",
-      "summary": "Our technical analysts identify select stocks every trading day that may gain momentum even in volatile markets. Here are the technical calls for today.",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:42.061600"
-    },
-    {
-      "id": "et_1780239886_11",
-      "source": "economic_times",
-      "headline": "Zepto shares crash 30% in unlisted market despite Sebi nod for IPO. What's cooking?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/zepto-shares-crash-30-in-unlisted-market-despite-sebi-nod-for-ipo-whats-cooking/articleshow/131418875.cms",
-      "published_at": "Sun, 31 May 2026 10:15:15 +0530",
-      "summary": "Zepto’s unlisted shares have dropped sharply despite Sebi approval for its IPO, signalling investor caution in a volatile market. The decline reflects broader weakness in pre-IPO valuations, macro unc",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:44.596652"
-    },
-    {
-      "id": "et_1780239886_16",
-      "source": "economic_times",
-      "headline": "Bonus issues, dividends and more: Reliance Industries, Trent among 20 stocks turning ex-date this week",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/bonus-issues-dividends-and-more-reliance-industries-trent-among-20-stocks-turning-ex-date-this-week/articleshow/131418356.cms",
-      "published_at": "Sun, 31 May 2026 09:03:58 +0530",
-      "summary": "Reliance Industries, Trent, and 18 other stocks are set to turn ex-date this week for corporate actions including dividends and bonus issues. Investors must hold shares by the record date to be eligib",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "RELIANCE"
-      ],
-      "analyzed_at": "2026-05-31T23:05:47.142865"
-    },
-    {
-      "id": "et_1780239886_17",
-      "source": "economic_times",
-      "headline": "20 months of bearish markets: One additional letter that tells you which 'cheap' stocks are actually cheap",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/20-months-of-bearish-markets-one-additional-letter-that-tells-you-which-cheap-stocks-are-actually-cheap/articleshow/131417866.cms",
-      "published_at": "Sun, 31 May 2026 07:56:15 +0530",
-      "summary": "Most investors live by one ratio. That ratio that tells them all they want to know – or should one say all they want to hear? They open a screen, sort by it, and start picking from the bottom. It is t",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:49.683415"
-    },
-    {
-      "id": "yahoo_1780239886_8",
-      "source": "yahoo",
-      "headline": "Warren Buffett's Berkshire dumps entire stake in dividend stock",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/warren-buffetts-berkshire-dumps-entire-203300760.html",
-      "published_at": "2026-05-30T20:33:00Z",
-      "summary": "Warren Buffett's Berkshire dumps entire stake in dividend stock",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:04:51.785897"
-    },
-    {
-      "id": "et_1780239886_18",
-      "source": "economic_times",
-      "headline": "NSE Social Stock Exchange gets CSR boost as MCA clears corporate funding route. Check details",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/nse-social-stock-exchange-gets-csr-boost-as-mca-clears-corporate-funding-route-check-details/articleshow/131407114.cms",
-      "published_at": "Sat, 30 May 2026 15:09:18 +0530",
-      "summary": "India's Social Stock Exchange receives a significant boost. Companies can now channel a portion of their Corporate Social Responsibility spending through this platform. This move aims to broaden fundi",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "NIFTY"
-      ],
-      "analyzed_at": "2026-05-31T23:05:52.228248"
-    },
-    {
-      "id": "et_1780239886_20",
-      "source": "economic_times",
-      "headline": "Sunil Singhania’s Abakkus Portfolio: 6 stocks rally up to 75% in CY26; 5 new buys added in Q4",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/sunil-singhanias-abakkus-portfolio-6-stocks-rally-up-to-75-in-cy26-5-new-buys-added-in-q4/slideshow/131405936.cms",
-      "published_at": "Sat, 30 May 2026 13:12:09 +0530",
-      "summary": "Sunil Singhania’s Abakkus Asset Manager portfolio rose 6% to Rs 2,742 crore in March 2026 quarter, with mixed CY26 performance showing strong gains in Avalon Technologies and Suven Life Sciences amid ",
-      "highlights": [
-        "Positive momentum detected",
-        "Favorable fundamentals",
-        "Market reacts positively"
-      ],
-      "sentiment": 0.75,
-      "risk_tag": "Low Risk",
-      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:05:54.768590"
-    },
-    {
-      "id": "et_1780239886_22",
-      "source": "economic_times",
-      "headline": "Concurrent Losers: 14 smallcap stocks decline for 5 consecutive sessions",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/concurrent-losers-14-smallcap-stocks-decline-for-5-consecutive-sessions/slideshow/131405355.cms",
-      "published_at": "Sat, 30 May 2026 11:59:18 +0530",
-      "summary": "Amid broader market weakness, the Sensex fell 408 points over five sessions ending May 29, while 14 BSE smallcap stocks declined continuously, losing up to 15% led by Wakefit Innovations, Master Trust",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "NIFTY"
-      ],
-      "analyzed_at": "2026-05-31T23:05:57.308071"
-    },
-    {
-      "id": "et_1780239886_26",
-      "source": "economic_times",
-      "headline": "Coal India, ONGC, among 10 stocks with highest increase in government holding in Q4. Do you own any?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/coal-india-ongc-among-10-stocks-with-highest-increase-in-government-holding-in-q4-do-you-own-any/slideshow/131404514.cms",
-      "published_at": "Sat, 30 May 2026 10:56:02 +0530",
-      "summary": "Despite broader market volatility, rising prices in power, energy and metal stocks boosted the value of Government of India holdings during the March 2026 quarter, led by ONGC, NTPC and Coal India.",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "META"
-      ],
-      "analyzed_at": "2026-05-31T23:05:59.848876"
-    },
-    {
-      "id": "et_1780239886_27",
-      "source": "economic_times",
-      "headline": "LIC, HAL, among 10 stocks that saw sharpest decrease in government shareholding in Q4. Check list",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/lic-hal-among-10-stocks-that-saw-sharpest-decrease-in-government-shareholding-in-q4-check-list/slideshow/131403961.cms",
-      "published_at": "Sat, 30 May 2026 10:04:03 +0530",
-      "summary": "Foreign selling, geopolitical tensions and market volatility eroded the value of the Government of India’s holdings in key listed companies during the March 2026 quarter, with LIC, IRFC and HAL leadin",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:06:02.385810"
-    },
-    {
-      "id": "et_1780239886_29",
-      "source": "economic_times",
-      "headline": "Why the stock market has begun to climb the wall of worry",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/why-the-stock-market-has-begun-to-climb-the-wall-of-worry/articleshow/131403580.cms",
-      "published_at": "Sat, 30 May 2026 09:37:12 +0530",
-      "summary": "Markets often climb despite worries. In 2020, markets rose before economic recovery became clear. Now, in 2026, a similar pattern emerges amid geopolitical tensions. Investor behavior shows learning, ",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:06:04.932191"
-    },
-    {
-      "id": "et_1780239886_33",
-      "source": "economic_times",
-      "headline": "CSR norm tweak to boost social stock exchanges",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/csr-norm-tweak-to-boost-social-stock-exchanges/articleshow/131402632.cms",
-      "published_at": "Sat, 30 May 2026 07:30:21 +0530",
-      "summary": "Companies can now allocate up to 10% of their annual CSR spending via zero coupon zero principal instruments from not-for-profit organizations listed on social stock exchanges. This move aims to boost",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-31T23:06:07.462364"
-    },
-    {
-      "id": "et_1780079876_1",
-      "source": "economic_times",
-      "headline": "Stock picks of the week: 5 stocks with consistent score improvement and upside potential of up to 22%",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/stock-picks-of-the-week-5-stocks-with-consistent-score-improvement-and-upside-potential-of-up-to-22/articleshow/131396814.cms",
-      "published_at": "Fri, 29 May 2026 23:33:29 +0530",
-      "summary": "As the market grappled with confusion over the Strait of Hormuz, there was more trouble for the bulls. After a few days of respite, another round of focused selling was visible. But market history tel",
-      "highlights": [
-        "Five stocks selected for weekly picks",
-        "Consistent score improvement across selections",
-        "Upside potential estimated up to 22%"
-      ],
-      "sentiment": 0.25,
-      "risk_tag": "Low Risk",
-      "reasoning": "The article highlights a curated list of five stocks showing steady score gains and notable upside. No adverse events are mentioned, suggesting limited immediate risk.",
-      "related_symbols": [
-        "AAPL"
-      ],
-      "analyzed_at": "2026-05-30T02:38:44.713139"
-    },
-    {
-      "id": "et_1780076339_1",
-      "source": "economic_times",
-      "headline": "AAPL",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/supreme-court-provides-relief-to-reliance-in-2007-securities-market-fraud-case/articleshow/131394997.cms",
-      "published_at": "Fri, 29 May 2026 22:08:12 +0530",
-      "summary": "Reliance Industries Ltd received relief from India's Supreme Court. The court overturned a lower court ruling and a 2020 order by the markets regulator. This order had alleged manipulative trading pra",
-      "highlights": [
-        "Supreme Court overturns lower court ruling",
-        "SEBI ordered to refund 2.5 billion rupees",
-        "Alleged manipulative trading practices dismissed"
-      ],
-      "sentiment": 0.4,
-      "risk_tag": "Low Risk",
-      "reasoning": "Supreme Court relief signals positive outcome for Reliance, reducing regulatory risk. No adverse events reported, indicating stable outlook.",
-      "related_symbols": [
-        "AAPL"
-      ],
-      "analyzed_at": "2026-05-30T01:39:54.969622"
-    },
-    {
-      "id": "et_1780076339_2",
-      "source": "economic_times",
-      "headline": "NFLX PB Fintech sees Rs 665 crore block deal as founders pare stake; Goldman among other top funds buy",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/pb-fintech-sees-rs-665-crore-block-deal-as-founders-pare-stake-goldman-among-other-top-funds-buy/articleshow/131394439.cms",
-      "published_at": "Fri, 29 May 2026 21:29:14 +0530",
-      "summary": "PB Fintech founders Yashish Dahiya and Alok Bansal sold 38 lakh shares worth Rs 665 crore in a block deal. The shares were purchased by various institutional investors, including Goldman Sachs and Tat",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "NFLX"
-      ],
-      "analyzed_at": "2026-05-30T01:40:01.830780"
-    },
-    {
-      "id": "et_1780075350_3",
-      "source": "economic_times",
-      "headline": "Sebi appoints Upma Chawdhry as MSE chairperson, only woman currently to head an Indian market infra institution",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/sebi-appoints-upma-chawdhry-as-mse-chairperson-only-woman-currently-to-head-an-indian-market-infra-institution/articleshow/131393589.cms",
-      "published_at": "Fri, 29 May 2026 20:31:44 +0530",
-      "summary": "SEBI approved retired IAS officer Upma Chawdhry as chairperson of the Metropolitan Stock Exchange of India. She is the only woman currently heading an Indian market infrastructure institution, bringin",
-      "highlights": [
-        "Upma Chawdhry appointed as MSE chairperson",
-        "SEBI approved the appointment of retired IAS officer",
-        "Only woman currently heading an Indian market infra institution"
-      ],
-      "sentiment": 0.4,
-      "risk_tag": "Low Risk",
-      "reasoning": "The appointment of a qualified leader with governance expertise is a positive development for the exchange. There are no negative indicators or risks mentioned in the report.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:22:48.509724"
-    },
-    {
-      "id": "et_1780076339_7",
-      "source": "economic_times",
-      "headline": "Moody's upgrades Reliance Industries rating to Baa1, now 2 notches above India's sovereign rating",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/moodys-upgrades-reliance-industries-rating-to-baa1-now-2-notches-above-indias-sovereign-rating/articleshow/131392282.cms",
-      "published_at": "Fri, 29 May 2026 19:12:36 +0530",
-      "summary": "The ratings agency said Reliance benefits from \"counter-cyclical business segments, significant international exposure (with over one-third of revenues derived from exports), and limited reliance on g",
-      "highlights": [
-        "Rating upgraded to Baa1 by Moody's",
-        "Two notches above India's sovereign rating",
-        "Over one‑third of revenue from exports"
-      ],
-      "sentiment": 0.72,
-      "risk_tag": "Low Risk",
-      "reasoning": "Moody's upgrade signals strong credit fundamentals for Reliance. The rating boost reflects diversified, export‑driven earnings and limited government dependence.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:40:27.226193"
-    },
-    {
-      "id": "et_1780076339_8",
-      "source": "economic_times",
-      "headline": "Solar Industries &amp; 8 large caps hit fresh 52-week high;stocksrally up to 20% in a month",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/solar-industries-amp-8-largecaps-hit-fresh-52-week-highstocksrally-up-to-20-in-a-month/slideshow/131391248.cms",
-      "published_at": "Fri, 29 May 2026 18:16:54 +0530",
-      "summary": "​Nine large-cap stocks, including Solar Industries and Adani group companies, hit fresh 52-week highs even as the Sensex slipped over 1,000 points.​",
-      "highlights": [
-        "Positive momentum detected",
-        "Favorable fundamentals",
-        "Market reacts positively"
-      ],
-      "sentiment": 0.75,
-      "risk_tag": "Low Risk",
-      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:40:34.293808"
-    },
-    {
-      "id": "et_1780076339_10",
-      "source": "economic_times",
-      "headline": "Natco Pharma shares crash 15% after weak Q4 results; net profit tanks 34% YoY",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/natco-pharma-shares-crash-15-after-weak-q4-results-net-profit-tanks-34-yoy/articleshow/131388521.cms",
-      "published_at": "Fri, 29 May 2026 16:03:02 +0530",
-      "summary": "Natco Pharma shares plunged after the company reported a steep fall in fourth-quarter profit, revenue and EBITDA. Weak operating margins and lower annual earnings weighed on investor sentiment despite",
-      "highlights": [
-        "Positive indicators noted",
-        "Growth keywords detected",
-        "Market expectations upbeat"
-      ],
-      "sentiment": 0.45,
-      "risk_tag": "Low Risk",
-      "reasoning": "Fallback: Detected positive keywords in title during API backup.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:40:41.766063"
-    },
-    {
-      "id": "yahoo_1780075350_25",
-      "source": "yahoo",
-      "headline": "If You're Only Going to Buy 1 Tech Stock Before the Next Earnings Season, Make It This One",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/youre-only-going-buy-1-154500562.html",
-      "published_at": "2026-05-29T15:45:00Z",
-      "summary": "If You're Only Going to Buy 1 Tech Stock Before the Next Earnings Season, Make It This One",
-      "highlights": [
-        "Strong earnings growth expected",
-        "Positive guidance for upcoming season",
-        "High analyst confidence in performance"
-      ],
-      "sentiment": 0.85,
-      "risk_tag": "Low Risk",
-      "reasoning": "The title suggests a strong recommendation to invest in a single tech stock ahead of earnings, implying positive expectations. The absence of negative indicators supports a favorable outlook.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:22:35.247267"
-    },
-    {
-      "id": "yahoo_1780076338_37",
-      "source": "yahoo",
-      "headline": "Enbridge vs Kinder Morgan: The Better Dividend Stock For Passive Income Investors",
-      "link": "https://finance.yahoo.com/markets/stocks/articles/enbridge-vs-kinder-morgan-better-154045799.html",
-      "published_at": "2026-05-29T15:40:45Z",
-      "summary": "Enbridge vs Kinder Morgan: The Better Dividend Stock For Passive Income Investors",
-      "highlights": [
-        "Enbridge vs Kinder Morgan dividend comparison",
-        "Focus on passive income potential",
-        "No specific financial metrics provided"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "The article compares dividend stocks without indicating a clear positive or negative bias, resulting in a neutral sentiment. A neutral stance implies low risk exposure for investors.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:39:27.526623"
-    },
-    {
-      "id": "yahoo_1780076338_32",
-      "source": "yahoo",
-      "headline": "Stock Market Today: Dow Rises 300 Points, Led By Surging IBM, Salesforce; Dell Soars On Earnings (Live Coverage)",
-      "link": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-us-iran-deal-dell-stock-dell-earnings/?src=A00220&yptr=yahoo",
-      "published_at": "2026-05-29T15:28:58Z",
-      "summary": "Stock Market Today: Dow Rises 300 Points, Led By Surging IBM, Salesforce; Dell Soars On Earnings (Live Coverage)",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:39:18.619007"
-    },
-    {
-      "id": "et_1780076339_11",
-      "source": "economic_times",
-      "headline": "Why stock market crashed today? Sensex sinks 1,100 points, Nifty below 23,550. 4 key factors",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/why-is-market-crashing-today-sensex-sinks-over-1100-points-nifty-below-23550-4-key-factors/articleshow/131387583.cms",
-      "published_at": "Fri, 29 May 2026 15:20:25 +0530",
-      "summary": "Indian stock markets experienced a sharp downturn Friday, with Sensex and Nifty falling significantly due to persistent foreign investor selling and concerns over a predicted low monsoon.  The IMD's f",
-      "highlights": [
-        "Sensex fell about 1,100 points",
-        "Nifty slipped below 23,550",
-        "Foreign investors continued heavy selling amid low‑monsoon forecast"
-      ],
-      "sentiment": -0.72,
-      "risk_tag": "High Risk",
-      "reasoning": "The headline mentions a market crash, indicating strong negative sentiment. Broad foreign outflows and monsoon concerns amplify market volatility.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:40:57.947875"
-    },
-    {
-      "id": "et_1780075350_13",
-      "source": "economic_times",
-      "headline": "Netweb Technologies jumps 15%, hits fresh 52-week high after rating upgrade",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/netweb-technologies-jumps-15-hits-fresh-52-week-high-after-rating-upgrade/articleshow/131386573.cms",
-      "published_at": "Fri, 29 May 2026 14:48:33 +0530",
-      "summary": "Netweb Technologies shares jumped over 15% to a fresh 52-week high. This rally follows a ratings upgrade by CRISIL Ratings Limited. The company's long-term rating moved to Crisil A+ Stable. CRISIL exp",
-      "highlights": [
-        "Shares up 15% to 52‑week high",
-        "Crisil upgraded rating to A+ Stable",
-        "Revenue growth and margin stability expected"
-      ],
-      "sentiment": 0.5,
-      "risk_tag": "Low Risk",
-      "reasoning": "The stock jump and rating upgrade signal positive momentum, with no adverse factors indicated.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:25:33.073766"
-    },
-    {
-      "id": "et_1780075350_14",
-      "source": "economic_times",
-      "headline": "HFCL shares soar 17% in two days, rally 170% in 2026. Should you buy, sell or hold?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hfcl-shares-soar-17-in-two-days-rally-170-in-2026-should-you-buy-sell-or-hold/articleshow/131386095.cms",
-      "published_at": "Fri, 29 May 2026 14:11:53 +0530",
-      "summary": "HFCL shares have surged 17% in two days and an impressive 170% in 2026, driven by strong earnings recovery, major defence orders and growing demand for optical fibre amid the global AI boom. Analysts ",
-      "highlights": [
-        "HFCL shares up 17% in two days",
-        "170% rally in 2026",
-        "Growth driven by defence orders and AI demand"
-      ],
-      "sentiment": 0.5,
-      "risk_tag": "Medium Risk",
-      "reasoning": "The headline signals a strong rally, indicating positive momentum, but the high‑risk nature of the stock and reliance on order momentum warrant caution.",
-      "related_symbols": [
-        "HFCL"
-      ],
-      "analyzed_at": "2026-05-30T01:25:46.277937"
-    },
-    {
-      "id": "et_1780075350_15",
-      "source": "economic_times",
-      "headline": "Ola Electric shares jump 9%, skyrocket 93% in 2 months. What's fuelling the rally?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ola-electric-shares-jump-9-skyrocket-93-in-2-months-whats-fuelling-the-rally/articleshow/131385689.cms",
-      "published_at": "Fri, 29 May 2026 14:01:02 +0530",
-      "summary": "Ola Electric shares surged to a more than four-month high after the EV maker reported a narrower quarterly loss and showed signs of sequential improvement in volumes and market share. Brokerages remai",
-      "highlights": [
-        "Shares jumped 9% to four‑month high",
-        "Stock up 93% over two months",
-        "Quarterly loss narrowed, volumes improving sequentially"
-      ],
-      "sentiment": 0.78,
-      "risk_tag": "Low Risk",
-      "reasoning": "The title’s strong language and share surge indicate positive market reaction, while cautions are limited to competitive pressures. Overall outlook remains upbeat with modest risk.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:25:59.202029"
-    },
-    {
-      "id": "et_1780075350_16",
-      "source": "economic_times",
-      "headline": "Multibaggers: 15 stocks with 25%+ sales and profit growth in Q4 March 2026",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/multibaggers-15-stocks-with-25-sales-and-profit-growth-in-q4-march-2026/slideshow/131385400.cms",
-      "published_at": "Fri, 29 May 2026 13:19:58 +0530",
-      "summary": "ETMarkets analysis identified 15 multibagger stocks delivering 125%-617% returns within a year, backed by over 25% growth in sales and profits during the March 2026 quarter, signalling strong business",
-      "highlights": [
-        "15 stocks delivered 125%-617% returns",
-        "Sales and profit grew over 25% in Q4 2026",
-        "ETMarkets identifies multibagger opportunities"
-      ],
-      "sentiment": 0.72,
-      "risk_tag": "Low Risk",
-      "reasoning": "The analysis highlights substantial returns and double‑digit sales and profit growth, indicating strong momentum. Positive performance suggests limited downside risk.",
-      "related_symbols": [],
-      "analyzed_at": "2026-05-30T01:26:14.026379"
     }
   ]
 }

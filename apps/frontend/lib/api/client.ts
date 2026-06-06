@@ -203,6 +203,13 @@ export interface GetStockChartParams {
   signal?: AbortSignal;
 }
 
+export interface PortfolioAnalysisResponse {
+  insight: string;
+  riskLabel: string;
+  riskTone: 'low' | 'medium' | 'high';
+  modelId: string;
+}
+
 /**
  * OHLCV chart series from the FastAPI ``GET /api/stock/chart`` endpoint (FMP-backed).
  */
@@ -259,6 +266,18 @@ export async function getStockChartSupportResistance(
     {
       method: 'GET',
       signal: params.signal,
+    },
+  );
+}
+
+export async function getPortfolioAnalysis(
+  signal?: AbortSignal,
+): Promise<PortfolioAnalysisResponse> {
+  return fetchWithErrorHandling<PortfolioAnalysisResponse>(
+    `${BACKEND_URL}/api/ai/widget/portfolio`,
+    {
+      method: 'GET',
+      signal,
     },
   );
 }
