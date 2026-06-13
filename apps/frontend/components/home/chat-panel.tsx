@@ -13,6 +13,7 @@ import { useChatContextStore } from '@/contexts/chat-context-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { detectSlashCommand, expandSlashCommand, getFilteredCommands, getHelpMessage, type SlashCommand } from '@/lib/slash-commands';
 
 function StatusDot({ status }: { status: ReturnType<typeof useNanobot>['status'] }) {
   if (status === 'connected')
@@ -154,6 +155,10 @@ export function ChatPanel() {
   const { messages, status, isProcessing, send, reconnect } = useNanobot();
   const { contexts, removeContext, clearAll } = useChatContextStore();
   const [input, setInput] = useState('');
+  const [detectedCommand, setDetectedCommand] = useState<string | null>(null);
+  const [showCommandMenu, setShowCommandMenu] = useState(false);
+  const [filteredCommands, setFilteredCommands] = useState<SlashCommand[]>([]);
+  const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -172,10 +177,64 @@ export function ChatPanel() {
     setInput('');
   }
 
+  function selectCommand(command: SlashCommand) {
+    const expanded = command.command === '/help' ? getHelpMessage() : command.prompt;
+    if (expanded) {
+      setInput(expanded + ' ');
+      setShowCommandMenu(false);
+      setDetectedCommand(null);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (showCommandMenu && filteredCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedCommandIndex((prev) => (prev + 1) % filteredCommands.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedCommandIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+        return;
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        selectCommand(filteredCommands[selectedCommandIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowCommandMenu(false);
+        return;
+      }
+    }
+
+    if (e.key === ' ' && detectedCommand) {
+      e.preventDefault();
+      const expanded = expandSlashCommand(input.trim());
+      if (expanded) {
+        setInput(expanded + ' ');
+        setDetectedCommand(null);
+        setShowCommandMenu(false);
+      }
+      return;
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (showCommandMenu && filteredCommands.length > 0) {
+        selectCommand(filteredCommands[selectedCommandIndex]);
+      } else {
+        const trimmed = input.trim();
+        const expanded = expandSlashCommand(trimmed);
+        if (expanded) {
+          setInput(expanded);
+          setTimeout(() => handleSend(), 0);
+        } else {
+          handleSend();
+        }
+      }
     }
   }
 
@@ -249,16 +308,66 @@ export function ChatPanel() {
               ))}
             </div>
           )}
+          <div className="relative">
+            {showCommandMenu && filteredCommands.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredCommands.map((cmd, index) => (
+                    <button
+                      key={cmd.command}
+                      type="button"
+                      onClick={() => selectCommand(cmd)}
+                      className={`w-full px-4 py-2.5 text-left transition-colors ${
+                        index === selectedCommandIndex
+                          ? 'bg-primary/10 text-primary'
+                          : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="font-mono text-sm font-semibold">{cmd.command}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{cmd.description}</p>
+                    </button>
+                  ))}
+                </div>
+                <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-[10px] text-muted-foreground">
+                  <kbd className="rounded bg-background px-1 py-0.5">↑↓</kbd> navigate •{' '}
+                  <kbd className="rounded bg-background px-1 py-0.5">Enter</kbd> or{' '}
+                  <kbd className="rounded bg-background px-1 py-0.5">Tab</kbd> select •{' '}
+                  <kbd className="rounded bg-background px-1 py-0.5">Esc</kbd> close
+                </div>
+              </div>
+            )}
+          </div>
           <div className="bg-muted/20 border-input focus-within:border-ring focus-within:ring-ring/50 flex flex-col rounded-3xl border transition-colors focus-within:ring-2">
             <Textarea
-              placeholder={isConnected ? 'Ask anything… (Enter to send)' : 'Connecting…'}
+              placeholder={isConnected ? 'Ask anything… (Enter to send, type / for commands)' : 'Connecting…'}
               rows={3}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setInput(value);
+                const command = detectSlashCommand(value.trim());
+                setDetectedCommand(command ? command.command : null);
+                
+                const filtered = getFilteredCommands(value);
+                setFilteredCommands(filtered);
+                setShowCommandMenu(filtered.length > 0);
+                setSelectedCommandIndex(0);
+              }}
               onKeyDown={handleKeyDown}
               disabled={!isConnected}
               className="max-h-20 min-h-12 resize-none overflow-y-auto border-0 bg-transparent px-4 pt-4 pb-2 shadow-none focus-visible:border-0 focus-visible:ring-0"
             />
+            {detectedCommand && !showCommandMenu && (
+              <div className="px-4 pb-2">
+                <span className="text-xs text-muted-foreground">
+                  Press <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">Space</kbd> or{' '}
+                  <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">Enter</kbd> to use{' '}
+                  <span className="font-medium text-primary">{detectedCommand}</span>
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center justify-end px-3 pb-1">
               <Button
