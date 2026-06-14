@@ -39,7 +39,7 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   text: { cols: 2, rows: 2 },
   candlestick: { cols: 2, rows: 2 },
   'portfolio-small': { cols: 2, rows: 2 },
-  'portfolio-medium': { cols: 4, rows: 2 },
+  'portfolio-medium': { cols: 3, rows: 3 },
   'portfolio-large': { cols: 4, rows: 4 },
   news: { cols: 4, rows: 4 },
   earnings: { cols: 2, rows: 4 },
@@ -48,7 +48,7 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
   { id: 'candlestick', label: 'Candlestick Chart', sizeLabel: '2x2' },
   { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '2x2' },
-  { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '4x2' },
+  { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '3x3' },
   { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '4x4' },
   { id: 'news', label: 'News Widget', sizeLabel: '4x4' },
   { id: 'earnings', label: 'Earnings Calendar', sizeLabel: '2x4' },
@@ -68,8 +68,8 @@ export const initialPlacements: WidgetPlacement[] = [
     widgetType: 'portfolio-medium',
     col: 4,
     row: 0,
-    colSpan: 2,
-    rowSpan: 2,
+    colSpan: 3,
+    rowSpan: 3,
   },
   {
     id: 'widget-earnings-1',

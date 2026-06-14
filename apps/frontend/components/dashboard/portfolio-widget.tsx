@@ -18,6 +18,7 @@ import { Area, AreaChart, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { getPortfolioAnalysis } from '@/lib/api/client';
+import type { PortfolioStrategyAction } from '@/lib/api/client';
 import type {
   PortfolioBrokerOption,
   PortfolioChatContextValue,
@@ -71,6 +72,7 @@ interface PortfolioAiSignals {
   insight: string;
   riskLabel: string;
   riskTone: 'low' | 'medium' | 'high';
+  strategy: PortfolioStrategyAction[];
 }
 
 interface PortfolioApiPosition extends Stock {
@@ -242,6 +244,7 @@ function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): P
       insight: 'Add a few holdings to unlock AI insight on concentration and diversification.',
       riskLabel: 'No active exposure yet',
       riskTone: 'low',
+      strategy: [],
     };
   }
 
@@ -261,15 +264,74 @@ function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): P
   }
 
   if (largest.weight >= 35) {
-    return { insight, riskLabel: `High concentration in ${largest.symbol}`, riskTone: 'high' };
+    return {
+      insight,
+      riskLabel: `High concentration in ${largest.symbol}`,
+      riskTone: 'high',
+      strategy: [
+        {
+          label: 'trim',
+          symbols: [largest.symbol],
+          reason: 'This holding is driving too much of total portfolio risk.',
+        },
+        {
+          label: 'add candidate',
+          symbols: holdings.slice(1, 3).map((holding) => holding.symbol),
+          reason: 'Smaller positions can broaden exposure better than adding to the lead name.',
+        },
+      ],
+    };
   }
   if (topTwoWeight >= 55) {
-    return { insight, riskLabel: 'Top-two concentration is elevated', riskTone: 'medium' };
+    return {
+      insight,
+      riskLabel: 'Top-two concentration is elevated',
+      riskTone: 'medium',
+      strategy: [
+        {
+          label: 'reduce risk',
+          symbols: [largest.symbol],
+          reason: 'The top of the portfolio is carrying an outsized share of exposure.',
+        },
+        {
+          label: 'add candidate',
+          symbols: holdings.slice(1, 3).map((holding) => holding.symbol),
+          reason: 'Broader participation would improve overall balance.',
+        },
+      ],
+    };
   }
   if (stocks.length <= 3) {
-    return { insight, riskLabel: 'Limited diversification across holdings', riskTone: 'medium' };
+    return {
+      insight,
+      riskLabel: 'Limited diversification across holdings',
+      riskTone: 'medium',
+      strategy: [
+        {
+          label: 'hold sizing steady',
+          symbols: [largest.symbol],
+          reason: 'A concentrated book benefits from slower sizing changes.',
+        },
+      ],
+    };
   }
-  return { insight, riskLabel: 'Risk is relatively balanced', riskTone: 'low' };
+  return {
+    insight,
+    riskLabel: 'Risk is relatively balanced',
+    riskTone: 'low',
+    strategy: [
+      {
+        label: 'hold',
+        symbols: [largest.symbol],
+        reason: 'The leading position is not yet forcing an urgent rebalance.',
+      },
+      {
+        label: 'add candidate',
+        symbols: holdings.slice(1, 3).map((holding) => holding.symbol),
+        reason: 'Selective adds to smaller holdings can improve diversification.',
+      },
+    ],
+  };
 }
 
 function RiskFlag({ label, tone }: { label: string; tone: PortfolioAiSignals['riskTone'] }) {
@@ -288,7 +350,13 @@ function RiskFlag({ label, tone }: { label: string; tone: PortfolioAiSignals['ri
   );
 }
 
-function PortfolioInsightCard({ insight }: { insight: string }) {
+function PortfolioInsightCard({
+  insight,
+  strategy = [],
+}: {
+  insight: string;
+  strategy?: PortfolioStrategyAction[];
+}) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
       <div className="mb-1 flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-slate-500">
@@ -296,6 +364,19 @@ function PortfolioInsightCard({ insight }: { insight: string }) {
         Portfolio Insight
       </div>
       <div className="text-[10px] leading-4 text-slate-700">{insight}</div>
+      {strategy.length > 0 ? (
+        <div className="mt-2 space-y-1 border-t border-slate-200 pt-2 text-[9px] text-slate-700">
+          {strategy.map((item, index) => (
+            <div key={`${item.label}-${item.symbols.join('-')}-${index}`}>
+              <span className="font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {item.label}:
+              </span>{' '}
+              <span>{item.symbols.join(', ') || 'N/A'}</span>
+              <span className="text-slate-500"> - {item.reason}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -943,12 +1024,11 @@ function PortfolioWidgetMedium({
   data,
   source,
   sourceLabel,
-  aiSignals,
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-2.5">
         <PortfolioSourceBadge source={source} label={sourceLabel} />
         <div className="flex items-center gap-2">
@@ -979,42 +1059,53 @@ function PortfolioWidgetMedium({
         </div>
       </div>
 
-      <div className="border-b border-slate-50 py-3">
-        <div className="mb-2">
-          <RiskFlag label={aiSignals.riskLabel} tone={aiSignals.riskTone} />
-        </div>
-        <PortfolioInsightCard insight={aiSignals.insight} />
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto pt-2">
         {stocks.length === 0 ? (
           <div className="py-6 text-center text-xs text-slate-400">
             No positions yet. Open the editor to build your paper portfolio.
           </div>
         ) : (
-          stocks.map((stock) => (
-            <div
-              key={stock.id}
-              className="flex items-center justify-between border-b border-slate-50 px-1 py-2 transition-colors last:border-0 hover:bg-slate-50"
-            >
-              <div className="flex flex-col">
-                <div className="text-xs font-bold text-slate-800">{stock.symbol}</div>
-                <div className="text-[8px] uppercase tracking-tighter text-slate-400">
-                  {stock.quantity} shs
-                </div>
-              </div>
-              <div className="flex flex-col items-end">
-                <div
-                  className={`text-[10px] font-bold ${percentClass(stock.currentPrice - stock.avgPrice)}`}
-                >
-                  {formatCurrency(stock.currentPrice, 1)}
-                </div>
-                <div className="text-[8px] font-mono text-slate-400">
-                  Avg: {formatCurrency(stock.avgPrice, 0)}
-                </div>
-              </div>
-            </div>
-          ))
+          <table className="w-full border-collapse text-left text-[10px]">
+            <thead className="sticky top-0 z-10 bg-white text-[8px] uppercase tracking-wider text-slate-400 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+              <tr>
+                <th className="bg-white py-1.5 font-semibold first:pl-0">Instrument</th>
+                <th className="bg-white py-1.5 text-right font-semibold">Avg</th>
+                <th className="bg-white py-1.5 text-right font-semibold">Price</th>
+                <th className="bg-white py-1.5 text-right font-semibold last:pr-0">Return</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {stocks.map((stock) => {
+                const stockPnl =
+                  stock.avgPrice === 0 ? 0 : (stock.currentPrice / stock.avgPrice - 1) * 100;
+
+                return (
+                  <tr key={stock.id} className="transition-colors hover:bg-slate-50/50">
+                    <td className="py-1.5 first:pl-0">
+                      <div className="text-[11px] font-bold leading-tight text-slate-900">
+                        {stock.symbol}
+                      </div>
+                      <div className="font-mono text-[7px] tracking-tight text-slate-400">
+                        {stock.quantity} <span className="opacity-70">shs</span>
+                      </div>
+                    </td>
+                    <td className="py-1.5 text-right font-mono text-[8px] text-slate-400">
+                      {formatCurrency(stock.avgPrice, 0)}
+                    </td>
+                    <td className="py-1.5 text-right text-[9px] font-bold text-slate-800">
+                      {formatCurrency(stock.currentPrice, 0)}
+                    </td>
+                    <td
+                      className={`py-1.5 text-right text-[8px] font-bold last:pr-0 ${percentClass(stockPnl)}`}
+                    >
+                      {stockPnl >= 0 ? '+' : ''}
+                      {stockPnl.toFixed(1)}%
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
@@ -1094,7 +1185,7 @@ function PortfolioWidgetLarge({
         <div>
           <RiskFlag label={aiSignals.riskLabel} tone={aiSignals.riskTone} />
         </div>
-        <PortfolioInsightCard insight={aiSignals.insight} />
+        <PortfolioInsightCard insight={aiSignals.insight} strategy={aiSignals.strategy} />
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -1387,6 +1478,7 @@ const PortfolioWidgetRoot = ({
           insight: response.insight,
           riskLabel: response.riskLabel,
           riskTone: response.riskTone,
+          strategy: response.strategy ?? [],
         });
       })
       .catch(() => {

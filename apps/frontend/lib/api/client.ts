@@ -208,7 +208,14 @@ export interface PortfolioAnalysisResponse {
   insight: string;
   riskLabel: string;
   riskTone: 'low' | 'medium' | 'high';
+  strategy: PortfolioStrategyAction[];
   modelId: string;
+}
+
+export interface PortfolioStrategyAction {
+  label: string;
+  symbols: string[];
+  reason: string;
 }
 
 /**

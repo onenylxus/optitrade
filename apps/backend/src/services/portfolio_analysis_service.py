@@ -24,9 +24,16 @@ Rules:
 - Focus on concentration, diversification, unrealized performance, and obvious risk drivers.
 - Do not invent market news, macro events, or price targets.
 - Keep the output compact for a dashboard widget.
-- Return strict JSON only with keys: insight, riskLabel, riskTone.
+- Write like a strategist, not a reporter.
+- If concentration is high, identify which symbol is the likely trim candidate.
+- If the portfolio needs better breadth, identify 1 to 2 smaller holdings that are better add candidates than the dominant name.
+- Use conditional, educational phrasing such as "if reducing risk" or "if adding exposure".
+- Return strict JSON only with keys: insight, riskLabel, riskTone, strategy.
 - riskTone must be exactly one of: low, medium, high.
 - riskLabel must be short and readable (3 to 8 words).
+- strategy must be an array of 2 to 4 objects with keys: label, symbols, reason.
+- strategy labels should be concise, such as trim, add candidate, hold, or reduce risk.
+- symbols must only contain portfolio symbols from the provided snapshot.
 - insight must be 1 to 2 sentences and make clear it is educational, not advice."""
 
 USER_PROMPT = """Portfolio snapshot JSON:
@@ -226,8 +233,16 @@ def _fallback_analysis(snapshot: dict[str, Any], model_id: str) -> PortfolioAnal
         risk_tone = "medium"
         risk_label = "Concentration is elevated"
 
+    top_symbol = str(largest.get("symbol", "N/A"))
+    secondary_symbols = [
+        str(position.get("symbol", "")).strip()
+        for position in ranked[1:3]
+        if str(position.get("symbol", "")).strip()
+    ]
+    strategy: list[dict[str, Any]] = []
+
     insight = (
-        f"Top holding {largest.get('symbol', 'N/A')} represents {largest_weight:.1f}% of value, "
+        f"Top holding {top_symbol} represents {largest_weight:.1f}% of value, "
         f"while {top_sector.get('sector', 'N/A')} is the largest sector at "
         f"{float(top_sector.get('percent', 0.0) or 0.0):.1f}%. "
     )
@@ -243,10 +258,51 @@ def _fallback_analysis(snapshot: dict[str, Any], model_id: str) -> PortfolioAnal
         )
     insight += "This is educational commentary, not investment advice."
 
+    if largest_weight >= 35:
+        strategy = [
+            {
+                "label": "trim",
+                "symbols": [top_symbol],
+                "reason": "Single-name concentration is driving too much of total portfolio risk.",
+            },
+            {
+                "label": "add candidate",
+                "symbols": secondary_symbols,
+                "reason": "Smaller holdings can improve breadth more effectively than adding to the dominant name.",
+            },
+        ]
+    elif top_two_weight >= 55:
+        strategy = [
+            {
+                "label": "reduce risk",
+                "symbols": [top_symbol],
+                "reason": "The top of the portfolio is carrying an outsized share of total exposure.",
+            },
+            {
+                "label": "add candidate",
+                "symbols": secondary_symbols,
+                "reason": "Incremental adds to smaller holdings can balance the portfolio.",
+            },
+        ]
+    else:
+        strategy = [
+            {
+                "label": "hold",
+                "symbols": [top_symbol],
+                "reason": "The leading position is not yet forcing an urgent rebalance.",
+            },
+            {
+                "label": "add candidate",
+                "symbols": secondary_symbols,
+                "reason": "Selective adds to smaller holdings can improve diversification.",
+            },
+        ]
+
     return PortfolioAnalysisResponse(
         insight=insight,
         risk_label=risk_label,
         risk_tone=risk_tone,
+        strategy=strategy,
         model_id=model_id,
     )
 
@@ -293,13 +349,20 @@ class PortfolioAnalysisService:
         insight = str(payload.get("insight", "")).strip()
         risk_label = str(payload.get("riskLabel", "")).strip()
         risk_tone = str(payload.get("riskTone", "")).strip().lower()
+        strategy = payload.get("strategy")
 
-        if not insight or risk_tone not in {"low", "medium", "high"} or not risk_label:
+        if (
+            not insight
+            or risk_tone not in {"low", "medium", "high"}
+            or not risk_label
+            or not isinstance(strategy, list)
+        ):
             return _fallback_analysis(snapshot, self._model)
 
         return PortfolioAnalysisResponse(
             insight=insight,
             risk_label=risk_label,
             risk_tone=risk_tone,
+            strategy=strategy,
             model_id=self._model,
         )
