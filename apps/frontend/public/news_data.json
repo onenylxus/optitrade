@@ -1,12 +1,68 @@
 {
   "metadata": {
     "total_news": 50,
-    "yahoo_count": 18,
-    "et_count": 32,
-    "analyzed_at": "2026-06-15T03:06:59.006965",
+    "yahoo_count": 24,
+    "et_count": 26,
+    "analyzed_at": "2026-06-15T03:39:00.050908",
     "model": "openrouter/free"
   },
   "news": [
+    {
+      "id": "yahoo_1781465911_5",
+      "source": "yahoo",
+      "headline": "Jim Cramer Asserts NVIDIA (NVDA), Not SpaceX, Is The “Key” To The Market",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/jim-cramer-asserts-nvidia-nvda-190818710.html",
+      "published_at": "2026-06-14T19:08:18Z",
+      "summary": "Jim Cramer Asserts NVIDIA (NVDA), Not SpaceX, Is The “Key” To The Market",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NVDA"
+      ],
+      "analyzed_at": "2026-06-15T03:38:48.126364"
+    },
+    {
+      "id": "yahoo_1781465911_6",
+      "source": "yahoo",
+      "headline": "Jim Cramer Explains Johnson & Johnson’s (JNJ) Shares Have Gained",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/jim-cramer-explains-johnson-johnson-190809661.html",
+      "published_at": "2026-06-14T19:08:09Z",
+      "summary": "Jim Cramer Explains Johnson & Johnson’s (JNJ) Shares Have Gained",
+      "highlights": [
+        "Jim Cramer discusses Johnson & Johnson share movement",
+        "JNJ shares have gained according to commentary",
+        "No specific financial metrics provided"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "The news simply notes share price gains without detailed data, resulting in a neutral outlook. No immediate risk factors are identified.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-15T03:38:57.542675"
+    },
+    {
+      "id": "yahoo_1781464922_6",
+      "source": "yahoo",
+      "headline": "Is SpaceX Stock Your Ticket to Becoming a Millionaire?",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/spacex-stock-ticket-becoming-millionaire-190500437.html",
+      "published_at": "2026-06-14T19:05:00Z",
+      "summary": "Is SpaceX Stock Your Ticket to Becoming a Millionaire?",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-15T03:22:54.917041"
+    },
     {
       "id": "yahoo_1781463988_1",
       "source": "yahoo",
@@ -60,6 +116,26 @@
       "reasoning": "The title indicates strong positive momentum with a significant price increase. The phrasing suggests further growth potential for the healthcare stock.",
       "related_symbols": [],
       "analyzed_at": "2026-06-15T02:43:31.622237"
+    },
+    {
+      "id": "yahoo_1781464922_34",
+      "source": "yahoo",
+      "headline": "Will Elon Musk Merge SpaceX And Tesla In 2026? Crypto Prediction Market Isn't Ruling Out The Possibility",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/elon-musk-merge-spacex-tesla-180126715.html",
+      "published_at": "2026-06-14T18:01:26Z",
+      "summary": "Will Elon Musk Merge SpaceX And Tesla In 2026? Crypto Prediction Market Isn't Ruling Out The Possibility",
+      "highlights": [
+        "Potential SpaceX and Tesla merger in 2026",
+        "Crypto prediction market considers possibility",
+        "No concrete financial details provided"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "The article lacks specific financial data or sentiment-inducing terms, resulting in a neutral assessment. No significant risk factors are identified.",
+      "related_symbols": [
+        "TSLA"
+      ],
+      "analyzed_at": "2026-06-15T03:23:01.055380"
     },
     {
       "id": "yahoo_1781462608_17",
@@ -170,6 +246,45 @@
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
       "related_symbols": [],
       "analyzed_at": "2026-06-15T02:46:49.864079"
+    },
+    {
+      "id": "yahoo_1781464922_49",
+      "source": "yahoo",
+      "headline": "Bank of America revisits Oracle stock price target after post-earnings selloff",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/bank-america-revisits-oracle-stock-163300959.html",
+      "published_at": "2026-06-14T16:33:00Z",
+      "summary": "Bank of America revisits Oracle stock price target after post-earnings selloff",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-15T03:23:09.503283"
+    },
+    {
+      "id": "yahoo_1781464922_50",
+      "source": "yahoo",
+      "headline": "Elon Musk Is A Stone's Throw Away From Becoming The World's First Trillionaire As SpaceX IPO Sends His Net Worth Soaring",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/elon-musk-stones-throw-away-163055086.html",
+      "published_at": "2026-06-14T16:30:55Z",
+      "summary": "Elon Musk Is A Stone's Throw Away From Becoming The World's First Trillionaire As SpaceX IPO Sends His Net Worth Soaring",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "RELIANCE",
+        "TSLA"
+      ],
+      "analyzed_at": "2026-06-15T03:23:25.447834"
     },
     {
       "id": "et_1781462608_3",
@@ -817,120 +932,6 @@
         "NIFTY"
       ],
       "analyzed_at": "2026-06-15T02:51:53.629836"
-    },
-    {
-      "id": "et_1781462608_43",
-      "source": "economic_times",
-      "headline": "Did City Union Bank shares really crash 23% in one day? Here's how the bonus math works",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/did-city-union-bank-shares-really-crash-23-in-one-day-heres-how-the-bonus-math-works/articleshow/131675031.cms",
-      "published_at": "Fri, 12 Jun 2026 11:01:20 +0530",
-      "summary": "City Union Bank shares appeared to fall 23% after turning ex-bonus following its 1:3 bonus issue, but the decline was purely technical. Adjusted prices show the stock actually gained on the day. The m",
-      "highlights": [
-        "Shares appeared to fall 23% after ex-bonus date",
-        "Bank implemented a 1:3 bonus share issue",
-        "Price decline was technical recalibration, not value erosion"
-      ],
-      "sentiment": -0.4,
-      "risk_tag": "Medium Risk",
-      "reasoning": "The title contains the word 'crash', triggering a negative sentiment per the critical rules. However, the content clarifies the decline was a technical adjustment due to a bonus issue.",
-      "related_symbols": [],
-      "analyzed_at": "2026-06-15T02:51:59.461046"
-    },
-    {
-      "id": "et_1781462608_44",
-      "source": "economic_times",
-      "headline": "MTAR Tech shares rally 12% after crashing 15% over 2 days. What lies ahead?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/mtar-tech-shares-rally-12-after-crashing-15-over-2-days-what-lies-ahead/articleshow/131674760.cms",
-      "published_at": "Fri, 12 Jun 2026 10:42:17 +0530",
-      "summary": "MTAR Tech shares rebounded 12% after a sharp two-day fall triggered by concerns over a potential project pause linked to Bloom Energy. The company clarified no such communication was received, easing ",
-      "highlights": [
-        "Shares rebounded 12% after 15% two‑day fall",
-        "Company received no pause communication from Bloom Energy",
-        "Order book growth and bulk deal activity boost sentiment"
-      ],
-      "sentiment": 0.62,
-      "risk_tag": "Low Risk",
-      "reasoning": "The rally indicates renewed investor confidence after the company denied project pause rumors. Strong order book and market optimism further support the positive outlook.",
-      "related_symbols": [],
-      "analyzed_at": "2026-06-15T02:52:09.067711"
-    },
-    {
-      "id": "et_1781462608_45",
-      "source": "economic_times",
-      "headline": "Vedanta demerger: Which demerged stock should you buy after their market debut on June 15?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/vedanta-demerger-which-demerged-stock-should-you-buy-after-their-market-debut-on-june-15/articleshow/131674612.cms",
-      "published_at": "Fri, 12 Jun 2026 10:29:00 +0530",
-      "summary": "Vedanta's mega demerger sees four new companies listing on June 15. Analysts suggest Vedanta Aluminium Metal as a strong buy due to capacity expansion and robust LME prices. Other demerged entities li",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "META"
-      ],
-      "analyzed_at": "2026-06-15T02:52:31.249683"
-    },
-    {
-      "id": "et_1781462608_46",
-      "source": "economic_times",
-      "headline": "Motilal Oswal shares jump 5% after UBS initiates coverage with 'Buy', sets Rs 1,150 target",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/motilal-oswal-shares-jump-5-after-ubs-initiates-coverage-with-buy-sets-rs-1150-target/articleshow/131674144.cms",
-      "published_at": "Fri, 12 Jun 2026 10:20:59 +0530",
-      "summary": "Shares of Motilal Oswal Financial Services rose sharply on Friday after UBS initiated coverage with a 'Buy' rating and Rs 1,150 target price. The brokerage cited strong AUM growth prospects, recurring",
-      "highlights": [
-        "Positive momentum detected",
-        "Favorable fundamentals",
-        "Market reacts positively"
-      ],
-      "sentiment": 0.75,
-      "risk_tag": "Low Risk",
-      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
-      "related_symbols": [],
-      "analyzed_at": "2026-06-15T02:52:45.610349"
-    },
-    {
-      "id": "et_1781462608_48",
-      "source": "economic_times",
-      "headline": "Cochin Shipyard among 5 F&amp;O stocks with a sharp rise in futures open interest",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/cochin-shipyard-among-5-fampo-stocks-with-a-sharp-rise-in-futures-open-interest/slideshow/131673859.cms",
-      "published_at": "Fri, 12 Jun 2026 09:54:18 +0530",
-      "summary": "Futures open interest in the NSE F&amp;O segment rose sharply on June 11, with five stocks recording over 5% growth. Cochin Shipyard led the list, followed by Max Healthcare, Amber Enterprises, Nuvama",
-      "highlights": [
-        "Cochin Shipyard leads with over 5% futures open interest growth",
-        "Five stocks show heightened trading activity in NSE F&O segment",
-        "Fresh position build-up signals strong investor interest"
-      ],
-      "sentiment": 0.45,
-      "risk_tag": "Low Risk",
-      "reasoning": "Positive open interest growth indicates strong market confidence and increased trading activity. The absence of negative factors or risks in the news supports a low-risk classification.",
-      "related_symbols": [
-        "NIFTY"
-      ],
-      "analyzed_at": "2026-06-15T02:52:51.568279"
-    },
-    {
-      "id": "et_1781462608_49",
-      "source": "economic_times",
-      "headline": "Why market rallied today? Sensex zooms 1,700 points, Nifty closes above 23,600. 4 key factors behind Rs 10 lakh crore gains",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/why-is-market-rising-today-sensex-zooms-1000-points-nifty-above-23400-4-key-factors-powering-the-rally/articleshow/131673189.cms",
-      "published_at": "Fri, 12 Jun 2026 09:29:46 +0530",
-      "summary": "Sensex and Nifty surged 2% each, adding Rs 10 lakh crore in market cap, as easing oil prices and US-Iran peace hopes boosted sentiment. Broad-based gains, a stronger rupee and global market rally supp",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "NIFTY"
-      ],
-      "analyzed_at": "2026-06-15T02:52:56.446055"
     }
   ]
 }
