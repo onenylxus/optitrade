@@ -126,6 +126,7 @@ def test_api_ai_index():
     assert any(
         w["path"] == "/widget/stock-chart/support-resistance" for w in body["widgets"]
     )
+    assert any(w["path"] == "/widget/stock-chart/patterns" for w in body["widgets"])
 
 
 def test_ai_widget_stock_chart_json_aliases(client_ai_override):

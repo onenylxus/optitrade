@@ -7,23 +7,70 @@ from fastapi import APIRouter, Depends, Query
 
 from src.api.controllers.ai_recommendation_controller import AIRecommendationController
 from src.api.controllers.portfolio_ai_controller import PortfolioAIController
+from src.api.controllers.stock_chart_pattern_controller import (
+    StockChartPatternController,
+)
 from src.api.controllers.stock_support_resistance_controller import (
     StockChartSupportResistanceController,
 )
 from src.api.deps import (
     get_portfolio_ai_controller,
     get_stock_chart_analysis_service,
+    get_stock_chart_pattern_controller,
     get_stock_support_resistance_controller,
 )
 from src.api.schemas.ai_portfolio import PortfolioAnalysisResponse
 from src.api.schemas.ai_stock_chart import (
     StockChartAnalysisResponse,
+    StockChartPatternAnalysisResponse,
     StockChartSupportResistanceResponse,
 )
 from src.api.schemas.stock_chart import ChartInterval, ChartRange
 from src.services.stock_chart_analysis_service import StockChartAnalysisService
 
 router = APIRouter()
+
+
+@router.get(
+    "/widget/stock-chart/patterns",
+    response_model=StockChartPatternAnalysisResponse,
+    response_model_by_alias=True,
+)
+async def ai_widget_stock_chart_patterns(
+    controller: Annotated[
+        StockChartPatternController,
+        Depends(get_stock_chart_pattern_controller),
+    ],
+    symbol: Annotated[str, Query(min_length=1, max_length=32)],
+    interval: ChartInterval,
+    chart_range: Annotated[
+        ChartRange | None,
+        Query(
+            alias="range",
+            description="Lookback when ``from``/``to`` are not both set.",
+        ),
+    ] = None,
+    from_date: Annotated[
+        date | None,
+        Query(alias="from", description="Inclusive range start (ISO date)."),
+    ] = None,
+    to_date: Annotated[
+        date | None,
+        Query(alias="to", description="Inclusive range end (ISO date)."),
+    ] = None,
+) -> StockChartPatternAnalysisResponse:
+    """
+    Chart patterns from OHLC pivot geometry, plus optional OpenRouter explanation.
+
+    Requires ``FMP_API_KEY``; uses ``OPENROUTER_API_KEY`` when configured.
+    """
+    return await controller.pattern_analysis(
+        symbol=symbol,
+        interval=interval,
+        chart_range=chart_range,
+        from_date=from_date,
+        to_date=to_date,
+    )
 
 
 @router.get(
@@ -92,6 +139,14 @@ async def ai_index() -> dict:
                 "path": "/widget/stock-chart",
                 "method": "GET",
                 "description": "OHLC-driven momentum, indicators, and LLM commentary.",
+            },
+            {
+                "path": "/widget/stock-chart/patterns",
+                "method": "GET",
+                "description": (
+                    "OHLC-derived chart patterns for overlays and optional "
+                    "LLM explanation."
+                ),
             },
             {
                 "path": "/widget/stock-chart/support-resistance",

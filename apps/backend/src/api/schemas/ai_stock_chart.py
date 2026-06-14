@@ -70,3 +70,54 @@ class StockChartSupportResistanceResponse(BaseModel):
     support: float | None = Field(default=None)
     resistance: float | None = Field(default=None)
     method: str = Field(default="pivot_clusters")
+
+
+class ChartPatternPoint(BaseModel):
+    """Named time/price point used to draw a detected chart pattern."""
+
+    label: str
+    index: int
+    date: str
+    price: float
+
+
+class ChartPatternLine(BaseModel):
+    """Line segment connecting two pattern points for frontend overlays."""
+
+    label: str
+    kind: str = Field(description="Semantic line role, e.g. support/resistance.")
+    start: ChartPatternPoint
+    end: ChartPatternPoint
+
+
+class ChartPatternDetection(BaseModel):
+    """Deterministic pattern geometry plus confidence metadata."""
+
+    pattern_type: str
+    display_name: str
+    direction: str
+    status: str
+    confidence: float = Field(ge=0, le=1)
+    points: list[ChartPatternPoint]
+    lines: list[ChartPatternLine]
+    breakout_level: float | None = None
+    invalidation_level: float | None = None
+    rationale: list[str]
+
+
+class StockChartPatternAnalysisResponse(BaseModel):
+    """Chart-pattern detections and optional model explanation."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbol: str
+    interval: ChartInterval
+    chart_range: ChartRange | None = Field(default=None, serialization_alias="range")
+    from_: date = Field(serialization_alias="from")
+    to: date
+    patterns: list[ChartPatternDetection]
+    analysis: str = Field(
+        description="Educational explanation grounded in the returned patterns.",
+    )
+    model_id: str = Field(description="Model id used, or deterministic fallback id.")
+    method: str = Field(default="pivot_geometry")
