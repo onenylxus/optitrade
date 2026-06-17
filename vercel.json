@@ -1,0 +1,25 @@
+{
+  "projects": [
+    {
+      "src": "apps/frontend",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "apps/backend",
+      "use": "@vercel/python",
+      "config": {
+        "functions": {
+          "api/**/*.py": {
+            "runtime": "python3.11"
+          }
+        }
+      }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}

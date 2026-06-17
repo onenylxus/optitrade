@@ -19,7 +19,10 @@ import {
   HelloStreamResponse,
 } from './types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+if (!BACKEND_URL) {
+  throw new Error('Environment variable NEXT_PUBLIC_BACKEND_URL is not defined');
+}
 
 function detailMessage(detail: unknown): string {
   if (typeof detail === 'string') {
