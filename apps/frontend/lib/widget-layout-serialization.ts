@@ -1,4 +1,5 @@
 import type { WidgetPlacement, WidgetType } from '@/app/(home)/fixtures';
+import { widgetDefaultSpans } from '@/app/(home)/fixtures';
 
 const WIDGET_LAYOUT_VERSION = 1;
 
@@ -75,6 +76,26 @@ function sortPlacements(placements: WidgetPlacement[]): WidgetPlacement[] {
     }
 
     return left.id.localeCompare(right.id);
+  });
+}
+
+export function applyWidgetLayoutMigrations(placements: WidgetPlacement[]): WidgetPlacement[] {
+  const mediumSpan = widgetDefaultSpans['portfolio-medium'];
+
+  return placements.map((placement) => {
+    if (placement.widgetType !== 'portfolio-medium') {
+      return placement;
+    }
+
+    if (placement.colSpan === mediumSpan.cols && placement.rowSpan === mediumSpan.rows) {
+      return placement;
+    }
+
+    return {
+      ...placement,
+      colSpan: mediumSpan.cols,
+      rowSpan: mediumSpan.rows,
+    };
   });
 }
 

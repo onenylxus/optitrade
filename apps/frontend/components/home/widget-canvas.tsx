@@ -20,7 +20,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { loadWidgetLayoutString, saveWidgetLayoutString } from '@/lib/firebase/widget-layout-store';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { isFirebaseConfigReady } from '@/lib/firebase/config';
-import { deserializeWidgetLayout, serializeWidgetLayout } from '@/lib/widget-layout-serialization';
+import {
+  applyWidgetLayoutMigrations,
+  deserializeWidgetLayout,
+  serializeWidgetLayout,
+} from '@/lib/widget-layout-serialization';
 import { cn } from '@/lib/utils';
 
 interface WidgetCanvasProps {
@@ -362,9 +366,10 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
           return;
         }
 
+        const migratedPlacements = applyWidgetLayoutMigrations(parsedPlacements);
         const normalizedLoadedPlacements = normalizePlacements(
-          parsedPlacements,
-          getInitialNormalizationColumns(parsedPlacements),
+          migratedPlacements,
+          getInitialNormalizationColumns(migratedPlacements),
         );
         const normalizedLoadedLayout = serializeWidgetLayout(normalizedLoadedPlacements);
         lastSavedLayoutRef.current = normalizedLoadedLayout;

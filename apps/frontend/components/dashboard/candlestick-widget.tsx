@@ -28,14 +28,17 @@ import {
 import {
   getStockChart,
   getStockChartAnalysis,
+  getStockChartPatterns,
   getStockChartSupportResistance,
 } from '@/lib/api/client';
 import {
   chartIntervalToApi,
   chartTimeframeToApiQuery,
+  fmpDateToChartTime,
   normalizeSymbolList,
   normalizeTicker,
   stockApiCandlesToChartData,
+  type StockChartPatternDetection,
 } from '@/lib/stock-chart-bridge';
 import {
   computeBollingerSeries,
@@ -90,6 +93,11 @@ const STUDY_COLORS = {
   rsi: '#a855f7',
   aiSupport: '#0d9488',
   aiResistance: '#ea580c',
+  pattern: '#f59e0b',
+  patternSupport: '#14b8a6',
+  patternResistance: '#f97316',
+  patternBreakout: '#eab308',
+  patternInvalidation: '#ef4444',
 } as const;
 
 function fmt2(n: number) {
@@ -176,6 +184,8 @@ function buildCandlestickChatContext(params: {
   showAiSr: boolean;
   apiSrSupport: number | null;
   apiSrResistance: number | null;
+  showPatterns: boolean;
+  patterns: StockChartPatternDetection[];
 }): string {
   const {
     activeSymbol,
@@ -190,6 +200,8 @@ function buildCandlestickChatContext(params: {
     showAiSr,
     apiSrSupport,
     apiSrResistance,
+    showPatterns,
+    patterns,
   } = params;
 
   const first = data[0];
@@ -245,6 +257,15 @@ function buildCandlestickChatContext(params: {
     lines.push('Key Levels: —');
   }
 
+  if (showPatterns && patterns.length > 0) {
+    const top = patterns[0];
+    lines.push(
+      `Chart Pattern: ${top.display_name} (${top.status}, ${Math.round(top.confidence * 100)}% confidence, ${top.direction})`,
+    );
+  } else {
+    lines.push('Chart Pattern: —');
+  }
+
   return lines.join('\n');
 }
 
@@ -267,6 +288,651 @@ function indicatorToggleButtonClass(active: boolean) {
 
 function indicatorToggleSuffixClass(active: boolean) {
   return cn('tabular-nums', active ? 'font-medium text-primary/80' : 'text-muted-foreground/35');
+}
+
+type ChartPatternGraphicVariant =
+  | 'channel'
+  | 'wedge'
+  | 'double-top'
+  | 'double-bottom'
+  | 'head-and-shoulders'
+  | 'inverse-head-and-shoulders'
+  | 'ascending-triangle'
+  | 'descending-triangle'
+  | 'flag'
+  | 'pennant'
+  | 'cup-and-handle'
+  | 'generic';
+
+type ChartPatternEducation = {
+  title: string;
+  subtitle: string;
+  graphic: ChartPatternGraphicVariant;
+  what: string;
+  howToUse: string;
+  watchFor: string;
+};
+
+const chartPatternEducationByType: Record<string, ChartPatternEducation> = {
+  channel: {
+    title: 'Price Channel',
+    subtitle: 'Price is oscillating between two sloped, mostly parallel boundaries.',
+    graphic: 'channel',
+    what:
+      'A price channel forms when swing highs and swing lows move in the same direction, creating a resistance line above price and a support line below price. An upward channel shows controlled upside progress; a downward channel shows controlled downside pressure.',
+    howToUse:
+      'Traders usually watch for bounces near channel support, rejection near channel resistance, or a decisive breakout beyond either boundary. A bullish channel continuation needs price to hold the lower boundary and eventually push above the upper boundary.',
+    watchFor:
+      'A clean break below channel support can invalidate a bullish channel, while a break above resistance can signal acceleration. Volume and broader market context help confirm whether the break is meaningful.',
+  },
+  wedge: {
+    title: 'Wedge',
+    subtitle: 'Price is compressing between converging trend lines.',
+    graphic: 'wedge',
+    what:
+      'A wedge forms when support and resistance converge, showing that each swing is getting smaller. Rising wedges often warn of weakening upside momentum, while falling wedges can show selling pressure fading.',
+    howToUse:
+      'The key signal is a breakout through one side of the wedge. Traders often wait for price to close outside the boundary instead of acting while price is still compressing inside the pattern.',
+    watchFor:
+      'False breakouts are common in wedges, so confirmation from follow-through candles, volume, or nearby support/resistance improves confidence.',
+  },
+  double_top: {
+    title: 'Double Top',
+    subtitle: 'Two failed attempts to break above a similar resistance area.',
+    graphic: 'double-top',
+    what:
+      'A double top is a bearish reversal pattern where price tests resistance twice and fails to push materially higher. The low between the two tops forms the neckline.',
+    howToUse:
+      'The pattern is usually considered confirmed when price breaks below the neckline. Traders then watch the former neckline as possible resistance on retests.',
+    watchFor:
+      'If price closes above the two tops, the bearish setup is invalidated and can turn into a breakout instead.',
+  },
+  double_bottom: {
+    title: 'Double Bottom',
+    subtitle: 'Two defended tests of a similar support area.',
+    graphic: 'double-bottom',
+    what:
+      'A double bottom is a bullish reversal pattern where sellers fail to push price below support on the second test. The high between the two bottoms forms the neckline.',
+    howToUse:
+      'The pattern is usually considered confirmed when price breaks above the neckline. Traders often look for the neckline to hold as support on a retest.',
+    watchFor:
+      'If price breaks below the two bottoms, the bullish reversal thesis is invalidated.',
+  },
+  head_and_shoulders: {
+    title: 'Head and Shoulders',
+    subtitle: 'A bearish reversal with a higher middle peak between two lower shoulders.',
+    graphic: 'head-and-shoulders',
+    what:
+      'This pattern shows buyers making one final higher high, then failing to match it on the right shoulder. The lows between the shoulders and head create the neckline.',
+    howToUse:
+      'Traders usually treat a break below the neckline as confirmation. The neckline can become resistance if price retests it from below.',
+    watchFor:
+      'A move back above the right shoulder or head weakens the reversal signal.',
+  },
+  inverse_head_and_shoulders: {
+    title: 'Inverse Head and Shoulders',
+    subtitle: 'A bullish reversal with a lower middle low between two higher shoulders.',
+    graphic: 'inverse-head-and-shoulders',
+    what:
+      'This pattern shows sellers making one final lower low, then failing to repeat it. The highs between the shoulders and head create the neckline.',
+    howToUse:
+      'Traders usually treat a break above the neckline as confirmation. The neckline can become support if price retests it from above.',
+    watchFor:
+      'A move back below the right shoulder or head weakens the reversal signal.',
+  },
+  ascending_triangle: {
+    title: 'Ascending Triangle',
+    subtitle: 'Flat resistance with rising lows pressing upward.',
+    graphic: 'ascending-triangle',
+    what:
+      'An ascending triangle forms when buyers keep stepping in at higher prices while resistance stays near the same level. It often has a bullish bias because pressure builds into resistance.',
+    howToUse:
+      'The main signal is a breakout above resistance. Traders also watch whether former resistance becomes support after the breakout.',
+    watchFor:
+      'A breakdown below rising support warns that the buying pressure has failed.',
+  },
+  descending_triangle: {
+    title: 'Descending Triangle',
+    subtitle: 'Flat support with falling highs pressing downward.',
+    graphic: 'descending-triangle',
+    what:
+      'A descending triangle forms when sellers keep appearing at lower prices while support stays near the same level. It often has a bearish bias because pressure builds into support.',
+    howToUse:
+      'The main signal is a breakdown below support. Traders also watch whether former support becomes resistance after the breakdown.',
+    watchFor:
+      'A breakout above falling resistance warns that the bearish pressure has failed.',
+  },
+  flag: {
+    title: 'Flag',
+    subtitle: 'A sharp move followed by a smaller counter-trend consolidation.',
+    graphic: 'flag',
+    what:
+      'A flag forms after a strong impulse move, then price pauses in a compact channel that often slopes against the prior move. It is commonly treated as a continuation pattern.',
+    howToUse:
+      'Traders watch for price to break out of the flag in the direction of the original impulse. The prior impulse gives context for the expected continuation direction.',
+    watchFor:
+      'If the consolidation breaks opposite the impulse, the continuation setup is weakened or invalidated.',
+  },
+  pennant: {
+    title: 'Pennant',
+    subtitle: 'A sharp move followed by a small triangular compression.',
+    graphic: 'pennant',
+    what:
+      'A pennant forms after a strong impulse move, then price compresses into converging support and resistance lines. It is usually interpreted as a continuation pause.',
+    howToUse:
+      'Traders watch for a breakout from the pennant in the direction of the prior impulse, ideally with expanding volume or strong follow-through.',
+    watchFor:
+      'A break against the impulse suggests the market rejected the continuation setup.',
+  },
+  cup_and_handle: {
+    title: 'Cup and Handle',
+    subtitle: 'A rounded recovery followed by a smaller pullback near resistance.',
+    graphic: 'cup-and-handle',
+    what:
+      'A cup and handle forms when price recovers from a rounded base back toward prior resistance, then pauses in a shallower pullback called the handle.',
+    howToUse:
+      'The usual bullish trigger is a breakout above the rim resistance. Traders watch the handle low as a key invalidation area.',
+    watchFor:
+      'A handle that becomes too deep can weaken the pattern because it shows sellers are still in control.',
+  },
+};
+
+function getChartPatternEducation(pattern: StockChartPatternDetection): ChartPatternEducation {
+  const direct = chartPatternEducationByType[pattern.pattern_type];
+  if (direct) {
+    return direct;
+  }
+
+  return {
+    title: pattern.display_name,
+    subtitle: 'A chart pattern defined by recent swing highs, swing lows, and boundary lines.',
+    graphic: 'generic',
+    what:
+      'Chart patterns organize price action into a structure that can make support, resistance, momentum, and invalidation levels easier to reason about.',
+    howToUse:
+      'Use the detected boundary lines, breakout level, and invalidation level as a checklist. A pattern is stronger when price respects its boundaries and then breaks in the expected direction.',
+    watchFor:
+      'Treat the pattern as context, not a standalone signal. Confirmation from volume, trend, market regime, and risk levels matters.',
+  };
+}
+
+type PatternCandle = {
+  close: number;
+  open?: number;
+};
+
+type PatternOverlayLine = {
+  label: string;
+  kind: 'support' | 'resistance' | 'neckline' | 'trend';
+  startIndex: number;
+  startPrice: number;
+  endIndex: number;
+  endPrice: number;
+};
+
+type PatternLabel = {
+  text: string;
+  index: number;
+  price: number;
+};
+
+type PatternChartSpec = {
+  candles: PatternCandle[];
+  overlays: PatternOverlayLine[];
+  labels?: PatternLabel[];
+};
+
+const patternChartSpecs: Record<ChartPatternGraphicVariant, PatternChartSpec> = {
+  channel: {
+    candles: [34, 48, 40, 58, 50, 68, 60, 78, 70, 88].map((close) => ({ close })),
+    overlays: [
+      { label: 'support', kind: 'support', startIndex: 0, startPrice: 30, endIndex: 9, endPrice: 72 },
+      {
+        label: 'resistance',
+        kind: 'resistance',
+        startIndex: 0,
+        startPrice: 52,
+        endIndex: 9,
+        endPrice: 94,
+      },
+    ],
+  },
+  wedge: {
+    candles: [32, 70, 44, 64, 50, 61, 55, 59, 57, 58].map((close) => ({ close })),
+    overlays: [
+      { label: 'support', kind: 'support', startIndex: 0, startPrice: 30, endIndex: 9, endPrice: 57 },
+      {
+        label: 'resistance',
+        kind: 'resistance',
+        startIndex: 0,
+        startPrice: 74,
+        endIndex: 9,
+        endPrice: 60,
+      },
+    ],
+  },
+  'double-top': {
+    candles: [36, 56, 78, 61, 45, 63, 79, 58, 42, 31].map((close) => ({ close })),
+    overlays: [
+      {
+        label: 'resistance',
+        kind: 'resistance',
+        startIndex: 1,
+        startPrice: 80,
+        endIndex: 7,
+        endPrice: 80,
+      },
+      { label: 'neckline', kind: 'neckline', startIndex: 3, startPrice: 45, endIndex: 8, endPrice: 45 },
+    ],
+    labels: [
+      { text: 'Top 1', index: 2, price: 86 },
+      { text: 'Top 2', index: 6, price: 86 },
+    ],
+  },
+  'double-bottom': {
+    candles: [72, 50, 26, 44, 59, 42, 27, 46, 64, 76].map((close) => ({ close })),
+    overlays: [
+      { label: 'support', kind: 'support', startIndex: 1, startPrice: 24, endIndex: 7, endPrice: 24 },
+      {
+        label: 'neckline',
+        kind: 'neckline',
+        startIndex: 3,
+        startPrice: 60,
+        endIndex: 9,
+        endPrice: 60,
+      },
+    ],
+    labels: [
+      { text: 'Bottom 1', index: 2, price: 16 },
+      { text: 'Bottom 2', index: 6, price: 16 },
+    ],
+  },
+  'head-and-shoulders': {
+    candles: [35, 56, 74, 53, 90, 51, 73, 55, 42, 32].map((close) => ({ close })),
+    overlays: [
+      { label: 'neckline', kind: 'neckline', startIndex: 3, startPrice: 51, endIndex: 7, endPrice: 54 },
+    ],
+    labels: [
+      { text: 'Shoulder', index: 2, price: 82 },
+      { text: 'Head', index: 4, price: 98 },
+      { text: 'Shoulder', index: 6, price: 81 },
+    ],
+  },
+  'inverse-head-and-shoulders': {
+    candles: [76, 56, 35, 58, 19, 60, 36, 55, 73, 86].map((close) => ({ close })),
+    overlays: [
+      {
+        label: 'neckline',
+        kind: 'neckline',
+        startIndex: 3,
+        startPrice: 59,
+        endIndex: 7,
+        endPrice: 57,
+      },
+    ],
+    labels: [
+      { text: 'Shoulder', index: 2, price: 26 },
+      { text: 'Head', index: 4, price: 10 },
+      { text: 'Shoulder', index: 6, price: 27 },
+    ],
+  },
+  'ascending-triangle': {
+    candles: [36, 72, 48, 74, 57, 75, 64, 76, 70, 86].map((close) => ({ close })),
+    overlays: [
+      {
+        label: 'resistance',
+        kind: 'resistance',
+        startIndex: 1,
+        startPrice: 76,
+        endIndex: 8,
+        endPrice: 76,
+      },
+      { label: 'rising support', kind: 'support', startIndex: 0, startPrice: 34, endIndex: 8, endPrice: 68 },
+    ],
+  },
+  'descending-triangle': {
+    candles: [82, 48, 72, 47, 62, 46, 55, 45, 49, 32].map((close) => ({ close })),
+    overlays: [
+      { label: 'support', kind: 'support', startIndex: 1, startPrice: 46, endIndex: 8, endPrice: 46 },
+      {
+        label: 'falling resistance',
+        kind: 'resistance',
+        startIndex: 0,
+        startPrice: 84,
+        endIndex: 8,
+        endPrice: 50,
+      },
+    ],
+  },
+  flag: {
+    candles: [22, 36, 53, 72, 88, 77, 82, 72, 76, 67, 72].map((close) => ({ close })),
+    overlays: [
+      { label: 'impulse', kind: 'trend', startIndex: 0, startPrice: 20, endIndex: 4, endPrice: 90 },
+      {
+        label: 'flag resistance',
+        kind: 'resistance',
+        startIndex: 5,
+        startPrice: 84,
+        endIndex: 10,
+        endPrice: 76,
+      },
+      { label: 'flag support', kind: 'support', startIndex: 5, startPrice: 70, endIndex: 10, endPrice: 62 },
+    ],
+  },
+  pennant: {
+    candles: [20, 35, 54, 74, 88, 75, 82, 73, 78, 75, 77].map((close) => ({ close })),
+    overlays: [
+      { label: 'impulse', kind: 'trend', startIndex: 0, startPrice: 19, endIndex: 4, endPrice: 90 },
+      {
+        label: 'pennant resistance',
+        kind: 'resistance',
+        startIndex: 5,
+        startPrice: 86,
+        endIndex: 10,
+        endPrice: 77,
+      },
+      {
+        label: 'pennant support',
+        kind: 'support',
+        startIndex: 5,
+        startPrice: 69,
+        endIndex: 10,
+        endPrice: 77,
+      },
+    ],
+  },
+  'cup-and-handle': {
+    candles: [78, 60, 43, 31, 25, 34, 50, 68, 78, 68, 73, 86].map((close) => ({ close })),
+    overlays: [
+      {
+        label: 'rim resistance',
+        kind: 'resistance',
+        startIndex: 0,
+        startPrice: 79,
+        endIndex: 8,
+        endPrice: 79,
+      },
+      { label: 'handle support', kind: 'support', startIndex: 8, startPrice: 72, endIndex: 10, endPrice: 66 },
+    ],
+    labels: [{ text: 'Handle', index: 9, price: 57 }],
+  },
+  generic: {
+    candles: [35, 48, 42, 58, 52, 66, 60, 75, 70, 82].map((close) => ({ close })),
+    overlays: [
+      { label: 'support', kind: 'support', startIndex: 0, startPrice: 30, endIndex: 9, endPrice: 72 },
+      {
+        label: 'resistance',
+        kind: 'resistance',
+        startIndex: 0,
+        startPrice: 54,
+        endIndex: 9,
+        endPrice: 90,
+      },
+    ],
+  },
+};
+
+function ChartPatternEducationGraphic({ variant }: { variant: ChartPatternGraphicVariant }) {
+  const spec = patternChartSpecs[variant] ?? patternChartSpecs.generic;
+  const chart = { left: 28, top: 18, width: 264, height: 138 };
+  const minPrice = 0;
+  const maxPrice = 100;
+  const xForIndex = (index: number) =>
+    chart.left + (index / Math.max(1, spec.candles.length - 1)) * chart.width;
+  const yForPrice = (price: number) =>
+    chart.top + ((maxPrice - price) / (maxPrice - minPrice)) * chart.height;
+  const overlayColor = {
+    support: '#0f766e',
+    resistance: '#ea580c',
+    neckline: '#7c3aed',
+    trend: '#2563eb',
+  } satisfies Record<PatternOverlayLine['kind'], string>;
+
+  const resolvedCandles = spec.candles.map((candle, index) => {
+    const previousClose = spec.candles[index - 1]?.close ?? candle.close - 5;
+    const open = candle.open ?? previousClose;
+    const high = Math.min(98, Math.max(open, candle.close) + 5 + (index % 2));
+    const low = Math.max(2, Math.min(open, candle.close) - 5 - ((index + 1) % 2));
+    return { ...candle, open, high, low };
+  });
+
+  return (
+    <svg
+      viewBox="0 0 320 200"
+      className="h-full min-h-52 w-full"
+      role="img"
+      aria-label="Chart pattern candlestick illustration"
+    >
+      <rect x="8" y="8" width="304" height="184" rx="18" fill="#f8fafc" />
+      <rect
+        x={chart.left}
+        y={chart.top}
+        width={chart.width}
+        height={chart.height}
+        rx="10"
+        fill="#ffffff"
+        stroke="#e2e8f0"
+      />
+      {[0.25, 0.5, 0.75].map((ratio) => (
+        <line
+          key={`grid-y-${ratio}`}
+          x1={chart.left}
+          x2={chart.left + chart.width}
+          y1={chart.top + chart.height * ratio}
+          y2={chart.top + chart.height * ratio}
+          stroke="#e2e8f0"
+          strokeDasharray="4 8"
+        />
+      ))}
+      {[0.25, 0.5, 0.75].map((ratio) => (
+        <line
+          key={`grid-x-${ratio}`}
+          x1={chart.left + chart.width * ratio}
+          x2={chart.left + chart.width * ratio}
+          y1={chart.top}
+          y2={chart.top + chart.height}
+          stroke="#eef2f7"
+          strokeDasharray="4 8"
+        />
+      ))}
+
+      {resolvedCandles.map((candle, index) => {
+        const x = xForIndex(index);
+        const openY = yForPrice(candle.open);
+        const closeY = yForPrice(candle.close);
+        const bodyTop = Math.min(openY, closeY);
+        const bodyHeight = Math.max(4, Math.abs(closeY - openY));
+        const bullish = candle.close >= candle.open;
+        const color = bullish ? '#16a34a' : '#dc2626';
+
+        return (
+          <g key={`pattern-candle-${index}`}>
+            <line
+              x1={x}
+              x2={x}
+              y1={yForPrice(candle.high)}
+              y2={yForPrice(candle.low)}
+              stroke={color}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <rect
+              x={x - 5}
+              y={bodyTop}
+              width="10"
+              height={bodyHeight}
+              rx="2"
+              fill={bullish ? '#dcfce7' : '#fee2e2'}
+              stroke={color}
+              strokeWidth="2"
+            />
+          </g>
+        );
+      })}
+
+      {spec.overlays.map((line) => {
+        const startX = xForIndex(line.startIndex);
+        const endX = xForIndex(line.endIndex);
+        const startY = yForPrice(line.startPrice);
+        const endY = yForPrice(line.endPrice);
+        const labelX = (startX + endX) / 2;
+        const labelY = (startY + endY) / 2 + (line.kind === 'support' ? 16 : -8);
+        return (
+          <g key={`${line.label}-${line.startIndex}-${line.endIndex}`}>
+            <line
+              x1={startX}
+              x2={endX}
+              y1={startY}
+              y2={endY}
+              stroke={overlayColor[line.kind]}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={line.kind === 'trend' ? undefined : '7 5'}
+            />
+            <text
+              x={labelX}
+              y={labelY}
+              textAnchor="middle"
+              fill={overlayColor[line.kind]}
+              fontSize="9"
+              fontWeight="600"
+            >
+              {line.label}
+            </text>
+          </g>
+        );
+      })}
+
+      {spec.labels?.map((label) => (
+        <text
+          key={`${label.text}-${label.index}`}
+          x={xForIndex(label.index)}
+          y={yForPrice(label.price)}
+          textAnchor="middle"
+          fill="#334155"
+          fontSize="9"
+          fontWeight="700"
+        >
+          {label.text}
+        </text>
+      ))}
+
+      <text x={chart.left} y="180" fill="#64748b" fontSize="10">
+        Static example, not live market data
+      </text>
+    </svg>
+  );
+}
+
+function ChartPatternExplanationModal({
+  pattern,
+  onClose,
+}: {
+  pattern: StockChartPatternDetection;
+  onClose: () => void;
+}) {
+  const education = getChartPatternEducation(pattern);
+
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="chart-pattern-explanation-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3">
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Chart Pattern
+            </p>
+            <h3 id="chart-pattern-explanation-title" className="text-base font-semibold">
+              What is {education.title}?
+            </h3>
+          </div>
+          <button
+            type="button"
+            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Close chart pattern explanation"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto">
+          <section className="border-b border-border bg-muted/20 p-4">
+            <p className="mb-3 text-sm text-muted-foreground">{education.subtitle}</p>
+            <div className="rounded-xl border border-border/70 bg-background p-3">
+              <ChartPatternEducationGraphic variant={education.graphic} />
+              <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-0.5 w-4 rounded-full bg-teal-500" aria-hidden />
+                  Support
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-0.5 w-4 rounded-full bg-orange-500" aria-hidden />
+                  Resistance
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-0.5 w-4 rounded-full bg-primary/70" aria-hidden />
+                  Price path
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-3 p-4 text-sm leading-relaxed">
+            <div>
+              <h4 className="font-medium text-foreground">What It Means</h4>
+              <p className="mt-1 text-muted-foreground">{education.what}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-foreground">How To Use It</h4>
+              <p className="mt-1 text-muted-foreground">{education.howToUse}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-foreground">What To Watch</h4>
+              <p className="mt-1 text-muted-foreground">{education.watchFor}</p>
+            </div>
+            <div className="grid gap-2 rounded-lg border border-border/70 bg-muted/25 p-3 text-xs sm:grid-cols-3">
+              <div>
+                <span className="block text-muted-foreground">Detected Bias</span>
+                <span className="font-medium capitalize text-foreground">{pattern.direction}</span>
+              </div>
+              <div>
+                <span className="block text-muted-foreground">Breakout Level</span>
+                <span className="font-medium text-foreground">
+                  {pattern.breakout_level != null ? fmt2(pattern.breakout_level) : 'Not set'}
+                </span>
+              </div>
+              <div>
+                <span className="block text-muted-foreground">Invalidation</span>
+                <span className="font-medium text-foreground">
+                  {pattern.invalidation_level != null ? fmt2(pattern.invalidation_level) : 'Not set'}
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -404,6 +1070,85 @@ function CandlestickStudyLegend({
   );
 }
 
+function ChartPatternSummary({
+  patterns,
+  analysis,
+  modelId,
+  loading,
+  error,
+}: {
+  patterns: StockChartPatternDetection[];
+  analysis: string | null;
+  modelId: string | null;
+  loading: boolean;
+  error: string | null;
+}) {
+  const [selectedPattern, setSelectedPattern] = React.useState<StockChartPatternDetection | null>(
+    null,
+  );
+  const closeExplanation = React.useCallback(() => setSelectedPattern(null), []);
+
+  if (loading) {
+    return <p className="text-[10px] text-muted-foreground">Scanning chart patterns…</p>;
+  }
+  if (error) {
+    return <p className="text-[10px] text-destructive">{error}</p>;
+  }
+  if (patterns.length === 0) {
+    return (
+      <p className="text-[10px] text-muted-foreground">
+        No high-confidence chart pattern detected for this range.
+      </p>
+    );
+  }
+
+  const top = patterns[0];
+
+  return (
+    <>
+      <div className="space-y-1.5 rounded-md border border-border/70 bg-muted/30 p-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+          <button
+            type="button"
+            className="rounded-sm font-medium text-foreground underline-offset-2 hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`Learn about ${top.display_name}`}
+            onClick={() => setSelectedPattern(top)}
+          >
+            {top.display_name}
+          </button>
+          <span className="rounded-full bg-background px-1.5 py-0.5 text-muted-foreground">
+            {top.status}
+          </span>
+          <span className="rounded-full bg-background px-1.5 py-0.5 text-muted-foreground">
+            {Math.round(top.confidence * 100)}% confidence
+          </span>
+          <span className="rounded-full bg-background px-1.5 py-0.5 text-muted-foreground">
+            {top.direction}
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+          {top.breakout_level != null ? (
+            <span>
+              Breakout{' '}
+              <span className="font-medium text-foreground">{fmt2(top.breakout_level)}</span>
+            </span>
+          ) : null}
+          {top.invalidation_level != null ? (
+            <span>
+              Invalidation{' '}
+              <span className="font-medium text-foreground">{fmt2(top.invalidation_level)}</span>
+            </span>
+          ) : null}
+        </div>
+        {analysis ? <CollapsibleStockAnalysis markdown={analysis} modelId={modelId} /> : null}
+      </div>
+      {selectedPattern ? (
+        <ChartPatternExplanationModal pattern={selectedPattern} onClose={closeExplanation} />
+      ) : null}
+    </>
+  );
+}
+
 type SeriesRefs = {
   chart: IChartApi | null;
   candle: ISeriesApi<'Candlestick'> | null;
@@ -414,6 +1159,9 @@ type SeriesRefs = {
   rsi: ISeriesApi<'Line'> | null;
   aiSupport: IPriceLine | null;
   aiResistance: IPriceLine | null;
+  patternLines: ISeriesApi<'Line'>[];
+  patternBreakout: IPriceLine | null;
+  patternInvalidation: IPriceLine | null;
 };
 
 const emptySeriesRefs = (): SeriesRefs => ({
@@ -426,6 +1174,9 @@ const emptySeriesRefs = (): SeriesRefs => ({
   rsi: null,
   aiSupport: null,
   aiResistance: null,
+  patternLines: [],
+  patternBreakout: null,
+  patternInvalidation: null,
 });
 
 export interface CandlestickWidgetProps extends Omit<
@@ -498,6 +1249,16 @@ export function CandlestickWidget({
   const srCacheRef = React.useRef<
     Map<string, { support: number | null; resistance: number | null }>
   >(new Map());
+  const patternCacheRef = React.useRef<
+    Map<
+      string,
+      {
+        patterns: StockChartPatternDetection[];
+        analysis: string;
+        modelId: string;
+      }
+    >
+  >(new Map());
 
   const [internalTf, setInternalTf] = React.useState<ChartTimeframe>(defaultTimeframe);
   const [internalIv, setInternalIv] = React.useState<ChartInterval>(() =>
@@ -512,6 +1273,8 @@ export function CandlestickWidget({
   const [showRSI, setShowRSI] = React.useState(false);
   /** Horizontal AI support/resistance price lines (when ``useStockApi`` provides levels). */
   const [showAiSr, setShowAiSr] = React.useState(true);
+  /** Deterministic chart-pattern overlays from backend OHLC pivot geometry. */
+  const [showPatterns, setShowPatterns] = React.useState(true);
 
   const [symbols, setSymbols] = React.useState<string[]>(() =>
     normalizeSymbolList(defaultSymbols, 3),
@@ -529,6 +1292,12 @@ export function CandlestickWidget({
 
   const [apiSrSupport, setApiSrSupport] = React.useState<number | null>(null);
   const [apiSrResistance, setApiSrResistance] = React.useState<number | null>(null);
+
+  const [apiPatterns, setApiPatterns] = React.useState<StockChartPatternDetection[]>([]);
+  const [apiPatternAnalysis, setApiPatternAnalysis] = React.useState<string | null>(null);
+  const [apiPatternModel, setApiPatternModel] = React.useState<string | null>(null);
+  const [apiPatternsLoading, setApiPatternsLoading] = React.useState(false);
+  const [apiPatternsError, setApiPatternsError] = React.useState<string | null>(null);
 
   const timeframe = timeframeProp ?? internalTf;
 
@@ -757,6 +1526,90 @@ export function CandlestickWidget({
     return () => ac.abort();
   }, [useStockApi, dataProp, activeSymbol, timeframe, interval]);
 
+  React.useEffect(() => {
+    const ac = new AbortController();
+
+    void (async () => {
+      if (!useStockApi || dataProp !== undefined) {
+        setApiPatterns([]);
+        setApiPatternAnalysis(null);
+        setApiPatternModel(null);
+        setApiPatternsLoading(false);
+        setApiPatternsError(null);
+        return;
+      }
+
+      if (!activeSymbol) {
+        setApiPatterns([]);
+        setApiPatternAnalysis(null);
+        setApiPatternModel(null);
+        setApiPatternsLoading(false);
+        setApiPatternsError(null);
+        return;
+      }
+
+      const apiInterval = chartIntervalToApi(interval);
+      const q = chartTimeframeToApiQuery(timeframe);
+      const cacheKey = `patterns|${activeSymbol}|${timeframe}|${interval}|${apiInterval}|${JSON.stringify(q)}`;
+      const cached = patternCacheRef.current.get(cacheKey);
+      if (cached) {
+        setApiPatterns(cached.patterns);
+        setApiPatternAnalysis(cached.analysis);
+        setApiPatternModel(cached.modelId);
+        setApiPatternsLoading(false);
+        setApiPatternsError(null);
+        return;
+      }
+
+      setApiPatterns([]);
+      setApiPatternAnalysis(null);
+      setApiPatternModel(null);
+      setApiPatternsError(null);
+      setApiPatternsLoading(true);
+
+      try {
+        const res = await getStockChartPatterns({
+          symbol: activeSymbol,
+          interval: apiInterval,
+          range: q.range,
+          from: q.from,
+          to: q.to,
+          signal: ac.signal,
+        });
+        if (ac.signal.aborted) {
+          return;
+        }
+        const result = {
+          patterns: res.patterns.slice(0, 3),
+          analysis: res.analysis,
+          modelId: res.model_id,
+        };
+        patternCacheRef.current.set(cacheKey, result);
+        setApiPatterns(result.patterns);
+        setApiPatternAnalysis(result.analysis);
+        setApiPatternModel(result.modelId);
+      } catch (e: unknown) {
+        if (ac.signal.aborted) {
+          return;
+        }
+        const msg =
+          e && typeof e === 'object' && 'message' in e
+            ? String((e as { message: string }).message)
+            : 'Could not load chart patterns';
+        setApiPatternsError(msg);
+        setApiPatterns([]);
+        setApiPatternAnalysis(null);
+        setApiPatternModel(null);
+      } finally {
+        if (!ac.signal.aborted) {
+          setApiPatternsLoading(false);
+        }
+      }
+    })();
+
+    return () => ac.abort();
+  }, [useStockApi, dataProp, activeSymbol, timeframe, interval]);
+
   const resolvedData = React.useMemo(() => {
     if (dataProp !== undefined) {
       return dataProp;
@@ -924,6 +1777,9 @@ export function CandlestickWidget({
       rsi: null,
       aiSupport: null,
       aiResistance: null,
+      patternLines: [],
+      patternBreakout: null,
+      patternInvalidation: null,
     };
 
     let resizeObserver: ResizeObserver | null = null;
@@ -1133,6 +1989,91 @@ export function CandlestickWidget({
     timeVisible,
   ]);
 
+  React.useEffect(() => {
+    const r = seriesRefs.current;
+    const { chart, candle } = r;
+    if (!chart || !candle) {
+      return;
+    }
+
+    for (const series of r.patternLines) {
+      chart.removeSeries(series);
+    }
+    r.patternLines = [];
+    if (r.patternBreakout) {
+      candle.removePriceLine(r.patternBreakout);
+      r.patternBreakout = null;
+    }
+    if (r.patternInvalidation) {
+      candle.removePriceLine(r.patternInvalidation);
+      r.patternInvalidation = null;
+    }
+
+    if (!useStockApi || dataProp !== undefined || !showPatterns || apiPatterns.length === 0) {
+      return;
+    }
+
+    const visiblePatterns = apiPatterns.slice(0, 3);
+    for (const pattern of visiblePatterns) {
+      for (const line of pattern.lines) {
+        const color =
+          line.kind === 'support'
+            ? STUDY_COLORS.patternSupport
+            : line.kind === 'resistance'
+              ? STUDY_COLORS.patternResistance
+              : STUDY_COLORS.pattern;
+        const series = chart.addSeries(
+          LineSeries,
+          {
+            color,
+            lineWidth: 2,
+            lineStyle: LineStyle.Dashed,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            title: pattern.display_name,
+          },
+          0,
+        );
+        series.setData([
+          { time: fmpDateToChartTime(line.start.date), value: line.start.price },
+          { time: fmpDateToChartTime(line.end.date), value: line.end.price },
+        ]);
+        r.patternLines.push(series);
+      }
+    }
+
+    const top = visiblePatterns[0];
+    if (top?.breakout_level != null && Number.isFinite(top.breakout_level)) {
+      r.patternBreakout = candle.createPriceLine({
+        price: top.breakout_level,
+        color: STUDY_COLORS.patternBreakout,
+        lineWidth: 1,
+        lineStyle: LineStyle.LargeDashed,
+        axisLabelVisible: true,
+        title: 'Pattern Breakout',
+      });
+    }
+    if (top?.invalidation_level != null && Number.isFinite(top.invalidation_level)) {
+      r.patternInvalidation = candle.createPriceLine({
+        price: top.invalidation_level,
+        color: STUDY_COLORS.patternInvalidation,
+        lineWidth: 1,
+        lineStyle: LineStyle.LargeDashed,
+        axisLabelVisible: true,
+        title: 'Pattern Invalid',
+      });
+    }
+  }, [
+    apiPatterns,
+    showPatterns,
+    useStockApi,
+    dataProp,
+    resolvedData.length,
+    borderVisible,
+    priceLineVisible,
+    timeVisible,
+  ]);
+
   const studyLegendProps = React.useMemo(() => {
     const lastBar = resolvedData[resolvedData.length - 1];
     const maPoint = showMA ? indicatorLines.ma[indicatorLines.ma.length - 1] : undefined;
@@ -1165,6 +2106,7 @@ export function CandlestickWidget({
   );
 
   const loadAiSummary = useStockApi && dataProp === undefined && useAiAnalysis;
+  const loadPatternSummary = useStockApi && dataProp === undefined;
 
   const contextText = React.useMemo(
     () =>
@@ -1181,6 +2123,8 @@ export function CandlestickWidget({
         showAiSr,
         apiSrSupport,
         apiSrResistance,
+        showPatterns,
+        patterns: apiPatterns,
       }),
     [
       activeSymbol,
@@ -1195,22 +2139,45 @@ export function CandlestickWidget({
       showAiSr,
       apiSrSupport,
       apiSrResistance,
+      showPatterns,
+      apiPatterns,
     ],
   );
 
+  const patternSummaryContent = React.useMemo(() => {
+    if (!loadPatternSummary) {
+      return null;
+    }
+    return (
+      <ChartPatternSummary
+        patterns={apiPatterns}
+        analysis={apiPatternAnalysis}
+        modelId={apiPatternModel}
+        loading={apiPatternsLoading}
+        error={apiPatternsError}
+      />
+    );
+  }, [
+    loadPatternSummary,
+    apiPatterns,
+    apiPatternAnalysis,
+    apiPatternModel,
+    apiPatternsLoading,
+    apiPatternsError,
+  ]);
+
   const summaryContent = React.useMemo(() => {
+    let aiSummary: React.ReactNode;
     if (!loadAiSummary) {
-      return (
+      aiSummary = (
         <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
           {ruleBasedInsight}
         </span>
       );
-    }
-    if (apiAiAnalysis) {
-      return <CollapsibleStockAnalysis markdown={apiAiAnalysis} modelId={apiAiModel} />;
-    }
-    if (apiAiLoading) {
-      return (
+    } else if (apiAiAnalysis) {
+      aiSummary = <CollapsibleStockAnalysis markdown={apiAiAnalysis} modelId={apiAiModel} />;
+    } else if (apiAiLoading) {
+      aiSummary = (
         <div className="space-y-1.5">
           <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
             {ruleBasedInsight}
@@ -1218,9 +2185,8 @@ export function CandlestickWidget({
           <p className="text-[10px] text-muted-foreground">Generating AI summary…</p>
         </div>
       );
-    }
-    if (apiAiError) {
-      return (
+    } else if (apiAiError) {
+      aiSummary = (
         <div className="space-y-1.5">
           <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
             {ruleBasedInsight}
@@ -1228,13 +2194,33 @@ export function CandlestickWidget({
           <p className="text-[10px] text-destructive">{apiAiError}</p>
         </div>
       );
+    } else {
+      aiSummary = (
+        <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
+          {ruleBasedInsight}
+        </span>
+      );
     }
+
+    if (!patternSummaryContent) {
+      return aiSummary;
+    }
+
     return (
-      <span className="block whitespace-pre-wrap text-xs leading-relaxed text-primary/90">
-        {ruleBasedInsight}
-      </span>
+      <div className="space-y-2">
+        {aiSummary}
+        {patternSummaryContent}
+      </div>
     );
-  }, [loadAiSummary, ruleBasedInsight, apiAiAnalysis, apiAiModel, apiAiLoading, apiAiError]);
+  }, [
+    loadAiSummary,
+    ruleBasedInsight,
+    apiAiAnalysis,
+    apiAiModel,
+    apiAiLoading,
+    apiAiError,
+    patternSummaryContent,
+  ]);
 
   const showToolbar = showControls || showIndicatorToggles;
   const variantClasses = candlestickVariantClassNames(variant);
@@ -1404,24 +2390,46 @@ export function CandlestickWidget({
                 </Button>
               </div>
               {useStockApi && dataProp === undefined ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  aria-pressed={showAiSr}
-                  aria-label="AI Support and Resistance levels on chart"
-                  onClick={() => setShowAiSr((v) => !v)}
-                  className={cn(
-                    indicatorToggleButtonClass(showAiSr),
-                    'ml-auto inline-flex shrink-0 items-center gap-1',
-                  )}
-                >
-                  <Bot className="h-3.5 w-3.5 opacity-90" aria-hidden />
-                  <span>
-                    AI{' '}
-                    <span className={indicatorToggleSuffixClass(showAiSr)}>Support/Resistance</span>
-                  </span>
-                </Button>
+                <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    aria-pressed={showPatterns}
+                    aria-label="Chart patterns on chart"
+                    onClick={() => setShowPatterns((v) => !v)}
+                    className={cn(
+                      indicatorToggleButtonClass(showPatterns),
+                      'inline-flex items-center gap-1',
+                    )}
+                  >
+                    <Bot className="h-3.5 w-3.5 opacity-90" aria-hidden />
+                    <span>
+                      Chart{' '}
+                      <span className={indicatorToggleSuffixClass(showPatterns)}>Patterns</span>
+                    </span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    aria-pressed={showAiSr}
+                    aria-label="AI Support and Resistance levels on chart"
+                    onClick={() => setShowAiSr((v) => !v)}
+                    className={cn(
+                      indicatorToggleButtonClass(showAiSr),
+                      'inline-flex items-center gap-1',
+                    )}
+                  >
+                    <Bot className="h-3.5 w-3.5 opacity-90" aria-hidden />
+                    <span>
+                      AI{' '}
+                      <span className={indicatorToggleSuffixClass(showAiSr)}>
+                        Support/Resistance
+                      </span>
+                    </span>
+                  </Button>
+                </div>
               ) : null}
             </div>
           ) : null}

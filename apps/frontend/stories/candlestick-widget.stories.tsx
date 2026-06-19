@@ -178,3 +178,16 @@ export const LiveBackendWithAi: Story = {
     variant: 'large',
   },
 };
+
+/** Live API with chart-pattern overlays and deterministic fallback explanation. */
+export const LiveBackendWithPatterns: Story = {
+  args: {
+    title: 'Live (API + Patterns)',
+    useStockApi: true,
+    useAiAnalysis: false,
+    defaultSymbols: ['AAPL'],
+    defaultTimeframe: '3M',
+    defaultInterval: '1d',
+    variant: 'large',
+  },
+};

@@ -5,6 +5,7 @@
 
 import type {
   StockChartAnalysisResponse,
+  StockChartPatternAnalysisResponse,
   StockChartResponse,
   StockChartSupportResistanceResponse,
 } from '@/lib/stock-chart-bridge';
@@ -207,7 +208,14 @@ export interface PortfolioAnalysisResponse {
   insight: string;
   riskLabel: string;
   riskTone: 'low' | 'medium' | 'high';
+  strategy: PortfolioStrategyAction[];
   modelId: string;
+}
+
+export interface PortfolioStrategyAction {
+  label: string;
+  symbols: string[];
+  reason: string;
 }
 
 /**
@@ -278,6 +286,22 @@ export async function getPortfolioAnalysis(
     {
       method: 'GET',
       signal,
+    },
+    );
+  }
+/**
+ * Chart-pattern overlays and explanation from ``GET /api/ai/widget/stock-chart/patterns``
+ * (same query shape as stock chart; ``OPENROUTER_API_KEY`` is optional on the server).
+ */
+export async function getStockChartPatterns(
+  params: GetStockChartParams,
+): Promise<StockChartPatternAnalysisResponse> {
+  const q = stockChartQueryString(params);
+  return fetchWithErrorHandling<StockChartPatternAnalysisResponse>(
+    `${BACKEND_URL}/api/ai/widget/stock-chart/patterns?${q}`,
+    {
+      method: 'GET',
+      signal: params.signal,
     },
   );
 }
