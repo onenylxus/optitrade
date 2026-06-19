@@ -5,6 +5,7 @@
 
 import type {
   StockChartAnalysisResponse,
+  StockChartPatternAnalysisResponse,
   StockChartResponse,
   StockChartSupportResistanceResponse,
 } from '@/lib/stock-chart-bridge';
@@ -19,7 +20,10 @@ import {
   HelloStreamResponse,
 } from './types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+if (!BACKEND_URL) {
+  throw new Error('Environment variable NEXT_PUBLIC_BACKEND_URL is not defined');
+}
 
 function detailMessage(detail: unknown): string {
   if (typeof detail === 'string') {
@@ -203,6 +207,20 @@ export interface GetStockChartParams {
   signal?: AbortSignal;
 }
 
+export interface PortfolioAnalysisResponse {
+  insight: string;
+  riskLabel: string;
+  riskTone: 'low' | 'medium' | 'high';
+  strategy: PortfolioStrategyAction[];
+  modelId: string;
+}
+
+export interface PortfolioStrategyAction {
+  label: string;
+  symbols: string[];
+  reason: string;
+}
+
 /**
  * OHLCV chart series from the FastAPI ``GET /api/stock/chart`` endpoint (FMP-backed).
  */
@@ -256,6 +274,34 @@ export async function getStockChartSupportResistance(
   const q = stockChartQueryString(params);
   return fetchWithErrorHandling<StockChartSupportResistanceResponse>(
     `${BACKEND_URL}/api/ai/widget/stock-chart/support-resistance?${q}`,
+    {
+      method: 'GET',
+      signal: params.signal,
+    },
+  );
+}
+
+export async function getPortfolioAnalysis(
+  signal?: AbortSignal,
+): Promise<PortfolioAnalysisResponse> {
+  return fetchWithErrorHandling<PortfolioAnalysisResponse>(
+    `${BACKEND_URL}/api/ai/widget/portfolio`,
+    {
+      method: 'GET',
+      signal,
+    },
+    );
+  }
+/**
+ * Chart-pattern overlays and explanation from ``GET /api/ai/widget/stock-chart/patterns``
+ * (same query shape as stock chart; ``OPENROUTER_API_KEY`` is optional on the server).
+ */
+export async function getStockChartPatterns(
+  params: GetStockChartParams,
+): Promise<StockChartPatternAnalysisResponse> {
+  const q = stockChartQueryString(params);
+  return fetchWithErrorHandling<StockChartPatternAnalysisResponse>(
+    `${BACKEND_URL}/api/ai/widget/stock-chart/patterns?${q}`,
     {
       method: 'GET',
       signal: params.signal,

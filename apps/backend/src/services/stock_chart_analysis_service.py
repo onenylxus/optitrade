@@ -199,9 +199,7 @@ class StockChartAnalysisService:
             self._model = "minimax/minimax-m2.7"
         env_bars = _parse_recent_bars_for_prompt()
         bars = (
-            recent_bars_for_prompt
-            if recent_bars_for_prompt is not None
-            else env_bars
+            recent_bars_for_prompt if recent_bars_for_prompt is not None else env_bars
         )
         self._recent_bars = max(8, min(bars, 120))
         self._chain = build_stock_chart_analysis_chain(

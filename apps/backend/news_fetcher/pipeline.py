@@ -47,8 +47,7 @@ class FinanceNewsFilter:
         'upgrade', 'downgrade', 'target', 'analyst', 'rating',
         'fed', 'inflation', 'interest', 'economy', 'gdp',
         'surge', 'plunge', 'rally', 'crash', 'boom', 'ipo', 'dividend',
-        'stock', 'market', 'fund', 'investment', 'crypto', 'earnings',
-        'revenue', 'acquisition'
+        'fund'
     ]
 
     @classmethod
@@ -56,7 +55,7 @@ class FinanceNewsFilter:
         if not title:
             return False
         title_lower = title.lower()
-        return any(kw.lower() in title_lower for kw in cls.KEYWORDS)
+        return any(kw in title_lower for kw in cls.KEYWORDS)
 
     @classmethod
     def filter_list(cls, news_list: List[NewsItem]) -> List[NewsItem]:
@@ -64,64 +63,228 @@ class FinanceNewsFilter:
 
 
 class NewsAnalysisPipeline:
-    """News analysis pipeline - integrates fetching and AI analysis"""
+    """News analysis pipeline - integrates fetching, persistence, and automated polling"""
 
-    def __init__(self, limit_per_source: int = 10):
+    def __init__(self, limit_per_source: int = 50):
         self.limit_per_source = limit_per_source
         self.analyzer = CloudAnalyzer()
+        # self.processed_ids = self._load_existing_ids()
+        self.processed_ids, self.processed_links = self._load_existing_history()
 
-    def run(self) -> List[Dict]:
-        """Run the complete pipeline"""
+    def _load_existing_history(self) -> tuple[set, set]:
+        """Load analyzed news IDs and links from existing JSON archive, preventing duplicate token consumption"""
+        ids = set()
+        links = set()
+        if os.path.exists(OUTPUT_FILE):
+            try:
+                with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    for item in data.get("news", []):
+                        if "id" in item:
+                            ids.add(item["id"])
+                        if "link" in item:
+                            links.add(item["link"])
+            except Exception as e:
+                print(f"⚠️ [Pipeline] Failed to read historical data ({e})")
+        return ids, links
+    def _load_cached_file(self) -> List[Dict]:
+        """Safely read cache file"""
+        if os.path.exists(OUTPUT_FILE):
+            try:
+                with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+                    return json.load(f).get("news", [])
+            except Exception:
+                pass
+        return []
+
+    def _parse_date(self, pub_time: str) -> datetime:
+        """Parse various RSS date strings into datetime objects"""
+        if not pub_time:
+            return datetime.min
+
+        if "T" in pub_time:
+            try:
+                clean_time = pub_time.split(".")[0].replace("Z", "")
+                return datetime.strptime(clean_time, "%Y-%m-%dT%H:%M:%S")
+            except Exception:
+                pass
+
+        if "," in pub_time:
+            try:
+                clean_time = pub_time.split(" +")[0].split(" -")[0]
+                return datetime.strptime(clean_time, "%a, %d %b %Y %H:%M:%S")
+            except Exception:
+                pass
+
+        return datetime.min
+
+    def run_once(self) -> List[Dict]:
+        if not os.path.exists(OUTPUT_FILE):
+            print("⚠️ [Pipeline] Automatically reset memory cache records...")
+            self.processed_ids = set()
+
         print("\n" + "="*70)
-        print("🚀 OptiTrade News Analysis System (Fetching + Cloud AI Analysis)")
+        print("🚀 OptiTrade News Analysis System (Flow Core)")
         print(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"🤖 AI Model: openrouter/free")
-        print(f"📊 Fetch limit per source: {self.limit_per_source}")
         print("="*70)
 
+        # ------------------------------------------------------------------
         # Step 1: Fetch news
+        # ------------------------------------------------------------------
         print("\n📡 Step 1: Fetching News")
         print("-"*50)
-
         all_news = []
+        try:
+            yahoo_news = YahooNewsFetcher.fetch(limit=self.limit_per_source)
+            all_news.extend(yahoo_news)
+            et_news = EconomicTimesFetcher.fetch(limit=self.limit_per_source)
+            all_news.extend(et_news)
+            print(f"\n📊 Fetch completed: {len(all_news)} raw news items")
+        except Exception as e:
+            print(f"⚠️ [Network/API Error] Unable to retrieve news: {e}")
+            return self._load_cached_file()
 
-        yahoo_news = YahooNewsFetcher.fetch(limit=self.limit_per_source)
-        all_news.extend(yahoo_news)
+        if not all_news:
+            return self._load_cached_file()
 
-        et_news = EconomicTimesFetcher.fetch(limit=self.limit_per_source)
-        all_news.extend(et_news)
-
-        print(f"\n📊 Fetch completed: {len(all_news)} raw news items")
-        print(f"   - Yahoo: {len(yahoo_news)} items")
-        print(f"   - Economic Times: {len(et_news)} items")
-
-        # Step 2: Filter financial news
-        print("\n🔍 Step 2: Filtering Financial News")
-        print("-"*50)
-
+        # ------------------------------------------------------------------
+        # Step 2 & 3: Filter & Deduplicate
+        # ------------------------------------------------------------------
         filtered_news = FinanceNewsFilter.filter_list(all_news)
-        print(f"   Before filter: {len(all_news)} items")
-        print(f"   After filter: {len(filtered_news)} items (non-financial news removed)")
-
-        # Step 3: Deduplication
-        print("\n🔄 Step 3: Deduplication")
-        print("-"*50)
-
         unique_news = Deduplicator.deduplicate(filtered_news)
-        print(f"   Before dedup: {len(filtered_news)} items")
-        print(f"   After dedup: {len(unique_news)} items")
+        print(f"🔄 After basic filtering and deduplication, {len(unique_news)} financial news items remain.")
 
-        # Step 4: AI Analysis
+        # ------------------------------------------------------------------
+        # Step 3.5: Dual Filter (Keywords & 3-Day Window)
+        # ------------------------------------------------------------------
+        TARGET_STOCK_KEYWORDS = [
+            'hfcl', 'nvda', 'nvidia', 'aapl', 'apple', 'tsla', 'tesla',
+            'msft', 'googl', 'google', 'amzn', 'amd',
+            'nifty', 'reliance', 'ril', 'shares', 'stock'
+        ]
+        now = datetime.now()
+        strict_stock_news = []
+
+        for news in unique_news:
+            text_to_check = f"{news.headline} {news.summary}".lower()
+            has_keyword = any(kw in text_to_check for kw in TARGET_STOCK_KEYWORDS)
+            news_time = self._parse_date(news.published_at)
+            days_age = (now - news_time).days
+
+            if has_keyword and days_age <= 3:
+                strict_stock_news.append(news)
+            else:
+                if days_age > 3 and has_keyword:
+                    print(f"🗑️ [Time Filter] 丟棄過期殭屍新聞 ({news.published_at}): {news.headline[:40]}...")
+
+        print(f"[Token Saver] Filter and retain {len(strict_stock_news)} of the latest stock news items.")
+
+        # Exclude already processed IDs
+        # new_news_to_analyze = [n for n in strict_stock_news if n.id not in self.processed_ids]
+        new_news_to_analyze = []
+        for n in strict_stock_news:
+            if n.id in self.processed_ids or n.link in self.processed_links:
+                continue # 重複了，跳過
+            new_news_to_analyze.append(n)
+        if not new_news_to_analyze:
+            print("\nNo new news containing the target stock; skip the AI ​​request.")
+            return self._load_cached_file()
+
+        print(f"\nDetected {len(new_news_to_analyze)} *NEW* items! Preparing for AI analysis...")
+
+        # ------------------------------------------------------------------
+        # Step 4: AI Sentiment Analysis
+        # ------------------------------------------------------------------
         print("\n🤖 Step 4: AI Sentiment Analysis")
         print("-"*50)
 
-        results = []
+        new_results = []
+        for i, news in enumerate(new_news_to_analyze, 1):
+          print(f"\n   [{i}/{len(new_news_to_analyze)}] Mock analysis: {news.headline[:50]}...")
 
-        for i, news in enumerate(unique_news, 1):
-            print(f"\n   [{i}/{len(unique_news)}] Analyzing: {news.headline[:50]}...")
+        # Mock data - 唔 call API
+        # analysis = {
+        #     "highlights": ["Testing pipeline", "AI skipped", "Mock mode"],
+        #     "sentiment": 0.0,
+        #     "risk_tag": "Low Risk",
+        #     "reasoning": "Mock analysis - no API call made for testing.",
+        #     "related_symbols": []
+        # }
 
-            analysis = self.analyzer.analyze(news.headline, news.summary)
+        # result = {
+        #     "id": news.id,
+        #     "source": news.source,
+        #     "headline": news.headline,
+        #     "link": news.link,
+        #     "published_at": news.published_at,
+        #     "summary": news.summary[:200],
+        #     "highlights": analysis.get("highlights", []),
+        #     "sentiment": analysis.get("sentiment", 0),
+        #     "risk_tag": analysis.get("risk_tag", "Low Risk"),
+        #     "reasoning": analysis.get("reasoning", ""),
+        #     "related_symbols": analysis.get("related_symbols", []),
+        #     "analyzed_at": datetime.now().isoformat()
+        # }
 
+        # new_results.append(result)
+        # self.processed_ids.add(news.id)
+        # self.processed_links.add(news.link)
+
+        # emoji = "🟡"
+        # print(f"       {emoji} Sentiment: {result['sentiment']:.2f} | Risk: {result['risk_tag']} (MOCK)")
+        # time.sleep(0.1)
+# real code
+        for i, news in enumerate(new_news_to_analyze, 1):
+            print(f"\n   [{i}/{len(new_news_to_analyze)}] Analyzing: {news.headline[:50]}...")
+
+            try:
+                analysis = self.analyzer.analyze(news.headline, news.summary)
+                if not analysis or ('choices' in str(analysis) and not isinstance(analysis, dict)):
+                    raise ValueError("Invalid API response format")
+            except Exception as e:
+                print(f"   ❌ AI analysis failed ({e}), using preset fallback values...")
+                analysis = {
+                    "highlights": ["API evaluation skipped"],
+                    "sentiment": 0.0,
+                    "risk_tag": "Low Risk",
+                    "reasoning": f"Skipped due to API error: {str(e)}",
+                    "related_symbols": []
+                }
+
+            # Regex Backup for Symbols
+            ai_symbols = analysis.get("related_symbols", [])
+            if not isinstance(ai_symbols, list):
+                ai_symbols = []
+
+            MASTER_STOCK_KEYWORDS = {
+                'RELIANCE': ['reliance', 'ril', 'mukesh ambani'],
+                'NIFTY': ['nifty', 'nifty50', 'nse'],
+                'HFCL': ['hfcl'],
+                'NVDA': ['nvda', 'nvidia', '黃仁勳'],
+                'AAPL': ['aapl', 'apple', 'iphone'],
+                'TSLA': ['tsla', 'tesla', 'musk'],
+                'MSFT': ['msft', 'microsoft'],
+                'GOOGL': ['googl', 'google', 'alphabet'],
+                'AMD': ['amd', 'advanced micro devices'],
+                'AMZN': ['amzn', 'amazon'],
+                'META': ['meta', 'facebook', 'instagram'],
+                'INFY': ['infosys', 'infy'],
+                'TCS': ['tcs', 'tata consultancy'],
+                'WIPRO': ['wipro'],
+                'DELL': ['dell'],
+                'IBM': ['ibm']
+            }
+
+            headline_lower = news.headline.lower()
+            summary_lower = news.summary.lower()
+            combined_text = f"{headline_lower} {summary_lower}"
+
+            extracted_symbols = list(ai_symbols) if isinstance(ai_symbols, list) else []
+
+            for stock_sym, keywords in MASTER_STOCK_KEYWORDS.items():
+                if any(kw in combined_text for kw in keywords):
+                    if stock_sym not in extracted_symbols:
+                        extracted_symbols.append(stock_sym)
             result = {
                 "id": news.id,
                 "source": news.source,
@@ -133,51 +296,131 @@ class NewsAnalysisPipeline:
                 "sentiment": analysis.get("sentiment", 0),
                 "risk_tag": analysis.get("risk_tag", "Low Risk"),
                 "reasoning": analysis.get("reasoning", ""),
+                "related_symbols": extracted_symbols,
                 "analyzed_at": datetime.now().isoformat()
             }
 
-            results.append(result)
+            new_results.append(result)
+            self.processed_ids.add(news.id)
+            self.processed_links.add(news.link)
 
-            # Display real-time results
             emoji = "🟢" if result['sentiment'] > 0.2 else "🔴" if result['sentiment'] < -0.2 else "🟡"
-            print(f"       {emoji} Sentiment: {result['sentiment']:.2f} | Risk: {result['risk_tag']}")
+            print(f"       {emoji} Sentiment: {result['sentiment']:.2f} | Risk: {result['risk_tag']} | Symbols: {extracted_symbols}")
+            time.sleep(2.5)
 
-            time.sleep(0.5)  # Avoid too many requests
-
-        # Step 5: Save results
-        print("\n💾 Step 5: Saving Results")
+        # ------------------------------------------------------------------
+        # Step 5: Merging, Absolute Deduplication, and Saving
+        # ------------------------------------------------------------------
+        print("\n💾 Step 5: Merging and Saving Results")
         print("-"*50)
+
+        existing_news = self._load_cached_file()
+
+        seen_links = set()
+        unique_combined = []
+
+        for item in new_results + existing_news:
+            link = item.get("link")
+            if link not in seen_links:
+                seen_links.add(link)
+                unique_combined.append(item)
+
+        unique_combined.sort(key=lambda item: self._parse_date(item.get("published_at", "")), reverse=True)
+
+        unique_combined = unique_combined[:50]
 
         output = {
             "metadata": {
-                "total_news": len(results),
-                "yahoo_count": len([r for r in results if r['source'] == 'yahoo']),
-                "et_count": len([r for r in results if r['source'] == 'economic_times']),
+                "total_news": len(unique_combined),
+                "yahoo_count": len([r for r in unique_combined if r['source'] == 'yahoo']),
+                "et_count": len([r for r in unique_combined if r['source'] == 'economic_times']),
                 "analyzed_at": datetime.now().isoformat(),
                 "model": "openrouter/free"
             },
-            "news": results
+            "news": unique_combined
         }
 
-        # Ensure directory exists
         os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-
         with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
             json.dump(output, f, indent=2, ensure_ascii=False)
 
-        print(f"   ✅ Results saved to: {OUTPUT_FILE}")
+        print(f"   ✅ Merged results saved successfully to: {OUTPUT_FILE}")
+        return unique_combined
 
-        # Step 6: Display summary
-        print("\n" + "="*70)
-        print("📊 Analysis Summary")
-        print("="*70)
+    # def start_automated_loop(self, interval_seconds: int = 900):
+    #     """🚀 Start automated monitoring loop in background"""
+    #     LOG_FILE = "pipeline.log"
 
-        positive = [r for r in results if r['sentiment'] > 0.2]
-        neutral = [r for r in results if -0.2 <= r['sentiment'] <= 0.2]
-        negative = [r for r in results if r['sentiment'] < -0.2]
+    #     def log_both(message: str):
+    #         timestamped_msg = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}"
+    #         print(timestamped_msg)
+    #         try:
+    #             with open(LOG_FILE, "a", encoding="utf-8") as f:
+    #                 f.write(timestamped_msg + "\n")
+    #         except Exception as e:
+    #             print(f"❌ Cannot write to log file: {e}")
 
-        print(f"   🟢 Positive news: {len(positive)} items")
-        print(f"   🟡 Neutral news: {len(neutral)} items")
-        print(f"   🔴 Negative news: {len(negative)} items")
+    #     log_both("⚡==================================================================⚡")
+    #     log_both("🕒 OptiTrade 背景自動新聞監控 Pipeline 已經正式啟動！")
+    #     log_both(f"📊 監控頻率：每 {interval_seconds // 60} 分鐘 ({interval_seconds} 秒) 自動執行一次")
+    #     log_both(f"💾 實體日誌將同步保存至: {os.path.abspath(LOG_FILE)}")
+    #     log_both("⚡==================================================================⚡\n")
 
-        return results
+    #     while True:
+    #         try:
+    #             log_both("🔄 [Pipeline] 開始執行新一輪的新聞抓取與 AI 分析任務...")
+    #             self.run_once()
+    #             log_both("🟢 [Pipeline] 本輪任務執行完畢，數據已成功合併與持久化。")
+    #         except Exception as e:
+    #             log_both(f"🚨 [Loop Error] 執行定時任務時發生崩潰: {e}")
+
+    #         log_both(f"💤 進入休眠模式，準備進行下一輪檢查。")
+
+    #         remaining = interval_seconds
+    #         while remaining > 0:
+    #             if remaining % 30 == 0 or remaining <= 5:
+    #                 mins, secs = divmod(remaining, 60)
+    #                 print(f"⏳ 距離下一輪自動抓取還有: {mins:02d}分 {secs:02d}秒 ...", end="\r", flush=True)
+    #             time.sleep(1)
+    #             remaining -= 1
+
+    #         print("\n⏰ [Timer] 倒數結束！喚醒 Pipeline...")\
+    def start_automated_loop(self, interval_seconds: int = 900):
+      """Start automated monitoring loop with countdown"""
+      LOG_FILE = "pipeline.log"
+
+      def log_both(message: str):
+          timestamped_msg = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}"
+          print(timestamped_msg, flush=True)
+          try:
+              with open(LOG_FILE, "a", encoding="utf-8") as f:
+                  f.write(timestamped_msg + "\n")
+          except Exception:
+              pass
+
+      log_both("="*60)
+      log_both("OptiTrade Background News Pipeline Started")
+      log_both(f"Interval: {interval_seconds // 60} minutes ({interval_seconds} seconds)")
+      log_both("="*60)
+
+      while True:
+          try:
+              log_both("Starting new fetch and analysis cycle...")
+              self.run_once()
+              log_both("Cycle completed successfully.")
+          except Exception as e:
+              log_both(f"Error in pipeline: {e}")
+
+          # 倒數顯示
+          log_both(f"Sleeping for {interval_seconds} seconds...")
+
+          remaining = interval_seconds
+          while remaining > 0:
+              mins, secs = divmod(remaining, 60)
+              if remaining % 15 == 0 or remaining <= 10:
+                  print(f"⏳ Next run in: {mins:02d}:{secs:02d}", flush=True)
+              time.sleep(1)
+              remaining -= 1
+
+          print("\n⏰ Timer finished! Waking up pipeline...\n", flush=True)
+

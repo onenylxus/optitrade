@@ -78,6 +78,46 @@ export interface StockChartSupportResistanceResponse {
   method: string;
 }
 
+export interface StockChartPatternPoint {
+  label: string;
+  index: number;
+  date: string;
+  price: number;
+}
+
+export interface StockChartPatternLine {
+  label: string;
+  kind: string;
+  start: StockChartPatternPoint;
+  end: StockChartPatternPoint;
+}
+
+export interface StockChartPatternDetection {
+  pattern_type: string;
+  display_name: string;
+  direction: string;
+  status: string;
+  confidence: number;
+  points: StockChartPatternPoint[];
+  lines: StockChartPatternLine[];
+  breakout_level: number | null;
+  invalidation_level: number | null;
+  rationale: string[];
+}
+
+/** ``GET /api/ai/widget/stock-chart/patterns`` — deterministic geometry plus explanation. */
+export interface StockChartPatternAnalysisResponse {
+  symbol: string;
+  interval: string;
+  range: string | null;
+  from: string;
+  to: string;
+  patterns: StockChartPatternDetection[];
+  analysis: string;
+  model_id: string;
+  method: string;
+}
+
 export function chartIntervalToApi(interval: ChartInterval): StockChartApiInterval {
   switch (interval) {
     case '1m':

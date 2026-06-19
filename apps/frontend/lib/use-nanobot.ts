@@ -14,7 +14,7 @@ export interface ChatMessage {
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
-const WS_URL = 'ws://178.128.213.162:8765/?client_id=OptiTrade';
+const WS_URL = 'ws://178.128.213.162:8765/?client_id=OptiTrade&token=capstone';
 
 const OPENUI_SYSTEM_PROMPT = openuiChatLibrary.prompt(openuiChatPromptOptions);
 

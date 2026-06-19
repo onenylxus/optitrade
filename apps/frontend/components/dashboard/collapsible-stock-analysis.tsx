@@ -21,17 +21,16 @@ export function CollapsibleStockAnalysis({
 
   const [expanded, setExpanded] = React.useState(false);
 
-  React.useEffect(() => {
-    setExpanded(false);
-  }, [markdown]);
-
   const showFull = expanded || !canExpand;
   const activeMarkdown = showFull ? fullMarkdown : overviewMarkdown;
   const showModelInMarkdown = Boolean(modelId) && (showFull || !canExpand);
 
   return (
     <div className="space-y-1.5">
-      <WidgetSummaryMarkdown markdown={activeMarkdown} modelId={showModelInMarkdown ? modelId : null} />
+      <WidgetSummaryMarkdown
+        markdown={activeMarkdown}
+        modelId={showModelInMarkdown ? modelId : null}
+      />
       {canExpand && !showFull && modelId ? (
         <p className="text-[10px] text-muted-foreground">
           Model: <span className="font-mono text-foreground/75">{modelId}</span>

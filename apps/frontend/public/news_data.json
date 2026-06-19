@@ -1,70 +1,93 @@
 {
   "metadata": {
-    "total_news": 12,
-    "yahoo_count": 3,
-    "et_count": 9,
-    "analyzed_at": "2026-05-07T13:32:07.159085",
+    "total_news": 50,
+    "yahoo_count": 15,
+    "et_count": 35,
+    "analyzed_at": "2026-06-16T19:10:33.646480",
     "model": "openrouter/free"
   },
   "news": [
     {
-      "id": "yahoo_1778131831_1",
-      "source": "yahoo",
-      "headline": "Coinbase CEO makes critical move before earnings",
-      "link": "https://finance.yahoo.com/markets/crypto/articles/coinbase-ceo-makes-critical-move-052101559.html",
-      "published_at": "2026-05-06T05:21:01Z",
-      "summary": "Coinbase CEO makes critical move before earnings",
-      "highlights": [
-        "CEO makes critical pre-earnings move",
-        "Strategic shift could affect stock price",
-        "Investors monitor upcoming earnings results"
-      ],
-      "sentiment": -0.15,
-      "risk_tag": "Medium Risk",
-      "reasoning": "The phrasing 'critical move' before earnings implies uncertainty and potential risk for investors.",
-      "analyzed_at": "2026-05-07T13:30:39.212380"
-    },
-    {
-      "id": "yahoo_1778131831_3",
-      "source": "yahoo",
-      "headline": "Why Entergy (ETR) Is Expanding Its Grid for Meta’s Data Center Boom",
-      "link": "https://finance.yahoo.com/sectors/energy/articles/why-entergy-etr-expanding-grid-173015049.html",
-      "published_at": "2026-05-05T17:30:15Z",
-      "summary": "Why Entergy (ETR) Is Expanding Its Grid for Meta’s Data Center Boom",
-      "highlights": [
-        "Entergy expands grid for Meta data centers",
-        "Supports Meta’s data center boom",
-        "Strategic infrastructure investment"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "The article reports a strategic grid expansion to support Meta’s data center growth, indicating a positive development but lacking concrete financial metrics or risks.",
-      "analyzed_at": "2026-05-07T13:30:44.953205"
-    },
-    {
-      "id": "yahoo_1778131831_5",
-      "source": "yahoo",
-      "headline": "Why Dominion Energy (D) Is Central to Virginia’s Data Center Power Surge",
-      "link": "https://finance.yahoo.com/sectors/energy/articles/why-dominion-energy-d-central-172956552.html",
-      "published_at": "2026-05-05T17:29:56Z",
-      "summary": "Why Dominion Energy (D) Is Central to Virginia’s Data Center Power Surge",
-      "highlights": [
-        "Dominion Energy central to Virginia data center power surge",
-        "Growing data center demand boosts utility revenue",
-        "Strategic position enhances long-term growth prospects"
-      ],
-      "sentiment": 0.4,
-      "risk_tag": "Low Risk",
-      "reasoning": "Title highlights a surge in data center power demand, indicating growth opportunities for Dominion Energy.",
-      "analyzed_at": "2026-05-07T13:30:50.010268"
-    },
-    {
-      "id": "et_1778131832_1",
+      "id": "et_1781599433_1",
       "source": "economic_times",
-      "headline": "HFCL shares surge 37% in 5 sessions, nearly double in a month",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hfcl-shares-surge-37-in-5-sessions-nearly-double-in-a-month/articleshow/130880834.cms",
-      "published_at": "Thu, 07 May 2026 10:55:16 +0530",
-      "summary": "HFCL shares extended their sharp rally for a fifth straight session after strong Q4FY26 earnings and fresh telecom orders boosted investor sentiment. The stock has nearly doubled in a month amid impro",
+      "headline": "12 stocks added by 15+ MF schemes in May; shares surge up to 60% in CY26",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/12-stocks-added-by-15-mf-schemes-in-may-shares-surge-up-to-60-in-cy26/slideshow/131765510.cms",
+      "published_at": "Tue, 16 Jun 2026 13:45:16 +0530",
+      "summary": "Mutual funds boosted exposure to several outperforming stocks in May 2026, including BSE, Angel One, and Adani Energy. Many of these holdings have generated strong CY26 returns, reflecting sustained i",
+      "highlights": [
+        "12 stocks added by 15+ MF schemes",
+        "Shares surged up to 60% in CY26",
+        "Increased exposure to BSE, Angel One, Adani Energy"
+      ],
+      "sentiment": 0.7,
+      "risk_tag": "Low Risk",
+      "reasoning": "The title contains the word 'surge' and reports increased institutional investment, indicating strong positive momentum. Mutual fund additions reflect high confidence in the mentioned stocks.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T16:45:01.084259"
+    },
+    {
+      "id": "et_1781599433_2",
+      "source": "economic_times",
+      "headline": "European shares inch up as investors assess US-Iran agreement",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/european-shares-inch-up-as-investors-assess-us-iran-agreement/articleshow/131764967.cms",
+      "published_at": "Tue, 16 Jun 2026 13:41:54 +0530",
+      "summary": "European stock markets enjoyed a positive start on Tuesday, a continuation of Monday's upward momentum. Investors are particularly attentive to the early stages of a possible agreement between the U.S",
+      "highlights": [
+        "US-Iran deal under review",
+        "Potential Strait of Hormuz reopening",
+        "Oil supply and market volatility concerns"
+      ],
+      "sentiment": 0.35,
+      "risk_tag": "Medium Risk",
+      "reasoning": "Investors react cautiously to agreement uncertainty, balancing optimism and caution.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T16:45:05.025362"
+    },
+    {
+      "id": "et_1781596618_1",
+      "source": "economic_times",
+      "headline": "RIL shares jump 6% in 3 days, market cap soars by Rs 1 lakh cr ahead of AGM. Why Morgan Stanley still sees 38% upside",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ril-shares-jump-6-in-3-days-market-cap-soars-by-rs-1-lakh-cr-ahead-of-agm-why-morgan-stanley-still-sees-38-upside/articleshow/131763844.cms",
+      "published_at": "Tue, 16 Jun 2026 13:10:36 +0530",
+      "summary": "Reliance Industries has added over Rs 1 lakh crore in market value in just three trading sessions ahead of its closely watched AGM. Despite the recent rally, Morgan Stanley sees another 38% upside, be",
+      "highlights": [
+        "RIL adds Rs 1 lakh crore market value",
+        "Shares jump 6% in three sessions",
+        "Morgan Stanley projects 38% upside"
+      ],
+      "sentiment": 0.5,
+      "risk_tag": "Low Risk",
+      "reasoning": "The headline signals a strong rally and market cap surge, indicating positive momentum. No adverse events or risks are mentioned, supporting a low-risk assessment.",
+      "related_symbols": [
+        "RELIANCE"
+      ],
+      "analyzed_at": "2026-06-16T15:57:01.608713"
+    },
+    {
+      "id": "et_1781595706_1",
+      "source": "economic_times",
+      "headline": "Hindalco, NALCO, Vedanta Aluminium shares crash up to 6% as aluminium prices drop on US-Iran peace deal",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hindalco-nalco-vedanta-aluminium-shares-crash-up-to-6-as-aluminium-prices-drop-on-us-iran-peace-deal/articleshow/131763333.cms",
+      "published_at": "Tue, 16 Jun 2026 12:55:07 +0530",
+      "summary": "Indian aluminium stocks saw a sharp decline today. This happened as aluminium prices crashed significantly. The drop followed news of an Iran-US peace deal framework. This deal improves prospects for ",
+      "highlights": [
+        "Aluminium stocks fell 6%",
+        "Prices dropped after Iran-US deal",
+        "Strait of Hormuz reopening expected impact"
+      ],
+      "sentiment": -0.5,
+      "risk_tag": "High Risk",
+      "reasoning": "The headline indicates a sharp crash in aluminium shares, signaling significant downside risk. No mitigating positive data is present, reinforcing a high-risk assessment.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T15:41:50.219356"
+    },
+    {
+      "id": "et_1781593687_1",
+      "source": "economic_times",
+      "headline": "IFCI shares rally 30% in 3 days, hit fresh record high amid buzz around NSE filing IPO papers by Thursday",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ifci-shares-rally-30-in-3-days-hit-fresh-record-high-amid-buzz-around-nse-filing-ipo-papers-by-thursday/articleshow/131761910.cms",
+      "published_at": "Tue, 16 Jun 2026 11:57:43 +0530",
+      "summary": "Vedanta’s Rs 2 lakh crore demerger has sparked renewed interest in its aluminium and power businesses, prompting investors to reassess value creation opportunities. Market focus is shifting towards wh",
       "highlights": [
         "Positive momentum detected",
         "Favorable fundamentals",
@@ -73,143 +96,849 @@
       "sentiment": 0.75,
       "risk_tag": "Low Risk",
       "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
-      "analyzed_at": "2026-05-07T13:31:07.766395"
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T15:10:50.648442"
     },
     {
-      "id": "et_1778131832_2",
+      "id": "et_1781593687_2",
       "source": "economic_times",
-      "headline": "Bajaj Auto shares rise 3% after firm posts record Q4 profit. Here’s what Jefferies, Nomura and other brokerages are saying",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/bajaj-auto-shares-rise-3-after-firm-posts-record-q4-profit-heres-what-jefferies-nomura-and-other-brokerages-are-saying/articleshow/130879685.cms",
-      "published_at": "Thu, 07 May 2026 10:25:44 +0530",
-      "summary": "Bajaj Auto shares rose over 3% after the company posted its highest-ever quarterly profit of Rs 2,746 crore for Q4FY26, up 34% year-on-year, prompting bullish brokerage commentary. Revenue from operat",
+      "headline": "Time for investors and traders to think alike? 7 Nifty Auto stocks with an upside potential of up to 19%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/time-for-investors-and-traders-to-think-alike-7-nifty-auto-stocks-with-an-upside-potential-of-up-to-19/articleshow/131761595.cms",
+      "published_at": "Tue, 16 Jun 2026 11:55:42 +0530",
+      "summary": "There are sectors that have not quite followed the war script. Take the auto sector, for instance. A surge in oil prices is supposed to be a dampener for discretionary buying. But auto sales have rema",
       "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
       ],
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-07T13:31:17.328064"
-    },
-    {
-      "id": "et_1778131832_3",
-      "source": "economic_times",
-      "headline": "Whirlpool stock crashes after weak outlook and price hike warning",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/whirlpool-stock-crashes-after-weak-outlook-and-price-hike-warning/slideshow/130879932.cms",
-      "published_at": "Thu, 07 May 2026 10:17:46 +0530",
-      "summary": "Whirlpool shares plunged nearly 17% after the appliance maker cut its 2026 outlook, suspended dividends, and warned of further price hikes. Weak consumer demand, rising inflationary pressures, tariff ",
-      "highlights": [
-        "Shares dropped nearly 17% intraday",
-        "2026 outlook cut and dividends suspended",
-        "Weak demand and inflation pressure earnings"
+      "related_symbols": [
+        "NIFTY"
       ],
-      "sentiment": -0.72,
-      "risk_tag": "High Risk",
-      "reasoning": "The stock fell sharply after a downgraded outlook and dividend suspension, indicating deteriorating fundamentals. Ongoing inflation, tariff uncertainty, and weak housing demand amplify downside risk.",
-      "analyzed_at": "2026-05-07T13:31:24.970623"
+      "analyzed_at": "2026-06-16T15:10:55.866878"
     },
     {
-      "id": "et_1778131832_4",
+      "id": "et_1781593687_3",
       "source": "economic_times",
-      "headline": "Godrej Consumer shares tumble 6% despite Q4 show. Should you buy, sell or hold the stock?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/godrej-consumer-shares-tumble-6-despite-q4-show-should-you-buy-sell-or-hold-the-stock/articleshow/130879655.cms",
-      "published_at": "Thu, 07 May 2026 10:13:37 +0530",
-      "summary": "Godrej Consumer Products shares dropped nearly 6% on Thursday despite reporting a 9.7% YoY rise in Q4 net profit and double-digit revenue growth. Brokerages remained positive on the stock, citing stro",
+      "headline": "US-Iran peace deal: Reliance Industries, ONGC; which other oil &amp; gas stocks will emerge as top winners and losers?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/us-iran-peace-deal-reliance-industries-ongc-which-other-oil-gas-stocks-will-emerge-as-top-winners-and-losers/articleshow/131761581.cms",
+      "published_at": "Tue, 16 Jun 2026 11:47:05 +0530",
+      "summary": "A US-Iran peace deal is expected to ease oil supply risks, pushing crude prices lower. Nomura sees OMCs, CGDs, and Petronet LNG as key beneficiaries, while upstream firms like ONGC and Oil India may f",
       "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
       ],
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-07T13:31:33.767944"
+      "related_symbols": [
+        "RELIANCE"
+      ],
+      "analyzed_at": "2026-06-16T15:11:02.776946"
     },
     {
-      "id": "et_1778131832_6",
+      "id": "et_1781590803_1",
       "source": "economic_times",
-      "headline": "SBI Q4 Preview: Can the largest PSB deliver good profits despite treasury pain?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/sbi-q4-preview-can-the-largest-psb-deliver-good-profits-despite-treasury-pain/articleshow/130879568.cms",
-      "published_at": "Thu, 07 May 2026 10:09:25 +0530",
-      "summary": "SBI is expected to report a subdued March quarter as treasury losses likely offset stable loan growth and resilient margins. Brokerages expect modest profit growth, steady asset quality and stable cre",
+      "headline": "YES Bank share price rises 3% on partnership with Northern Arc to extend lending offerings",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/yes-bank-share-price-rises-3-on-partnership-with-northern-arc-to-extend-lending-offerings/articleshow/131761393.cms",
+      "published_at": "Tue, 16 Jun 2026 11:32:45 +0530",
+      "summary": "YES Bank shares gained after the lender announced a strategic partnership with Northern Arc Capital. The collaboration aims to expand credit access, accelerate digital lending, and provide debt invest",
       "highlights": [
-        "Treasury losses likely offset stable loan growth",
-        "Brokerages expect modest profit growth QoQ",
-        "Asset quality steady and credit costs stable outlook"
+        "YES Bank shares rose 3% post-partnership announcement",
+        "Collaboration with Northern Arc Capital to extend lending offerings",
+        "Focus on accelerating digital lending and debt investment opportunities"
       ],
-      "sentiment": -0.45,
+      "sentiment": 0.4,
+      "risk_tag": "Low Risk",
+      "reasoning": "Partnership with Northern Arc Capital aims to expand credit access and accelerate digital lending, signaling strategic growth. No immediate risks or negative factors mentioned.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T14:20:14.666373"
+    },
+    {
+      "id": "et_1781589866_1",
+      "source": "economic_times",
+      "headline": "Suzlon Energy shares jump over 6%. Why brokerages call it India’s most investible wind energy stock?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/suzlon-energy-shares-jump-over-6-why-brokerages-call-it-indias-most-investible-wind-energy-stock/articleshow/131760586.cms",
+      "published_at": "Tue, 16 Jun 2026 11:10:19 +0530",
+      "summary": "Suzlon Energy shares rose sharply on Tuesday after the company outlined an ambitious FY31 roadmap focused on expanding beyond wind energy into a broader renewable energy platform. Brokerages including",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T14:04:55.545722"
+    },
+    {
+      "id": "et_1781588845_1",
+      "source": "economic_times",
+      "headline": "Vedanta Aluminium, Oil &amp; Gas and Power shares fall up to 5% on Day 2. What should investors do?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/vedanta-aluminium-oil-gas-and-power-shares-fall-up-to-5-on-day-2-what-should-investors-do/articleshow/131760425.cms",
+      "published_at": "Tue, 16 Jun 2026 11:01:17 +0530",
+      "summary": "Shares of newly demerged Vedanta entities saw a dip post-listing. Investors are now weighing long-term opportunities, with Vedanta Aluminium emerging as a clear heavyweight due to its scale and expans",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T13:47:49.651129"
+    },
+    {
+      "id": "yahoo_1781608220_4",
+      "source": "yahoo",
+      "headline": "SpaceX stock is getting bought by a wave of retail investors: By the numbers",
+      "link": "https://finance.yahoo.com/markets/stocks/article/spacex-stock-is-getting-bought-by-a-wave-of-retail-investors-by-the-numbers-105408630.html",
+      "published_at": "2026-06-16T10:54:08Z",
+      "summary": "SpaceX stock is getting bought by a wave of retail investors: By the numbers",
+      "highlights": [
+        "Retail investors driving new buying wave",
+        "Increased demand for SpaceX shares",
+        "No concrete financial numbers disclosed"
+      ],
+      "sentiment": 0.2,
+      "risk_tag": "Low Risk",
+      "reasoning": "Retail investors are increasingly buying SpaceX stock, indicating modest optimism. No specific financial metrics are provided, so risk remains low.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T19:10:31.136445"
+    },
+    {
+      "id": "et_1781588845_2",
+      "source": "economic_times",
+      "headline": "DLF, Godrej Properties, other realty stocks jump up to 11% in 2 days. Is the rally sustainable?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/dlf-godrej-properties-other-realty-stocks-jump-up-to-11-in-2-days-is-the-rally-sustainable/articleshow/131760183.cms",
+      "published_at": "Tue, 16 Jun 2026 10:46:55 +0530",
+      "summary": "Realty stocks are experiencing a significant jump, with some gaining over 11% in just two days. This surge is fueled by attractive valuations after a prolonged correction and positive pre-sales guidan",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T13:47:57.961475"
+    },
+    {
+      "id": "yahoo_1781606947_6",
+      "source": "yahoo",
+      "headline": "3 Dividend Stocks to Hold for the Long Haul",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/3-dividend-stocks-hold-long-103500385.html",
+      "published_at": "2026-06-16T10:35:00Z",
+      "summary": "3 Dividend Stocks to Hold for the Long Haul",
+      "highlights": [
+        "Focus on long-term dividend growth",
+        "Emphasis on stable income generation",
+        "Selection of resilient companies"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "The title focuses on long-term dividend stock recommendations without explicit positive or negative indicators. No specific risks or performance metrics are mentioned.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T18:55:01.967662"
+    },
+    {
+      "id": "yahoo_1781606947_11",
+      "source": "yahoo",
+      "headline": "Comstock sells 27% stake in Pinnacle Gas Services to Sixth Street",
+      "link": "https://finance.yahoo.com/energy/articles/comstock-sells-27-stake-pinnacle-103316501.html",
+      "published_at": "2026-06-16T10:33:16Z",
+      "summary": "Comstock sells 27% stake in Pinnacle Gas Services to Sixth Street",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T18:55:10.427781"
+    },
+    {
+      "id": "yahoo_1781606947_16",
+      "source": "yahoo",
+      "headline": "3 Dividend Stocks That Recently Hit 52-Highs to Buy in June",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/3-dividend-stocks-recently-hit-102500301.html",
+      "published_at": "2026-06-16T10:25:00Z",
+      "summary": "3 Dividend Stocks That Recently Hit 52-Highs to Buy in June",
+      "highlights": [
+        "EPS grew 25% YoY",
+        "Revenue beat consensus by $200M",
+        "Guidance raised for FY2026"
+      ],
+      "sentiment": 0.85,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive earnings and strong guidance indicate a favorable investment opportunity.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T18:55:14.266112"
+    },
+    {
+      "id": "yahoo_1781605120_6",
+      "source": "yahoo",
+      "headline": "SCHD Now Concentrates 42 Percent of Your Money in Just 10 Stocks. Here Is Who Should Still Own It",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/schd-now-concentrates-42-percent-101253453.html",
+      "published_at": "2026-06-16T10:12:53Z",
+      "summary": "SCHD Now Concentrates 42 Percent of Your Money in Just 10 Stocks. Here Is Who Should Still Own It",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T18:18:54.517372"
+    },
+    {
+      "id": "et_1781588845_5",
+      "source": "economic_times",
+      "headline": "Beyond Vedanta: The other Anil Agarwal stock that just exploded 500% on AI boom",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/beyond-vedanta-the-other-anil-agarwal-stock-that-just-exploded-500-on-ai-boom/articleshow/131759302.cms",
+      "published_at": "Tue, 16 Jun 2026 10:06:37 +0530",
+      "summary": "Sterlite Technologies, a Vedanta-backed optical fibre manufacturer, has witnessed an extraordinary 500% surge in its stock value in 2026, driven by the global AI boom. This rally is fueled by the esca",
+      "highlights": [
+        "Stock surges 500% amid AI boom",
+        "Vedanta-backed optical fibre manufacturer",
+        "Demand for data center infrastructure rises"
+      ],
+      "sentiment": 0.8,
+      "risk_tag": "Low Risk",
+      "reasoning": "Strong stock surge driven by AI-driven infrastructure demand indicates positive momentum. No significant risks highlighted in the news.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T13:48:11.199336"
+    },
+    {
+      "id": "et_1781588845_6",
+      "source": "economic_times",
+      "headline": "Buyback alert! Last date to buy Cyient shares to participate in Rs 720 crore share buyback. Do you own?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/buyback-alert-last-date-to-buy-cyient-shares-to-participate-in-rs-720-crore-share-buyback-do-you-own/articleshow/131759264.cms",
+      "published_at": "Tue, 16 Jun 2026 09:59:25 +0530",
+      "summary": "Cyient’s Rs 720 crore share buyback enters the final stage, with June 16 as the last date to buy shares to qualify. The record date is June 17. The company plans to repurchase shares at Rs 1,125 apiec",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T13:48:20.836444"
+    },
+    {
+      "id": "et_1781588845_7",
+      "source": "economic_times",
+      "headline": "Motilal Oswal Financial Services among 5 F&amp;O stocks with a sharp rise in futures open interest",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/motilal-oswal-financial-services-among-5-fampo-stocks-with-a-sharp-rise-in-futures-open-interest/slideshow/131759200.cms",
+      "published_at": "Tue, 16 Jun 2026 09:49:45 +0530",
+      "summary": "Motilal Oswal Financial Services was among five NSE F&amp;O stocks witnessing a sharp rise in futures open interest on June 15. The overall OI increase exceeded 7%, indicating fresh long or short buil",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T13:48:29.807190"
+    },
+    {
+      "id": "et_1781588845_9",
+      "source": "economic_times",
+      "headline": "GIC shares decline 6% as Rs 3,088 crore OFS opens at 9% discount",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/gic-shares-in-focus-as-ofs-worth-rs-3088-crore-opens-at-9-discount/articleshow/131758964.cms",
+      "published_at": "Tue, 16 Jun 2026 09:35:39 +0530",
+      "summary": "The government is set to divest up to a 5% stake in General Insurance Corporation of India (GIC) through an offer for sale, opening today at a floor price of Rs 352 per share. This move aims to raise ",
+      "highlights": [
+        "Government divestment in GIC at 9% discount",
+        "Offer price set at Rs 352 per share",
+        "Target raises over Rs 3,087 crore"
+      ],
+      "sentiment": 0.15,
       "risk_tag": "Medium Risk",
-      "reasoning": "Title flags treasury pain and a subdued quarter, implying earnings headwinds despite stable loan trends. Management commentary on margins and deposits will be key to gauge downside risk.",
-      "analyzed_at": "2026-05-07T13:31:37.257938"
+      "reasoning": "The news presents a mixed situation with a discount event but overall neutral tone.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T13:48:34.171848"
     },
     {
-      "id": "et_1778131832_7",
-      "source": "economic_times",
-      "headline": "Spicier than jhalmuri: The Rs 1.7 lakh crore fiscal bite hidden in state election results",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/spicier-than-jhalmuri-the-rs-1-7-lakh-crore-fiscal-bite-hidden-in-state-election-results/articleshow/130879521.cms",
-      "published_at": "Thu, 07 May 2026 10:07:18 +0530",
-      "summary": "What looked like a light-hearted campaign moment during PM Narendra Modi’s West Bengal trail has now turned into a major fiscal concern after election results triggered expensive welfare promises. Eco",
+      "id": "yahoo_1781604193_26",
+      "source": "yahoo",
+      "headline": "These 3 Beaten-Down Growth Stocks Look Like Long-Term Comeback Candidates",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/3-beaten-down-growth-stocks-093500343.html",
+      "published_at": "2026-06-16T09:35:00Z",
+      "summary": "These 3 Beaten-Down Growth Stocks Look Like Long-Term Comeback Candidates",
       "highlights": [
-        "Fiscal bite estimated at Rs 1.69 lakh crore post-polls",
-        "West Bengal campaign pledges turn into costly commitments",
-        "Stretched state budgets face added pressure from promises"
+        "Three growth stocks identified as comeback candidates",
+        "Focus on long-term investment potential",
+        "Market conditions may support recovery"
       ],
-      "sentiment": -0.75,
-      "risk_tag": "High Risk",
-      "reasoning": "Election-driven welfare pledges translate into a large fiscal bite, straining public finances. The sizable burden raises rollover and deficit risks for already stretched states.",
-      "analyzed_at": "2026-05-07T13:31:40.022396"
+      "sentiment": 0.4,
+      "risk_tag": "Low Risk",
+      "reasoning": "The title suggests a positive outlook for long-term recovery of growth stocks despite past underperformance. No specific risks are mentioned in the content.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T18:03:16.900917"
     },
     {
-      "id": "et_1778131832_8",
-      "source": "economic_times",
-      "headline": "KPIT Technologies shares slide 4% as Q4 profit falls 33% YoY to Rs 163 crore",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/kpit-technologies-shares-slide-4-as-q4-profit-falls-33-yoy-to-rs-163-crore/articleshow/130879389.cms",
-      "published_at": "Thu, 07 May 2026 10:03:57 +0530",
-      "summary": "KPIT Technologies shares fell sharply on Thursday. The automotive software firm reported a 33% year-on-year decline in net profit for the March quarter. This occurred despite a healthy 12% rise in rev",
+      "id": "yahoo_1781604193_31",
+      "source": "yahoo",
+      "headline": "Micron Stock Charges Toward New High and Could Reach This Level",
+      "link": "https://www.barrons.com/articles/micron-stock-price-new-high-analyst-fc450072?siteid=yhoof2&yptr=yahoo",
+      "published_at": "2026-06-16T09:31:00Z",
+      "summary": "Micron Stock Charges Toward New High and Could Reach This Level",
       "highlights": [
-        "Q4 net profit fell 33% YoY to Rs 163 crore",
-        "Revenue increased 12% YoY despite profit drop",
-        "Operating expenses rose significantly"
-      ],
-      "sentiment": -0.62,
-      "risk_tag": "High Risk",
-      "reasoning": "The 33% YoY profit decline despite revenue growth signals financial stress. Rising operating expenses and dividend recommendations may indicate liquidity pressures.",
-      "analyzed_at": "2026-05-07T13:31:56.507246"
-    },
-    {
-      "id": "et_1778131832_9",
-      "source": "economic_times",
-      "headline": "F&amp;O Radar: Bull Call Spread strategy for Crompton shares this week",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/fo-radar-bull-call-spread-strategy-for-crompton-shares-this-week/articleshow/130879334.cms",
-      "published_at": "Thu, 07 May 2026 10:01:43 +0530",
-      "summary": "Crompton Ltd shows signs of a bullish reversal, with a double bottom pattern and a strong daily candle above its 200-day EMA. Increased trading volumes and a daily RSI of 67.73 indicate positive momen",
-      "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
       ],
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-07T13:32:02.290411"
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T18:03:33.355927"
     },
     {
-      "id": "et_1778131832_10",
-      "source": "economic_times",
-      "headline": "Dividend alert! Last date to buy these 10 stocks before they go ex-record date. Do you own?",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/dividend-alert-last-date-to-buy-these-10-stocks-before-they-go-ex-record-date-do-you-own/articleshow/130879204.cms",
-      "published_at": "Thu, 07 May 2026 10:01:28 +0530",
-      "summary": "Investors have a final opportunity today to purchase shares of 10 companies before they go ex-record date for dividends tomorrow, May 8. Notable companies include Central Bank of India, Laurus Labs, N",
+      "id": "yahoo_1781603256_2",
+      "source": "yahoo",
+      "headline": "Stocks rise as SpaceX fever lifts tech; yen flat after BOJ hikes rates",
+      "link": "https://finance.yahoo.com/news/asia-markets-temper-iran-deal-011441660.html",
+      "published_at": "2026-06-16T09:29:53Z",
+      "summary": "Stocks rise as SpaceX fever lifts tech; yen flat after BOJ hikes rates",
       "highlights": [
-        "Monitor developments",
-        "Watch for confirmation",
-        "Risk assessment advised"
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
       ],
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "analyzed_at": "2026-05-07T13:32:06.646959"
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T17:47:57.464895"
+    },
+    {
+      "id": "et_1781588845_10",
+      "source": "economic_times",
+      "headline": "Sensex rises over 250 points, Nifty above 23,900 as markets extend gains; HCL Tech among top gainers",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/sensex-rises-over-250-points-nifty-above-23900-as-markets-extend-gains-hcl-tech-among-top-gainers/articleshow/131758642.cms",
+      "published_at": "Tue, 16 Jun 2026 09:28:57 +0530",
+      "summary": "Indian stock markets surged for a third consecutive day, with Sensex and Nifty extending gains amid optimism around a potential Iran-US peace deal framework. While positive macro factors like falling ",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T13:48:39.361078"
+    },
+    {
+      "id": "et_1781588845_11",
+      "source": "economic_times",
+      "headline": "HDFC AMC among 4 stocks flash bullish signals, indicating a possible uptrend",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hdfc-amc-among-4-stocks-flash-bullish-signals-indicating-a-possible-uptrend/slideshow/131758659.cms",
+      "published_at": "Tue, 16 Jun 2026 09:20:55 +0530",
+      "summary": "Four Nifty500 stocks appeared on the White Marubozu bullish scanner on June 15, signalling strong buying momentum across select counters. The candlestick pattern reflects sustained bullish sentiment t",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T13:49:19.719592"
+    },
+    {
+      "id": "et_1781582584_1",
+      "source": "economic_times",
+      "headline": "Adani Enterprises shares in focus on partnership with Jabil to build AI data centres in India",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/adani-enterprises-shares-in-focus-on-partnership-with-jabil-to-build-ai-data-centres-in-india/articleshow/131758463.cms",
+      "published_at": "Tue, 16 Jun 2026 09:11:13 +0530",
+      "summary": "Adani Enterprises will be in focus after announcing a strategic partnership with Jabil to develop an AI and data centre infrastructure manufacturing platform in India. The collaboration aims to build ",
+      "highlights": [
+        "Adani Enterprises partners with Jabil for AI data centers",
+        "Focus on multi-gigawatt AI hardware production",
+        "Targets global demand for advanced technology"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Medium Risk",
+      "reasoning": "Strong partnership expected to boost AI infrastructure capacity in India.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T12:03:46.668011"
+    },
+    {
+      "id": "yahoo_1781603256_36",
+      "source": "yahoo",
+      "headline": "Prediction: This Will Be Micron's Stock Price by Late 2027 (Hint: It Implies Big Gains)",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/prediction-microns-stock-price-2027-090800954.html",
+      "published_at": "2026-06-16T09:08:00Z",
+      "summary": "Prediction: This Will Be Micron's Stock Price by Late 2027 (Hint: It Implies Big Gains)",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T17:48:06.138773"
+    },
+    {
+      "id": "et_1781581501_1",
+      "source": "economic_times",
+      "headline": "HCL Tech shares in focus after buying stake in Sarvam AI for Rs 1,427 crore",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/hcl-tech-shares-in-focus-after-buying-stake-in-sarvam-ai-for-rs-1427-crore/articleshow/131758435.cms",
+      "published_at": "Tue, 16 Jun 2026 09:00:59 +0530",
+      "summary": "HCLTech will remain in focus after investing Rs 1,427 crore in Sarvam AI, becoming the lead investor in the startup’s Series B funding round. The partnership aims to advance frontier and sovereign AI ",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:46:17.662046"
+    },
+    {
+      "id": "et_1781581501_2",
+      "source": "economic_times",
+      "headline": "Kalyan Jewellers among 6 stocks showing bullish RSI upswing",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/kalyan-jewellers-among-6-stocks-showing-bullish-rsi-upswing/slideshow/131758384.cms",
+      "published_at": "Tue, 16 Jun 2026 08:49:48 +0530",
+      "summary": "On June 15, six Nifty500 stocks that gained over 8% appeared in the RSI Trending Up scan based on StockEdge.com data. Their RSI readings crossed above the 50 mark from lower levels, indicating improvi",
+      "highlights": [
+        "Six Nifty500 stocks gained over 8%",
+        "RSI readings crossed above the 50 mark",
+        "Kalyan Jewellers shows improving price momentum"
+      ],
+      "sentiment": 0.6,
+      "risk_tag": "Low Risk",
+      "reasoning": "The news indicates a bullish RSI upswing and improving momentum for Kalyan Jewellers. Positive technical signals generally suggest strengthening investor sentiment.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T11:46:29.712709"
+    },
+    {
+      "id": "yahoo_1781601328_24",
+      "source": "yahoo",
+      "headline": "SpaceX Stock Hit $2 Trillion on IPO Day. History Says a $10,000 Investment Will Be Worth This Much in a Year.",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/spacex-stock-hit-2-trillion-084400141.html",
+      "published_at": "2026-06-16T08:44:00Z",
+      "summary": "SpaceX Stock Hit $2 Trillion on IPO Day. History Says a $10,000 Investment Will Be Worth This Much in a Year.",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "RELIANCE"
+      ],
+      "analyzed_at": "2026-06-16T17:16:26.084470"
+    },
+    {
+      "id": "et_1781581501_3",
+      "source": "economic_times",
+      "headline": "Stocks to buy in 2026 for long term: Avanti feeds, Suzlon Energy among 5 stocks that could give 10-20% return",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/stocks-to-buy-in-2026-for-long-term-avanti-feeds-suzlon-energy-among-5-stocks-that-could-give-10-20-return/slideshow/131757516.cms",
+      "published_at": "Tue, 16 Jun 2026 07:43:44 +0530",
+      "summary": "We have collated a list of recommendations from top brokerage firms from ETNow and other sources",
+      "highlights": [
+        "Stocks recommended for 10-20% long-term returns",
+        "Avanti Feeds and Suzlon Energy listed as top picks",
+        "Analysis based on brokerage firm recommendations"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "The title highlights long-term growth potential with 10-20% returns, suggesting positive analyst sentiment. The inclusion of specific stocks like Avanti Feeds and Suzlon Energy indicates targeted recommendations.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:46:35.813787"
+    },
+    {
+      "id": "et_1781581501_4",
+      "source": "economic_times",
+      "headline": "Stocks in news: HCL Tech, Bharti Airtel, SBI, Adani Enterprises, GMR Airports",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/stocks-in-news-hcl-tech-bharti-airtel-sbi-adani-enterprises-gmr-airports/articleshow/131757417.cms",
+      "published_at": "Tue, 16 Jun 2026 07:42:16 +0530",
+      "summary": "Indian equities opened the week strong, with the Sensex and Nifty gaining nearly 1% each on positive global sentiment. Key stocks in focus include HCL Technologies, GMR Airports, Adani Enterprises, an",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T11:46:42.869399"
+    },
+    {
+      "id": "et_1781581501_5",
+      "source": "economic_times",
+      "headline": "Positive Breakout: These 14 stocks cross above their 200 DMAs",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/positive-breakout-these-14-stocks-cross-above-their-200-dmas/slideshow/131757393.cms",
+      "published_at": "Tue, 16 Jun 2026 07:30:32 +0530",
+      "summary": "As long as the stock is priced above the 200-day SMA on the daily timeframe, it is generally considered to be in an overall uptrend.",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:46:57.304792"
+    },
+    {
+      "id": "et_1781581501_6",
+      "source": "economic_times",
+      "headline": "Bonus bonanza! Last date to buy Brigade Enterprises shares for 1:3 bonus issue reward",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/bonus-bonanza-last-date-to-buy-brigade-enterprises-shares-for-13-bonus-issue-reward/articleshow/131757298.cms",
+      "published_at": "Tue, 16 Jun 2026 07:27:28 +0530",
+      "summary": "Brigade Enterprises in May announced its first bonus issue in around seven years, along with the release of its Q4 results. It said its board approved the plan to issue one bonus share with a face val",
+      "highlights": [
+        "1:3 bonus share ratio for shareholders",
+        "Record date determines eligibility",
+        "Q4 results disclosed alongside announcement"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "The announcement of a bonus share issue after seven years signals shareholder-friendly action. The company's Q4 results release adds context but lacks negative indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:47:10.514609"
+    },
+    {
+      "id": "et_1781581501_8",
+      "source": "economic_times",
+      "headline": "Schneider shares hit upper circuit on parent co's AI deal",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/schneider-shares-hit-upper-circuit-on-parent-cos-ai-deal/articleshow/131757058.cms",
+      "published_at": "Tue, 16 Jun 2026 06:38:05 +0530",
+      "summary": "Schneider Electric Infrastructure shares saw a significant jump. This followed an announcement by its French parent, Schneider Electric. The parent company will partner with Taiwan's Foxconn to provid",
+      "highlights": [
+        "Parent company partners with Foxconn for AI infrastructure",
+        "Indian unit shows strong growth potential",
+        "Analysts remain optimistic about future prospects"
+      ],
+      "sentiment": 0.85,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive market reaction to AI partnership announcement.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:47:15.181557"
+    },
+    {
+      "id": "yahoo_1781601328_7",
+      "source": "yahoo",
+      "headline": "Meta Platforms, Inc. (META): Among Stocks ChatGPT Predicts Could Make You Wealthy in 3 Years",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/meta-platforms-inc-meta-among-062802036.html",
+      "published_at": "2026-06-16T06:28:02Z",
+      "summary": "Meta Platforms, Inc. (META): Among Stocks ChatGPT Predicts Could Make You Wealthy in 3 Years",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "META"
+      ],
+      "analyzed_at": "2026-06-16T17:15:39.952952"
+    },
+    {
+      "id": "yahoo_1781601328_8",
+      "source": "yahoo",
+      "headline": "Palantir Technologies Inc. (PLTR): Among Stocks ChatGPT Predicts Could Make You Wealthy in 3 Years",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/palantir-technologies-inc-pltr-among-062757394.html",
+      "published_at": "2026-06-16T06:27:57Z",
+      "summary": "Palantir Technologies Inc. (PLTR): Among Stocks ChatGPT Predicts Could Make You Wealthy in 3 Years",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T17:16:08.214882"
+    },
+    {
+      "id": "yahoo_1781601328_14",
+      "source": "yahoo",
+      "headline": "Rocket Lab Corporation (RKLB): Among Stocks ChatGPT Predicts Could Make You Wealthy in 3 Years",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/rocket-lab-corporation-rklb-among-062752656.html",
+      "published_at": "2026-06-16T06:27:52Z",
+      "summary": "Rocket Lab Corporation (RKLB): Among Stocks ChatGPT Predicts Could Make You Wealthy in 3 Years",
+      "highlights": [
+        "Rocket Lab highlighted among potential winners",
+        "No specific financial metrics provided",
+        "Future outlook based on predictions"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "The article merely lists Rocket Lab as a potential future winner without any concrete data or events, implying a neutral stance.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T17:16:14.887188"
+    },
+    {
+      "id": "et_1781581501_10",
+      "source": "economic_times",
+      "headline": "Vedanta demerger unlocks 20% value; Aluminium arm becomes most valuable",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/vedanta-demerger-unlocks-20-value-aluminium-arm-becomes-most-valuable/articleshow/131756952.cms",
+      "published_at": "Tue, 16 Jun 2026 06:20:17 +0530",
+      "summary": "Vedanta's five companies unlocked approximately 20% value following a major corporate restructuring. While four newly demerged businesses experienced early gains that turned into losses on their stock",
+      "highlights": [
+        "Vedanta's demerger unlocked 20% value",
+        "Aluminium arm became most valuable post-restructuring",
+        "Combined value of entities increased significantly"
+      ],
+      "sentiment": 0.4,
+      "risk_tag": "Low Risk",
+      "reasoning": "Demerger unlocked value and increased combined worth, indicating positive market reaction. Early losses in demerged stocks were offset by overall gains.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:47:20.585139"
+    },
+    {
+      "id": "yahoo_1781601328_18",
+      "source": "yahoo",
+      "headline": "Italy's antitrust regulator probes Apple over cloud services under Digital Market rules",
+      "link": "https://finance.yahoo.com/technology/articles/italys-antitrust-regulator-probes-apple-062015050.html",
+      "published_at": "2026-06-16T06:20:15Z",
+      "summary": "Italy's antitrust regulator probes Apple over cloud services under Digital Market rules",
+      "highlights": [
+        "Risk event detected",
+        "Monitor closely",
+        "Potential market impact"
+      ],
+      "sentiment": -0.65,
+      "risk_tag": "High Risk",
+      "reasoning": "Negative sentiment due to risk concerns and potential systemic impact.",
+      "related_symbols": [
+        "AAPL"
+      ],
+      "analyzed_at": "2026-06-16T17:16:19.873161"
+    },
+    {
+      "id": "et_1781581501_17",
+      "source": "economic_times",
+      "headline": "Sensex, Nifty rally 1% as US-Iran peace hopes spark risk-on sentiment",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/sensex-nifty-rally-1-as-us-iran-peace-hopes-spark-risk-on-sentiment/articleshow/131756735.cms",
+      "published_at": "Tue, 16 Jun 2026 05:28:19 +0530",
+      "summary": "Indian equities surged over 1% on Monday, with the Nifty 50 and Sensex climbing significantly. Hopes of a US-Iran peace deal and easing crude oil prices prompted traders to reduce bearish bets, liftin",
+      "highlights": [
+        "Indian equities surged over 1%",
+        "Nifty 50 and Sensex climbed significantly",
+        "Realty, consumer durables and auto stocks led gains"
+      ],
+      "sentiment": 0.72,
+      "risk_tag": "Low Risk",
+      "reasoning": "The title signals a rally, indicating strong positive market sentiment. Positive macro cues from US‑Iran peace hopes further boost confidence.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T11:47:28.630224"
+    },
+    {
+      "id": "et_1781581501_18",
+      "source": "economic_times",
+      "headline": "Stock Radar: MRPL bounces back after forming double bottom formation; stock still down 25% from highs – should you buy?",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/stock-radar-mrpl-bounces-back-after-forming-double-bottom-formation-stock-still-down-25-from-highs-should-you-buy/articleshow/131741144.cms",
+      "published_at": "Tue, 16 Jun 2026 05:00:00 +0530",
+      "summary": "Mangalore Refinery and Petrochemicals Ltd stock is showing positive signals. A double bottom formation on daily charts indicates a potential comeback for bulls. Experts suggest buying the stock for a ",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:47:39.972058"
+    },
+    {
+      "id": "yahoo_1781601328_4",
+      "source": "yahoo",
+      "headline": "Stock market today: Dow, S&P 500, Nasdaq futures drift ahead of Warsh's first Fed meeting as chair",
+      "link": "https://finance.yahoo.com/markets/live/stock-market-today-dow-sp-500-nasdaq-futures-drift-ahead-of-warshs-first-fed-meeting-as-chair-223512220.html",
+      "published_at": "2026-06-15T22:35:12Z",
+      "summary": "Stock market today: Dow, S&P 500, Nasdaq futures drift ahead of Warsh's first Fed meeting as chair",
+      "highlights": [
+        "Dow, S&P 500, Nasdaq futures drift ahead of Fed meeting",
+        "Warsh's first meeting as Fed chair",
+        "Market shows cautious pre-meeting movement"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "The news describes market futures drifting ahead of a Fed meeting, indicating cautious optimism without strong directional signals. The absence of negative or positive keywords in the title supports a neutral sentiment.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T17:15:32.664477"
+    },
+    {
+      "id": "et_1781581501_20",
+      "source": "economic_times",
+      "headline": "Ahead of Market: 10 things that will decide stock market action on Tuesday",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/ahead-of-market-10-things-that-will-decide-stock-market-action-on-tuesday/articleshow/131749233.cms",
+      "published_at": "Mon, 15 Jun 2026 21:15:14 +0530",
+      "summary": "Indian equities rallied sharply as an interim US-Iran peace framework eased geopolitical concerns and pushed oil prices lower. Improved inflation and interest-rate expectations lifted sentiment, helpi",
+      "highlights": [
+        "Indian equities rallied sharply",
+        "US-Iran peace framework eased concerns",
+        "Oil prices fell, boosting sentiment"
+      ],
+      "sentiment": 0.4,
+      "risk_tag": "Low Risk",
+      "reasoning": "The headline signals a rally, indicating positive market sentiment. No negative catalysts or high uncertainty are mentioned, so risk remains low.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-16T11:47:45.331889"
+    },
+    {
+      "id": "et_1781581501_22",
+      "source": "economic_times",
+      "headline": "Market trading guide: NDR Auto among 2 stock recommendations for Tuesday",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/market-trading-guide-ndr-auto-among-2-stock-recommendations-for-tuesday/articleshow/131748920.cms",
+      "published_at": "Mon, 15 Jun 2026 20:44:00 +0530",
+      "summary": "Improved investor sentiment following the interim US-Iran peace agreement has supported equities as crude fell below $85, easing inflation concerns and improving the FY27 outlook. Analysts favour grow",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:47:50.088350"
+    },
+    {
+      "id": "et_1781581501_23",
+      "source": "economic_times",
+      "headline": "Two Trades for Today: A city gas distributor for a 9.4% gain, a mid-cap private bank stock for a 5% upmove",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/two-trades-for-today-a-city-gas-distributor-for-a-9-4-gain-a-mid-cap-private-bank-stock-for-a-5-upmove/articleshow/131748405.cms",
+      "published_at": "Mon, 15 Jun 2026 20:30:18 +0530",
+      "summary": "Our technical analysts identify select stocks every trading day that may gain momentum even in volatile markets. Here are the technical calls for today.",
+      "highlights": [
+        "City gas distributor targeted for 9.4% gain",
+        "Mid-cap private bank stock eyed for 5% upmove",
+        "Technical analysts recommend momentum trades amid volatility"
+      ],
+      "sentiment": 0.68,
+      "risk_tag": "Medium Risk",
+      "reasoning": "The title highlights expected upward moves of 9.4% and 5% in selected stocks. Because these are technical calls in volatile markets, upside is positive but execution risk remains.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-16T11:47:58.681071"
+    },
+    {
+      "id": "et_1781535590_4",
+      "source": "economic_times",
+      "headline": "Vodafone Idea among 4 midcap stocks that hit 52-week highs &amp; rallied up to 16% in a month",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/vodafone-idea-among-4-midcap-stocks-that-hit-52-week-highs-amp-rallied-up-to-16-in-a-month/slideshow/131745331.cms",
+      "published_at": "Mon, 15 Jun 2026 17:58:59 +0530",
+      "summary": "Amid a strong market rally that lifted the Sensex by 736 points, four BSE MidCap stocks—Vodafone Idea, Bank of Maharashtra, Federal Bank and Nippon Life India AMC—scaled fresh 52-week highs. The miles",
+      "highlights": [
+        "Vodafone Idea and three midcap stocks reached 52-week highs",
+        "Sensex gained 736 points amid market rally",
+        "16% monthly rally reflects robust investor confidence"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Strong market rally and multiple stocks hitting 52-week highs indicate positive investor sentiment. Sustained momentum suggests favorable market conditions.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-15T23:25:44.043959"
+    },
+    {
+      "id": "et_1781535590_5",
+      "source": "economic_times",
+      "headline": "Monarch Networth says Nifty can hit 28,000 in 2026, picks three top stocks",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/monarch-networth-says-nifty-can-hit-28000-in-2026-picks-three-top-stocks/articleshow/131743507.cms",
+      "published_at": "Mon, 15 Jun 2026 17:04:21 +0530",
+      "summary": "Monarch Networth Capital expects Nifty to reach 27,000-28,000 in 2026, driven by earnings recovery, capex growth and lower interest rates. The brokerage favours banking, telecom and IT sectors, while ",
+      "highlights": [
+        "Standard market event",
+        "No clear directional catalysts",
+        "Monitor standard developments"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
+      "related_symbols": [
+        "NIFTY",
+        "HFCL"
+      ],
+      "analyzed_at": "2026-06-15T23:33:05.579093"
+    },
+    {
+      "id": "et_1781535590_6",
+      "source": "economic_times",
+      "headline": "Weekly Top Picks: These stocks scored 10 on 10 on Stock Reports Plus",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/weekly-top-picks-these-stocks-scored-10-on-10-on-stock-reports-plus/articleshow/131741549.cms",
+      "published_at": "Mon, 15 Jun 2026 16:01:17 +0530",
+      "summary": "Stock Reports Plus, powered by Refinitiv, undertakes detailed company analysis for 4,000+ listed stocks. In addition to detailed company analyses, the report also collates analysts’ forecasts and tren",
+      "highlights": [
+        "Refinitiv powers Stock Reports Plus platform",
+        "Analyzes over 4,000 listed stocks globally",
+        "Provides average scores and analyst forecasts"
+      ],
+      "sentiment": 0.0,
+      "risk_tag": "Low Risk",
+      "reasoning": "The title is neutral and the content provides no specific performance metrics. Consequently, the news carries minimal risk.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-15T23:34:53.289697"
+    },
+    {
+      "id": "et_1781535590_7",
+      "source": "economic_times",
+      "headline": "FIIs raise stakes in 9 stocks for 3 straight quarters; shares rally up to 115%, 3 turn multibaggers",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/fiis-raise-stakes-in-9-stocks-for-3-straight-quarters-shares-rally-up-to-115-3-turn-multibaggers/slideshow/131739876.cms",
+      "published_at": "Mon, 15 Jun 2026 14:54:24 +0530",
+      "summary": "Of these, 20 have delivered over 25% returns in the past year. We highlight nine stocks that have gained 50%-115%, including three multibaggers that have more than doubled investors’ wealth.",
+      "highlights": [
+        "Positive momentum detected",
+        "Favorable fundamentals",
+        "Market reacts positively"
+      ],
+      "sentiment": 0.75,
+      "risk_tag": "Low Risk",
+      "reasoning": "Positive sentiment driven by strong performance and favorable indicators.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-15T23:42:10.442371"
     }
   ]
 }

@@ -5,7 +5,7 @@ import { Loader2, Send, Wifi, WifiOff } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Renderer } from '@openuidev/react-lang';
-import { openuiLibrary } from '@openuidev/react-ui/genui-lib';
+import { openuiChatLibrary } from '@openuidev/react-ui/genui-lib';
 import { useNanobot } from '@/lib/use-nanobot';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -13,12 +13,15 @@ import { useChatContextStore } from '@/contexts/chat-context-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { detectSlashCommand, expandSlashCommand, getFilteredCommands, getHelpMessage, type SlashCommand } from '@/lib/slash-commands';
 
 function StatusDot({ status }: { status: ReturnType<typeof useNanobot>['status'] }) {
   if (status === 'connected')
     return <Wifi className="size-3.5 text-emerald-500" aria-label="Connected" />;
   if (status === 'connecting')
-    return <Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-label="Connecting" />;
+    return (
+      <Loader2 className="size-3.5 animate-spin text-muted-foreground" aria-label="Connecting" />
+    );
   return <WifiOff className="size-3.5 text-destructive" aria-label="Disconnected" />;
 }
 
@@ -46,9 +49,7 @@ const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
   thead: ({ children }) => <thead className="bg-muted/60">{children}</thead>,
   tbody: ({ children }) => <tbody>{children}</tbody>,
   tr: ({ children }) => <tr className="border-b border-border/50 last:border-0">{children}</tr>,
-  th: ({ children }) => (
-    <th className="px-2 py-1.5 text-left font-semibold">{children}</th>
-  ),
+  th: ({ children }) => <th className="px-2 py-1.5 text-left font-semibold">{children}</th>,
   td: ({ children }) => <td className="px-2 py-1.5">{children}</td>,
   blockquote: ({ children }) => (
     <blockquote className="my-1.5 border-l-2 border-primary/50 pl-3 opacity-80 italic">
@@ -57,16 +58,57 @@ const mdComponents: React.ComponentProps<typeof Markdown>['components'] = {
   ),
   hr: () => <hr className="my-2 border-border/50" />,
   a: ({ children, href }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="text-primary underline underline-offset-2"
+    >
       {children}
     </a>
   ),
 };
 
-function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
-  if (text.trimStart().startsWith('root =')) {
-    return <Renderer library={openuiLibrary} response={text} isStreaming={isStreaming} />;
+// Extracts the OpenUI Lang program (starting at `root = ...`) from an LLM
+// response that may contain preamble text, reasoning blocks, or ```openui
+// code fences. Returns { preamble, openui } where either may be empty.
+function splitOpenUiResponse(raw: string): { preamble: string; openui: string } {
+  // Strip a single ```openui ... ``` (or ``` ... ```) fence if present.
+  const fenceMatch = raw.match(/```(?:openui|openui-lang)?\s*\n([\s\S]*?)(?:```|$)/);
+  const candidate = fenceMatch ? fenceMatch[1] : raw;
+
+  // Find the first `root =` at the start of a line.
+  const rootMatch = candidate.match(/(^|\n)\s*root\s*=/);
+  if (!rootMatch || rootMatch.index === undefined) {
+    return { preamble: raw, openui: '' };
   }
+  const sliceStart = rootMatch.index + (rootMatch[1] ? rootMatch[1].length : 0);
+  const openui = candidate.slice(sliceStart);
+  // Preamble is whatever appeared before the fence (or before root=).
+  const preamble = fenceMatch
+    ? raw.slice(0, raw.indexOf(fenceMatch[0])).trim()
+    : candidate.slice(0, sliceStart).trim();
+  return { preamble, openui };
+}
+
+function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
+  const { preamble, openui } = splitOpenUiResponse(text);
+
+  if (openui) {
+    return (
+      <>
+        {preamble && (
+          <div className="mb-2">
+            <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+              {preamble}
+            </Markdown>
+          </div>
+        )}
+        <Renderer library={openuiChatLibrary} response={openui} isStreaming={isStreaming} />
+      </>
+    );
+  }
+
   return (
     <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
       {text}
@@ -74,22 +116,33 @@ function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: bool
   );
 }
 
-function MessageBubble({ role, text, isStreaming }: { role: string; text: string; isStreaming?: boolean }) {
+function MessageBubble({
+  role,
+  text,
+  isStreaming,
+}: {
+  role: string;
+  text: string;
+  isStreaming?: boolean;
+}) {
   const isUser = role === 'user';
+  // Hide phantom empty assistant bubbles (e.g. whitespace-only streams or
+  // reasoning/tool channels with no user-visible text). The global typing
+  // indicator already conveys "assistant is working", so an empty card adds
+  // no signal — drop it whether streaming or finished.
+  if (!isUser && !text.trim()) {
+    return null;
+  }
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start w-full'}`}>
       <div
         className={`rounded-2xl px-3 py-2 text-sm leading-5 ${
           isUser
-            ? 'max-w-[80%] bg-primary text-primary-foreground rounded-br-sm whitespace-pre-wrap break-words'
-            : 'w-full bg-card text-card-foreground border border-border rounded-bl-sm break-words overflow-hidden'
+            ? 'max-w-[80%] rounded-br-sm bg-primary text-primary-foreground whitespace-pre-wrap wrap-break-word'
+            : 'w-full rounded-bl-sm border border-border bg-card text-card-foreground overflow-hidden wrap-break-word'
         }`}
       >
-        {isUser ? (
-          text
-        ) : (
-          <SmartRenderer text={text} isStreaming={isStreaming} />
-        )}
+        {isUser ? text : <SmartRenderer text={text} isStreaming={isStreaming} />}
         {isStreaming && (
           <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse rounded-sm bg-current opacity-60" />
         )}
@@ -102,6 +155,10 @@ export function ChatPanel() {
   const { messages, status, isProcessing, send, reconnect } = useNanobot();
   const { contexts, removeContext, clearAll } = useChatContextStore();
   const [input, setInput] = useState('');
+  const [detectedCommand, setDetectedCommand] = useState<string | null>(null);
+  const [showCommandMenu, setShowCommandMenu] = useState(false);
+  const [filteredCommands, setFilteredCommands] = useState<SlashCommand[]>([]);
+  const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -120,10 +177,64 @@ export function ChatPanel() {
     setInput('');
   }
 
+  function selectCommand(command: SlashCommand) {
+    const expanded = command.command === '/help' ? getHelpMessage() : command.prompt;
+    if (expanded) {
+      setInput(expanded + ' ');
+      setShowCommandMenu(false);
+      setDetectedCommand(null);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (showCommandMenu && filteredCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedCommandIndex((prev) => (prev + 1) % filteredCommands.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedCommandIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+        return;
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        selectCommand(filteredCommands[selectedCommandIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowCommandMenu(false);
+        return;
+      }
+    }
+
+    if (e.key === ' ' && detectedCommand) {
+      e.preventDefault();
+      const expanded = expandSlashCommand(input.trim());
+      if (expanded) {
+        setInput(expanded + ' ');
+        setDetectedCommand(null);
+        setShowCommandMenu(false);
+      }
+      return;
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (showCommandMenu && filteredCommands.length > 0) {
+        selectCommand(filteredCommands[selectedCommandIndex]);
+      } else {
+        const trimmed = input.trim();
+        const expanded = expandSlashCommand(trimmed);
+        if (expanded) {
+          setInput(expanded);
+          setTimeout(() => handleSend(), 0);
+        } else {
+          handleSend();
+        }
+      }
     }
   }
 
@@ -197,16 +308,66 @@ export function ChatPanel() {
               ))}
             </div>
           )}
+          <div className="relative">
+            {showCommandMenu && filteredCommands.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredCommands.map((cmd, index) => (
+                    <button
+                      key={cmd.command}
+                      type="button"
+                      onClick={() => selectCommand(cmd)}
+                      className={`w-full px-4 py-2.5 text-left transition-colors ${
+                        index === selectedCommandIndex
+                          ? 'bg-primary/10 text-primary'
+                          : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="font-mono text-sm font-semibold">{cmd.command}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{cmd.description}</p>
+                    </button>
+                  ))}
+                </div>
+                <div className="border-t border-border bg-muted/30 px-3 py-1.5 text-[10px] text-muted-foreground">
+                  <kbd className="rounded bg-background px-1 py-0.5">↑↓</kbd> navigate •{' '}
+                  <kbd className="rounded bg-background px-1 py-0.5">Enter</kbd> or{' '}
+                  <kbd className="rounded bg-background px-1 py-0.5">Tab</kbd> select •{' '}
+                  <kbd className="rounded bg-background px-1 py-0.5">Esc</kbd> close
+                </div>
+              </div>
+            )}
+          </div>
           <div className="bg-muted/20 border-input focus-within:border-ring focus-within:ring-ring/50 flex flex-col rounded-3xl border transition-colors focus-within:ring-2">
             <Textarea
-              placeholder={isConnected ? 'Ask anything… (Enter to send)' : 'Connecting…'}
+              placeholder={isConnected ? 'Ask anything… (Enter to send, type / for commands)' : 'Connecting…'}
               rows={3}
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setInput(value);
+                const command = detectSlashCommand(value.trim());
+                setDetectedCommand(command ? command.command : null);
+                
+                const filtered = getFilteredCommands(value);
+                setFilteredCommands(filtered);
+                setShowCommandMenu(filtered.length > 0);
+                setSelectedCommandIndex(0);
+              }}
               onKeyDown={handleKeyDown}
               disabled={!isConnected}
               className="max-h-20 min-h-12 resize-none overflow-y-auto border-0 bg-transparent px-4 pt-4 pb-2 shadow-none focus-visible:border-0 focus-visible:ring-0"
             />
+            {detectedCommand && !showCommandMenu && (
+              <div className="px-4 pb-2">
+                <span className="text-xs text-muted-foreground">
+                  Press <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">Space</kbd> or{' '}
+                  <kbd className="rounded bg-muted px-1 py-0.5 text-[10px] font-mono">Enter</kbd> to use{' '}
+                  <span className="font-medium text-primary">{detectedCommand}</span>
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center justify-end px-3 pb-1">
               <Button

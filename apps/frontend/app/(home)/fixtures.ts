@@ -9,7 +9,8 @@ export type WidgetType =
   | 'portfolio-small'
   | 'portfolio-medium'
   | 'portfolio-large'
-  | 'news';
+  | 'news'
+  | 'earnings';
 
 export interface WidgetSpan {
   cols: number;
@@ -25,73 +26,66 @@ export interface WidgetPlacement {
   rowSpan: number;
 }
 
-export const GRID_CELL_WIDTH_REM = 4;
-export const GRID_CELL_HEIGHT_REM = 3.5;
+export const GRID_CELL_WIDTH_REM = 8;
+export const GRID_CELL_HEIGHT_REM = 8;
 export const GRID_GAP_REM = 0.5;
 export const DRAWER_WIDGET_MIME = 'application/x-optitrade-widget';
 export const SOURCE_WIDGET_MIME = 'application/x-optitrade-source-widget';
 
 export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
-  number: { cols: 4, rows: 3 },
-  chart: { cols: 5, rows: 5 },
-  table: { cols: 5, rows: 5 },
-  text: { cols: 5, rows: 5 },
-  candlestick: { cols: 8, rows: 7 },
-  'portfolio-small': { cols: 5, rows: 5 },
-  'portfolio-medium': { cols: 6, rows: 7 },
-  'portfolio-large': { cols: 8, rows: 8 },
-  news: { cols: 8, rows: 8 },
+  number: { cols: 2, rows: 2 },
+  chart: { cols: 2, rows: 2 },
+  table: { cols: 2, rows: 2 },
+  text: { cols: 2, rows: 2 },
+  candlestick: { cols: 2, rows: 2 },
+  'portfolio-small': { cols: 2, rows: 2 },
+  'portfolio-medium': { cols: 3, rows: 3 },
+  'portfolio-large': { cols: 4, rows: 4 },
+  news: { cols: 4, rows: 4 },
+  earnings: { cols: 2, rows: 4 },
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
-  { id: 'number', label: 'Number Widget', sizeLabel: '4x3' },
-  { id: 'chart', label: 'Chart Widget', sizeLabel: '5x5' },
-  { id: 'table', label: 'Table Widget', sizeLabel: '5x5' },
-  { id: 'text', label: 'Text Widget', sizeLabel: '5x5' },
-  { id: 'candlestick', label: 'Candlestick Widget', sizeLabel: '8x7' },
-  { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '5x5' },
-  { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '6x7' },
-  { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '8x8' },
-  { id: 'news', label: 'News Widget', sizeLabel: '8x8' },
+  { id: 'candlestick', label: 'Candlestick Chart', sizeLabel: '2x2' },
+  { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '2x2' },
+  { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '3x3' },
+  { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '4x4' },
+  { id: 'news', label: 'News Widget', sizeLabel: '4x4' },
+  { id: 'earnings', label: 'Earnings Calendar', sizeLabel: '2x4' },
 ];
 
 export const initialPlacements: WidgetPlacement[] = [
-  { id: 'widget-number-1', widgetType: 'number', col: 0, row: 0, colSpan: 4, rowSpan: 3 },
-  { id: 'widget-chart-1', widgetType: 'chart', col: 4, row: 0, colSpan: 5, rowSpan: 5 },
-  { id: 'widget-text-1', widgetType: 'text', col: 9, row: 0, colSpan: 5, rowSpan: 5 },
-  { id: 'widget-table-1', widgetType: 'table', col: 0, row: 5, colSpan: 5, rowSpan: 5 },
-  { id: 'widget-candlestick-1', widgetType: 'candlestick', col: 5, row: 5, colSpan: 8, rowSpan: 7 },
   {
-    id: 'widget-portfolio-small-1',
-    widgetType: 'portfolio-small',
-    col: 13,
-    row: 5,
-    colSpan: 5,
-    rowSpan: 5,
+    id: 'widget-portfolio-large-1',
+    widgetType: 'portfolio-large',
+    col: 0,
+    row: 0,
+    colSpan: 4,
+    rowSpan: 4,
   },
   {
     id: 'widget-portfolio-medium-1',
     widgetType: 'portfolio-medium',
-    col: 0,
-    row: 12,
-    colSpan: 6,
-    rowSpan: 7,
+    col: 4,
+    row: 0,
+    colSpan: 3,
+    rowSpan: 3,
   },
   {
-    id: 'widget-portfolio-large-1',
-    widgetType: 'portfolio-large',
-    col: 5,
-    row: 12,
-    colSpan: 8,
-    rowSpan: 8,
+    id: 'widget-earnings-1',
+    widgetType: 'earnings',
+    col: 0,
+    row: 4,
+    colSpan: 2,
+    rowSpan: 2,
   },
   {
-    id: 'widget-news-1',
-    widgetType: 'news',
-    col: 0,
-    row: 12,
-    colSpan: 8,
-    rowSpan: 8,
+    id: 'widget-portfolio-small-1',
+    widgetType: 'portfolio-small',
+    col: 2,
+    row: 4,
+    colSpan: 2,
+    rowSpan: 2,
   },
 ];
 

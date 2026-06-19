@@ -2,27 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import socket
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-import hashlib
-import hmac
-import json
 from pathlib import Path
-import socket
 from typing import Any
-
-from src.binance_client import (
-    fetch_binance_portfolio_snapshot,
-    validate_binance_connection,
-)
-from src.futu_client import fetch_futu_portfolio_snapshot, validate_futu_connection
-
-from src.ibkr_client import (
-    IbkrConnectionSettings,
-    fetch_ibkr_portfolio_snapshot,
-    validate_ibkr_connection,
-)
-
 
 @dataclass(frozen=True)
 class Position:
@@ -72,6 +57,7 @@ BROKER_LABELS = {
     "binance": "Binance",
     "mock": "Mock Data",
 }
+
 
 @dataclass(frozen=True)
 class BrokerConnection:
@@ -167,7 +153,9 @@ def _public_broker_settings(connection: BrokerConnection) -> dict[str, Any]:
     return settings
 
 
-def _ibkr_settings(connection: BrokerConnection) -> IbkrConnectionSettings:
+def _ibkr_settings(connection: BrokerConnection):
+    from src.ibkr_client import IbkrConnectionSettings
+
     host = str(connection.settings.get("host", "127.0.0.1")).strip() or "127.0.0.1"
     port = _safe_int(connection.settings.get("port"), 7497)
     client_id = _safe_int(connection.settings.get("clientId"), 1)
@@ -179,7 +167,9 @@ def _validate_futu_socket(host: str, port: int) -> None:
         with socket.create_connection((host, port), timeout=5):
             return
     except OSError as error:
-        raise RuntimeError(f"Unable to connect to Futu OpenAPI at {host}:{port}: {error}") from error
+        raise RuntimeError(
+            f"Unable to connect to Futu OpenAPI at {host}:{port}: {error}"
+        ) from error
 
 
 def _configured_broker_connection(
@@ -254,8 +244,10 @@ def _build_sector_values(positions: tuple[Position, ...]) -> list[dict[str, Any]
 def build_portfolio_snapshot(
     positions: tuple[Position, ...] = DEFAULT_POSITIONS,
 ) -> dict[str, Any]:
-    connection = get_broker_connection_status()
+    connection = _default_broker_connection()
     if connection.id == "ibkr" and connection.status == "connected":
+        from src.ibkr_client import fetch_ibkr_portfolio_snapshot
+
         try:
             return fetch_ibkr_portfolio_snapshot(_ibkr_settings(connection))
         except RuntimeError as error:
@@ -271,6 +263,8 @@ def build_portfolio_snapshot(
             _write_broker_connection(configured)
             connection = configured
     elif connection.id == "futu" and connection.status == "connected":
+        from src.futu_client import fetch_futu_portfolio_snapshot
+
         try:
             return fetch_futu_portfolio_snapshot(
                 host=str(connection.settings.get("host", "127.0.0.1")),
@@ -290,6 +284,8 @@ def build_portfolio_snapshot(
             _write_broker_connection(configured)
             connection = configured
     elif connection.id == "binance" and connection.status == "connected":
+        from src.binance_client import fetch_binance_portfolio_snapshot
+
         try:
             return fetch_binance_portfolio_snapshot(
                 api_key=str(connection.settings.get("apiKey", "")),
@@ -320,7 +316,7 @@ def build_portfolio_snapshot(
     return {
         "asOf": _utc_now(),
         "baseCurrency": "USD",
-        "source": "backend" if connection.status == "connected" else "demo",
+        "source": "backend",
         "broker": _broker_connection_payload(connection),
         "positions": [_position_payload(position) for position in positions],
         "summary": {
@@ -339,7 +335,7 @@ def build_portfolio_snapshot(
 
 
 def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
-    broker_id = _normalize_broker_id(payload.get("broker"))
+    broker_id = _normalize_broker_id(payload.get("broker", "ibkr"))
 
     if broker_id == "mock":
         connection = _default_broker_connection()
@@ -347,6 +343,8 @@ def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
         return _broker_connection_payload(connection)
 
     if broker_id == "ibkr":
+        from src.ibkr_client import IbkrConnectionSettings, validate_ibkr_connection
+
         host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
         port = int(payload.get("port", 7497))
         client_id = int(payload.get("clientId", 1))
@@ -376,6 +374,8 @@ def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
         return _broker_connection_payload(connection)
 
     if broker_id == "futu":
+        from src.futu_client import validate_futu_connection
+
         host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
         port = int(payload.get("port", 11111))
         market = str(payload.get("market", "US")).strip().upper() or "US"
@@ -410,6 +410,8 @@ def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
     if not api_secret:
         raise ValueError("apiSecret is required for Binance")
 
+    from src.binance_client import validate_binance_connection
+
     validated = validate_binance_connection(api_key, api_secret, testnet=testnet)
     connection = _configured_broker_connection(
         "binance",
@@ -439,7 +441,9 @@ def get_broker_connection_status() -> BrokerConnection:
     return BrokerConnection(
         id=broker_id,
         status=str(payload.get("status", "disconnected")),
-        broker=str(payload.get("name") or payload.get("broker") or _broker_label(broker_id)),
+        broker=str(
+            payload.get("name") or payload.get("broker") or _broker_label(broker_id)
+        ),
         settings=_legacy_settings(payload),
         account_id=payload.get("accountId"),
         synced_at=payload.get("syncedAt"),
@@ -513,7 +517,16 @@ def _broker_connection_payload(connection: BrokerConnection) -> dict[str, Any]:
         "syncedAt": connection.synced_at,
         "lastError": connection.last_error,
     }
-    for key in ("host", "port", "clientId", "market", "apiKey", "apiKeyPreview", "hasSecret", "testnet"):
+    for key in (
+        "host",
+        "port",
+        "clientId",
+        "market",
+        "apiKey",
+        "apiKeyPreview",
+        "hasSecret",
+        "testnet",
+    ):
         if key in settings:
             payload[key] = settings[key]
     return payload
