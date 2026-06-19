@@ -17,7 +17,7 @@ import {
 import { Area, AreaChart, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts';
 import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { getPortfolioAnalysis } from '@/lib/api/client';
+import { BACKEND_URL, getPortfolioAnalysis } from '@/lib/api/client';
 import type { PortfolioStrategyAction } from '@/lib/api/client';
 import type {
   PortfolioBrokerOption,
@@ -135,7 +135,7 @@ interface BrokerOptionConfig {
 }
 
 const PORTFOLIO_API_BASE_URL =
-  process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ?? 'http://127.0.0.1:8000';
+  process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ?? BACKEND_URL;
 
 const HOLDING_CHART_COLORS = ['#0f172a', '#334155', '#64748b', '#94a3b8', '#cbd5e1'];
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BaseWidget } from './base-widget';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
+import { BACKEND_URL } from '@/lib/api/client';
 
 interface NewsItem {
   // id: string;
@@ -101,11 +102,11 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     const fetchNews = async () => {
       setLoading(true);
       try {
-        let url = 'http://localhost:8000/api/news';
+        let url = `${BACKEND_URL}/api/news`;
 
         if (allInterestedSymbols.length > 0) {
           const symbolsParam = allInterestedSymbols.join(',');
-          url = `http://localhost:8000/api/news?symbols=${symbolsParam}`;
+          url = `${BACKEND_URL}/api/news?symbols=${symbolsParam}`;
         }
 
         console.log(`[API Request] Fetching news using all stock symbols, URL: ${url}`);
