@@ -340,8 +340,9 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
     return () => clearInterval(id);
   }, [tick]);
 
-  const hkt      = new Date(now.getTime() + (8 * 3600000) - (now.getTimezoneOffset() * 60000));
-  const hktMins  = hkt.getHours() * 60 + hkt.getMinutes();
+  // HKT = UTC+8
+  const hkt      = new Date(now.getTime() + 8 * 3600000);
+  const hktMins  = hkt.getUTCHours() * 60 + hkt.getUTCMinutes();
   const { session, phase } = getPhaseAndSession();
   const meta     = PHASE_META[phase];
   const holiday  = isUSHoliday(hkt);
