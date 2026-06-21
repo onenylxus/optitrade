@@ -44,54 +44,49 @@ function fmtRange(open: number, close: number): string {
 }
 
 function isDst(): boolean {
-  // ET DST: second Sunday March – first Sunday November
+  // ET DST: second Sunday March 02:00 → first Sunday November 02:00
   const now = new Date();
-  const jan = new Date(now.getFullYear(), 0, 1);
-  const nov = new Date(now.getFullYear(), 10, 1);
-  // Find last Sunday of Oct
-  const octLastSun = new Date(now.getFullYear(), 10, 0);
-  while (octLastSun.getDay() !== 0) octLastSun.setDate(octLastSun.getDate() - 1);
-  // Find second Sunday of March
-  const mar1 = new Date(now.getFullYear(), 2, 1);
+  const year = now.getFullYear();
+  // Second Sunday March
+  const mar1 = new Date(year, 2, 1);
   const marSecondSun = mar1.getDay() === 0 ? 8 : 15 - mar1.getDay();
-  const dstStart = new Date(now.getFullYear(), 2, marSecondSun);
-  const dstEnd = new Date(now.getFullYear(), 10, octLastSun.getDate());
+  const dstStart = new Date(year, 2, marSecondSun, 2, 0, 0);
+  // First Sunday November
+  const nov1 = new Date(year, 10, 1);
+  const novFirstSun = nov1.getDay() === 0 ? 1 : 8 - nov1.getDay();
+  const dstEnd = new Date(year, 10, novFirstSun, 2, 0, 0);
   return now >= dstStart && now < dstEnd;
 }
 
 function buildSession(): MarketSession {
-  const offset = isDst() ? 13 : 12; // HKT ahead of ET
-
-  // ET → HKT continuous minutes from HKT midnight today
-  // ET 04:00  = offset + 4  hours
-  // ET 09:30  = offset + 9.5 hours
-  // ET 16:00  = offset + 16 hours
-  // ET 20:00  = offset + 20 hours
-  const e4   = (offset + 4)  * 60;
-  const e930 = (offset + 9.5) * 60;
-  const e16  = (offset + 16) * 60;
-  const e20  = (offset + 20) * 60;
-
-  // Normalise to 0-1440 range (wrap to next day if > 1440)
-  const wrap = (m: number) => m >= 1440 ? m - 1440 : m;
-
-  // Sort so open < close; the `wrap > 0` means the window crosses midnight in HKT
-  const order = (a: number, b: number): { open: number; close: number; crossesMidnight: boolean } => {
-    if (a < b) return { open: a, close: b, crossesMidnight: false };
-    // wraps to next calendar day
-    return { open: b, close: a + 1440, crossesMidnight: true };
-  };
-
-  const pre  = order(e4,   e930);
-  const reg   = order(e930, e16);
-  const ah    = order(e16,  e20);
-
-  return {
-    phase: 'closed',
-    preMkt:   { open: pre.open, close: pre.close, label: 'Pre-Market',   range: fmtRange(pre.open, pre.close), color: '#f59e0b' },
-    regular:  { open: reg.open, close: reg.close,  label: 'Regular',      range: fmtRange(reg.open, reg.close),  color: '#22c55e' },
-    afterHrs: { open: ah.open, close: ah.close,   label: 'After-Hours', range: fmtRange(ah.open, ah.close),   color: '#a78bfa' },
-  };
+  // HKT times derived from ET session windows:
+  //   EDT (summer): ET is UTC-4, HKT is UTC+8 → HKT = ET + 12h
+  //   EST (winter): ET is UTC-5, HKT is UTC+8 → HKT = ET + 13h
+  //
+  // US Summer (EDT, mid-March → early November):
+  //   Pre-Market:  04:00–09:30 ET → 16:00–21:30 HKT
+  //   Regular:     09:30–16:00 ET → 21:30–04:00 HKT next day
+  //   After-Hours: 16:00–20:00 ET → 04:00–08:00 HKT next day
+  //
+  // US Winter (EST, early November → mid-March):
+  //   Pre-Market:  04:00–09:30 ET → 17:00–22:30 HKT
+  //   Regular:     09:30–16:00 ET → 22:30–05:00 HKT next day
+  //   After-Hours: 16:00–20:00 ET → 05:00–09:00 HKT next day
+  const edt = isDst();
+  const session = edt
+    ? {
+        phase: 'closed' as Phase,
+        preMkt:   { open: 16*60,      close: 21*60+30,  label: 'Pre-Market',   range: '16:00 – 21:30',           color: '#f59e0b' },
+        regular:  { open: 21*60+30,   close: 28*60,      label: 'Regular',      range: '21:30 – 04:00 +1d',        color: '#22c55e' },
+        afterHrs: { open: 28*60,       close: 32*60,      label: 'After-Hours', range: '04:00 – 08:00 +1d',        color: '#a78bfa' },
+      }
+    : {
+        phase: 'closed' as Phase,
+        preMkt:   { open: 17*60,      close: 22*60+30,  label: 'Pre-Market',   range: '17:00 – 22:30',           color: '#f59e0b' },
+        regular:  { open: 22*60+30,   close: 29*60,      label: 'Regular',      range: '22:30 – 05:00 +1d',        color: '#22c55e' },
+        afterHrs: { open: 29*60,       close: 33*60,      label: 'After-Hours', range: '05:00 – 09:00 +1d',        color: '#a78bfa' },
+      };
+  return session;
 }
 
 function getPhaseAndSession(): { session: MarketSession; phase: Phase } {
