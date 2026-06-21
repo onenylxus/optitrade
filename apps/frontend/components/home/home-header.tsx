@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageSquare, PenLine, UserRound } from 'lucide-react';
+import { PenLine, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,6 @@ import type { AuthenticatedUserResponse } from '@/lib/api/types';
 interface HomeHeaderProps {
   isEditMode: boolean;
   onEditModeChange: (nextValue: boolean) => void;
-  isChatOpen: boolean;
-  onChatOpenChange: (nextValue: boolean) => void;
   firebaseUser: User | null;
   backendProfile: AuthenticatedUserResponse | null;
   onSignOut: () => void;
@@ -21,8 +19,6 @@ interface HomeHeaderProps {
 export function HomeHeader({
   isEditMode,
   onEditModeChange,
-  isChatOpen,
-  onChatOpenChange,
   firebaseUser,
   backendProfile,
   onSignOut,
@@ -51,17 +47,6 @@ export function HomeHeader({
       </div>
 
       <div className="flex min-w-0 items-center justify-end gap-2">
-        <Button
-          type="button"
-          variant={isChatOpen ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onChatOpenChange(!isChatOpen)}
-          aria-label={isChatOpen ? 'Hide chat' : 'Show chat'}
-        >
-          <MessageSquare className="size-4" />
-          {isChatOpen ? 'Hide Chat' : 'Chat'}
-        </Button>
-
         <Button
           type="button"
           variant={isEditMode ? 'default' : 'outline'}

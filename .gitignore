@@ -36,6 +36,8 @@ testem.log
 /typings
 /reports
 /docs/Ching working folder
+/.run
+/scripts
 
 # System Files
 .DS_Store
