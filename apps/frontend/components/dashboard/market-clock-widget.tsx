@@ -3,29 +3,128 @@
 import { useEffect, useState, useCallback } from 'react';
 import { BaseWidget } from './base-widget';
 
-// ── Market phases (HKT 24h format, mapped from ET) ──────────────────────────
-// HKT = UTC+8; ET = UTC-5/4. ET offset from HKT is -12 or -13h (DST).
-// Market hours in HKT (wraps across midnight):
-//   Pre-market:  21:30 – 00:00 HKT (prev day ET 04:00–09:30)
-//   Regular:     00:00 – 04:00 HKT (same day ET 09:30–16:00)
-//   After-hours: 04:00 – 08:00 HKT (same day ET 16:00–20:00)
-const PRE_MARKET  = { open: 21 * 60 + 30, close: 24 * 60 };
-const REGULAR     = { open: 24 * 60,      close: 28 * 60 };
-const AFTER_HOURS = { open: 28 * 60,       close: 32 * 60 };
+// ── Market phases ────────────────────────────────────────────────────────────
+// NYSE regular:  9:30 AM – 4:00 PM ET  (6.5 hours)
+// Pre-market:    4:00 AM – 9:30 AM ET  (5.5 hours)
+// After-hours:   4:00 PM – 8:00 PM ET  (4 hours)
+// HKT = ET + 12h (standard) or + 13h (DST).
 
 type Phase = 'closed' | 'pre_market' | 'regular' | 'after_hours';
 
-function normaliseMin(m: number): number {
-  const d = m % (24 * 60);
-  return d < 0 ? d + 24 * 60 : d;
+interface MarketSession {
+  phase: Phase;
+  // Pre-market: 21:30 – 00:00 HKT (next day ET 04:00–09:30) → 21:30–24:00
+  // Regular:    00:00 – 04:00 HKT (same day ET 09:30–16:00)
+  // After-hrs: 04:00 – 08:00 HKT (same day ET 16:00–20:00)
+  // We store them as continuous minutes from HKT midnight (00:00 today).
+  // Wrap-around is handled by normalising: if open > close, the range wraps midnight.
+  preMkt:   { open: number; close: number; label: string; range: string; color: string };
+  regular:  { open: number; close: number; label: string; range: string; color: string };
+  afterHrs: { open: number; close: number; label: string; range: string; color: string };
 }
 
-function getPhase(minutesHKT: number): Phase {
-  const m = normaliseMin(minutesHKT);
-  if (m >= PRE_MARKET.open  && m < PRE_MARKET.close)  return 'pre_market';
-  if (m >= REGULAR.open     && m < REGULAR.close)     return 'regular';
-  if (m >= AFTER_HOURS.open && m < AFTER_HOURS.close) return 'after_hours';
-  return 'closed';
+function fmtHour(h: number): { str: string; nextDay: boolean } {
+  // h is continuous minutes; may exceed 1440 (next calendar day)
+  const excess = Math.floor(h / 1440);
+  const mins = h % 1440;
+  const hour = Math.floor(mins / 60);
+  const min  = Math.round(mins % 60);
+  return {
+    str: `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+    nextDay: excess > 0,
+  };
+}
+
+function fmtRange(open: number, close: number): string {
+  // The +1d marker clarifies when the range wraps to the next calendar day
+  const o = fmtHour(open);
+  const c = fmtHour(close);
+  const nextDay = o.nextDay || c.nextDay;
+  return `${o.str} – ${c.str}${nextDay ? ' +1d' : ''}`;
+}
+
+function isDst(): boolean {
+  // ET DST: second Sunday March – first Sunday November
+  const now = new Date();
+  const jan = new Date(now.getFullYear(), 0, 1);
+  const nov = new Date(now.getFullYear(), 10, 1);
+  // Find last Sunday of Oct
+  const octLastSun = new Date(now.getFullYear(), 10, 0);
+  while (octLastSun.getDay() !== 0) octLastSun.setDate(octLastSun.getDate() - 1);
+  // Find second Sunday of March
+  const mar1 = new Date(now.getFullYear(), 2, 1);
+  const marSecondSun = mar1.getDay() === 0 ? 8 : 15 - mar1.getDay();
+  const dstStart = new Date(now.getFullYear(), 2, marSecondSun);
+  const dstEnd = new Date(now.getFullYear(), 10, octLastSun.getDate());
+  return now >= dstStart && now < dstEnd;
+}
+
+function buildSession(): MarketSession {
+  const offset = isDst() ? 13 : 12; // HKT ahead of ET
+
+  // ET → HKT continuous minutes from HKT midnight today
+  // ET 04:00  = offset + 4  hours
+  // ET 09:30  = offset + 9.5 hours
+  // ET 16:00  = offset + 16 hours
+  // ET 20:00  = offset + 20 hours
+  const e4   = (offset + 4)  * 60;
+  const e930 = (offset + 9.5) * 60;
+  const e16  = (offset + 16) * 60;
+  const e20  = (offset + 20) * 60;
+
+  // Normalise to 0-1440 range (wrap to next day if > 1440)
+  const wrap = (m: number) => m >= 1440 ? m - 1440 : m;
+
+  // Sort so open < close; the `wrap > 0` means the window crosses midnight in HKT
+  const order = (a: number, b: number): { open: number; close: number; crossesMidnight: boolean } => {
+    if (a < b) return { open: a, close: b, crossesMidnight: false };
+    // wraps to next calendar day
+    return { open: b, close: a + 1440, crossesMidnight: true };
+  };
+
+  const pre  = order(e4,   e930);
+  const reg   = order(e930, e16);
+  const ah    = order(e16,  e20);
+
+  return {
+    phase: 'closed',
+    preMkt:   { open: pre.open, close: pre.close, label: 'Pre-Market',   range: fmtRange(pre.open, pre.close), color: '#f59e0b' },
+    regular:  { open: reg.open, close: reg.close,  label: 'Regular',      range: fmtRange(reg.open, reg.close),  color: '#22c55e' },
+    afterHrs: { open: ah.open, close: ah.close,   label: 'After-Hours', range: fmtRange(ah.open, ah.close),   color: '#a78bfa' },
+  };
+}
+
+function getPhaseAndSession(): { session: MarketSession; phase: Phase } {
+  const session = buildSession();
+
+  // HKT minutes from today's midnight
+  const now = new Date();
+  const hkt = new Date(now.getTime() + (8 * 3600000) - (now.getTimezoneOffset() * 60000));
+  const hktMins = hkt.getHours() * 60 + hkt.getMinutes(); // 0–1439
+
+  const { preMkt, regular, afterHrs } = session;
+
+  // Continuous comparison with midnight-crossing awareness
+  // If a range crosses midnight (close > 1440), we extend hktMins by adding 1440
+  const inRange = (open: number, close: number, mins: number): boolean => {
+    if (close > 1440) {
+      // crosses midnight: match if mins >= open OR mins + 1440 < close
+      return mins >= open || mins + 1440 < close;
+    }
+    return mins >= open && mins < close;
+  };
+
+  if (inRange(preMkt.open, preMkt.close, hktMins)) {
+    session.phase = 'pre_market';
+  } else if (inRange(regular.open, regular.close, hktMins)) {
+    session.phase = 'regular';
+  } else if (inRange(afterHrs.open, afterHrs.close, hktMins)) {
+    session.phase = 'after_hours';
+  } else {
+    session.phase = 'closed';
+  }
+
+  return { session, phase: session.phase };
 }
 
 // ── US Holiday helpers ────────────────────────────────────────────────────────
@@ -90,71 +189,102 @@ function getGoodFriday(year: number): Date {
   return new Date(easter.getTime() - 2 * 86400000);
 }
 
-function getCountdown(phase: Phase, minutesHKT: number, holiday: { closed: boolean; name?: string } | null) {
+function getCountdown(
+  phase: Phase,
+  hktMins: number,
+  holiday: { closed: boolean; name?: string } | null,
+  session: MarketSession,
+) {
+  const minsTo = (target: number): string => {
+    let diff = target - hktMins;
+    if (diff <= 0) diff += 1440;
+    const rh = Math.floor(diff / 60);
+    const rm = diff % 60;
+    return `${String(rh).padStart(2, '0')}:${String(rm).padStart(2, '0')}`;
+  };
+
   if (phase === 'closed') {
     if (holiday?.closed) {
-      const rem = (24 * 60 - minutesHKT) + PRE_MARKET.open;
-      const rh = Math.floor(rem / 60);
-      const rm = rem % 60;
-      return { label: `${holiday.name} — reopens in`, countdown: `${String(rh).padStart(2, '0')}:${String(rm).padStart(2, '0')}` };
+      return { label: `${holiday.name} — reopens in`, countdown: minsTo(session.preMkt.open) };
     }
-    const rem = PRE_MARKET.open - minutesHKT;
-    const rh = Math.floor(rem / 60);
-    const rm = rem % 60;
-    return { label: 'Pre-market opens in', countdown: `${String(rh).padStart(2, '0')}:${String(rm).padStart(2, '0')}` };
+    return { label: 'Pre-market opens in', countdown: minsTo(session.preMkt.open) };
   }
-  if (phase === 'pre_market') {
-    const rem = REGULAR.open - minutesHKT;
-    const rh = Math.floor(rem / 60);
-    const rm = rem % 60;
-    return { label: 'Regular opens in', countdown: `${String(rh).padStart(2, '0')}:${String(rm).padStart(2, '0')}` };
-  }
-  if (phase === 'regular') {
-    const rem = minutesHKT < 24 * 60
-      ? (24 * 60 - minutesHKT) + REGULAR.close
-      : REGULAR.close - minutesHKT;
-    const rh = Math.floor(rem / 60);
-    const rm = rem % 60;
-    return { label: 'Closes in', countdown: `${String(rh).padStart(2, '0')}:${String(rm).padStart(2, '0')}` };
-  }
-  const rem = (24 * 60 - minutesHKT) + PRE_MARKET.open;
-  const rh = Math.floor(rem / 60);
-  const rm = rem % 60;
-  return { label: 'Reopens in', countdown: `${String(rh).padStart(2, '0')}:${String(rm).padStart(2, '0')}` };
+  if (phase === 'pre_market') return { label: 'Regular opens in', countdown: minsTo(session.regular.open) };
+  if (phase === 'regular')    return { label: 'Closes in',          countdown: minsTo(session.regular.close) };
+  return { label: 'Reopens in',            countdown: minsTo(session.preMkt.open + 1440) };
 }
 
-// SVG arc helper
+// SVG arc — draw a circular arc from startAngle to endAngle degrees
 function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
   const toRad = (a: number) => ((a - 90) * Math.PI) / 180;
   const x1 = cx + r * Math.cos(toRad(startAngle));
   const y1 = cy + r * Math.sin(toRad(startAngle));
   const x2 = cx + r * Math.cos(toRad(endAngle));
   const y2 = cy + r * Math.sin(toRad(endAngle));
-  const large = ((endAngle - startAngle) % 360 + 360) % 360 > 180 ? 1 : 0;
+  const sweep = ((endAngle - startAngle) % 360 + 360) % 360;
+  const large = sweep > 180 ? 1 : 0;
   return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
 }
 
-function minutesToAngle(minutes: number) {
-  return ((minutes % (24 * 60) + 24 * 60) % (24 * 60)) / (24 * 60) * 360;
+// Convert continuous HKT minutes (can exceed 1440 for next-day windows) to SVG angle
+function minsToAngle(mins: number): number {
+  const normalised = ((mins % 1440) + 1440) % 1440;
+  return (normalised / 1440) * 360;
 }
 
-// 24h clock face hour markers
-function HourMarkers({ cx, cy, r }: { cx: number; cy: number; r: number }) {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+// ── Clock face — hour / minute / second hands (時針分針秒針) ───────────────────
+function ClockFace({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  const now  = new Date();
+  const hkt  = new Date(now.getTime() + (8 * 3600000) - (now.getTimezoneOffset() * 60000));
+  const sec  = hkt.getSeconds();
+  const min  = hkt.getMinutes();
+  const hrs  = hkt.getHours();
+
+  // 24h clock: hour hand completes one full rotation in 24h
+  const secDeg = (sec / 60) * 360;
+  const minDeg = ((min + sec / 60) / 60) * 360;
+  const hrDeg  = ((hrs + min / 60) / 24) * 360;
+
+  const toRad = (deg: number) => ((deg - 90) * Math.PI) / 180;
+
   return (
     <>
-      {hours.map((h) => {
-        const angle = ((h / 24) * 360 - 90) * (Math.PI / 180);
+      {/* Second hand — red, thin, longest */}
+      <line x1={cx} y1={cy}
+        x2={cx + (r - 6)  * Math.cos(toRad(secDeg))}
+        y2={cy + (r - 6)  * Math.sin(toRad(secDeg))}
+        stroke="#ef4444" strokeWidth={1.5} strokeLinecap="round" />
+      {/* Minute hand — slate, medium */}
+      <line x1={cx} y1={cy}
+        x2={cx + (r - 16) * Math.cos(toRad(minDeg))}
+        y2={cy + (r - 16) * Math.sin(toRad(minDeg))}
+        stroke="#475569" strokeWidth={2.5} strokeLinecap="round" />
+      {/* Hour hand — navy, thickest, shortest (52% radius) */}
+      <line x1={cx} y1={cy}
+        x2={cx + r * 0.52 * Math.cos(toRad(hrDeg))}
+        y2={cy + r * 0.52 * Math.sin(toRad(hrDeg))}
+        stroke="#0f172a" strokeWidth={3.5} strokeLinecap="round" />
+      {/* Centre cap */}
+      <circle cx={cx} cy={cy} r={4.5} fill="#0f172a" />
+      <circle cx={cx} cy={cy} r={2}   fill="#f8fafc" />
+    </>
+  );
+}
+
+// 24h hour markers
+function HourMarkers({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  return (
+    <>
+      {Array.from({ length: 24 }, (_, h) => {
+        const angleDeg = (h / 24) * 360 - 90;
+        const rad = (angleDeg * Math.PI) / 180;
         const isMajor = h % 6 === 0;
-        const inner = r - (isMajor ? 8 : 5);
+        const inner = r - (isMajor ? 9 : 5);
         const outer = r;
         return (
-          <line
-            key={h}
-            x1={cx + inner * Math.cos(angle)}
-            y1={cy + inner * Math.sin(angle)}
-            x2={cx + outer * Math.cos(angle)}
-            y2={cy + outer * Math.sin(angle)}
+          <line key={h}
+            x1={cx + inner * Math.cos(rad)} y1={cy + inner * Math.sin(rad)}
+            x2={cx + outer * Math.cos(rad)} y2={cy + outer * Math.sin(rad)}
             stroke="currentColor"
             strokeWidth={isMajor ? 2 : 1}
             strokeOpacity={isMajor ? 0.6 : 0.3}
@@ -162,21 +292,16 @@ function HourMarkers({ cx, cy, r }: { cx: number; cy: number; r: number }) {
         );
       })}
       {[0, 6, 12, 18].map((h) => {
-        const label = h === 0 ? '00' : h === 12 ? '12' : h.toString();
-        const angle = ((h / 24) * 360 - 90) * (Math.PI / 180);
+        const rad = ((h / 24) * 360 - 90) * Math.PI / 180;
         const labelR = r - 18;
         return (
-          <text
-            key={h}
-            x={cx + labelR * Math.cos(angle)}
-            y={cy + labelR * Math.sin(angle)}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={9}
-            fill="currentColor"
-            fillOpacity={0.5}
+          <text key={h}
+            x={cx + labelR * Math.cos(rad)}
+            y={cy + labelR * Math.sin(rad)}
+            textAnchor="middle" dominantBaseline="central"
+            fontSize={9} fill="currentColor" fillOpacity={0.5}
           >
-            {label}
+            {h === 0 ? '00' : h === 12 ? '12' : h.toString()}
           </text>
         );
       })}
@@ -184,69 +309,29 @@ function HourMarkers({ cx, cy, r }: { cx: number; cy: number; r: number }) {
   );
 }
 
-// Phase arc
-function PhaseArc({
-  cx, cy, r, openMin, closeMin, color,
-}: {
+// Phase arc on the clock ring
+function PhaseArc({ cx, cy, r, openMins, closeMins, color }: {
   cx: number; cy: number; r: number;
-  openMin: number; closeMin: number; color: string;
+  openMins: number; closeMins: number; color: string;
 }) {
-  const start = minutesToAngle(openMin);
-  let end = minutesToAngle(closeMin);
-  let large = (closeMin - openMin) / (24 * 60) > 0.5 ? 1 : 0;
-  if (closeMin < openMin) large = 1;
-
-  const toRad = (a: number) => ((a - 90) * Math.PI) / 180;
-  const x1 = cx + r * Math.cos(toRad(start));
-  const y1 = cy + r * Math.sin(toRad(start));
-  const x2 = cx + r * Math.cos(toRad(end));
-  const y2 = cy + r * Math.sin(toRad(end));
-
-  const d = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+  const start = minsToAngle(openMins);
+  const end   = minsToAngle(closeMins);
+  const path  = describeArc(cx, cy, r, start, end);
   return (
     <>
-      <path d={d} stroke={color} strokeWidth={12} fill="none" strokeLinecap="round" opacity={0.9} />
-      <path d={d} stroke={color} strokeWidth={12} fill="none" strokeLinecap="round" opacity={0.3}
-        style={{ filter: `blur(4px)` }} />
-    </>
-  );
-}
-
-// ── Analogue clock face — hour / minute / second hands (時針分針秒針) ─────────
-function ClockFace({ cx, cy, r }: { cx: number; cy: number; r: number }) {
-  const now = new Date();
-  const sec = now.getSeconds();
-  const min = now.getMinutes();
-  const hrs = now.getHours();
-
-  const secDeg = (sec / 60) * 360;
-  const minDeg = ((min + sec / 60) / 60) * 360;
-  const hrDeg  = ((hrs + min / 60) / 24) * 360;
-
-  const toRad = (deg: number) => ((deg - 90) * Math.PI) / 180;
-  const sRad = toRad(secDeg); const sLen = r - 6;
-  const mRad = toRad(minDeg); const mLen = r - 14;
-  const hRad = toRad(hrDeg);  const hLen = r * 0.52;
-
-  return (
-    <>
-      <line x1={cx} y1={cy} x2={cx + sLen * Math.cos(sRad)} y2={cy + sLen * Math.sin(sRad)}
-        stroke="#ef4444" strokeWidth={1.5} strokeLinecap="round" />
-      <line x1={cx} y1={cy} x2={cx + mLen * Math.cos(mRad)} y2={cy + mLen * Math.sin(mRad)}
-        stroke="#475569" strokeWidth={2.5} strokeLinecap="round" />
-      <line x1={cx} y1={cy} x2={cx + hLen * Math.cos(hRad)} y2={cy + hLen * Math.sin(hRad)}
-        stroke="#0f172a" strokeWidth={3.5} strokeLinecap="round" />
-      <circle cx={cx} cy={cy} r={4.5} fill="#0f172a" />
-      <circle cx={cx} cy={cy} r={2} fill="#f8fafc" />
+      <path d={path} stroke={color} strokeWidth={10} fill="none"
+        strokeLinecap="round" opacity={0.85} />
+      <path d={path} stroke={color} strokeWidth={10} fill="none"
+        strokeLinecap="round" opacity={0.25} style={{ filter: 'blur(3px)' }} />
     </>
   );
 }
 
 const PHASE_META: Record<Phase, { label: string; color: string; badge: string }> = {
-  closed:       { label: 'Market Closed',    color: '#94a3b8', badge: 'CLOSED' },
-  pre_market:   { label: 'Pre-Market',       color: '#f59e0b', badge: 'PRE-MARKET' },
-  regular:      { label: 'Regular Session',  color: '#22c55e', badge: 'OPEN' },
-  after_hours:  { label: 'After Hours',       color: '#a78bfa', badge: 'AFTER-HOURS' },
+  closed:      { label: 'Market Closed',   color: '#94a3b8', badge: 'CLOSED' },
+  pre_market:  { label: 'Pre-Market',      color: '#f59e0b', badge: 'PRE-MARKET' },
+  regular:     { label: 'Regular Session', color: '#22c55e', badge: 'OPEN' },
+  after_hours: { label: 'After Hours',      color: '#a78bfa', badge: 'AFTER-HOURS' },
 };
 
 interface MarketClockWidgetProps extends Omit<React.ComponentProps<typeof BaseWidget>, 'title' | 'children'> {}
@@ -255,29 +340,24 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
   const [now, setNow] = useState<Date>(new Date());
 
   const tick = useCallback(() => setNow(new Date()), []);
-
   useEffect(() => {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [tick]);
 
-  // HKT = UTC+8, no DST
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const hk  = new Date(utc + 8 * 3600000);
-  const hkHours   = hk.getHours();
-  const hkMinutes = hk.getMinutes();
-  const minutesHKT = hkHours * 60 + hkMinutes;
-  const phase = getPhase(minutesHKT);
-  const meta  = PHASE_META[phase];
+  const hkt      = new Date(now.getTime() + (8 * 3600000) - (now.getTimezoneOffset() * 60000));
+  const hktMins  = hkt.getHours() * 60 + hkt.getMinutes();
+  const { session, phase } = getPhaseAndSession();
+  const meta     = PHASE_META[phase];
+  const holiday  = isUSHoliday(hkt);
+  const { label: countdownLabel, countdown } = getCountdown(phase, hktMins, holiday, session);
 
   const svgSize = 180;
   const cx = svgSize / 2;
   const cy = svgSize / 2;
   const r  = svgSize / 2 - 12;
-  const innerR = r - 10;
+  const innerR = r - 14;
 
-  const todayHoliday = isUSHoliday(hk);
-  const { label: countdownLabel, countdown } = getCountdown(phase, minutesHKT, todayHoliday);
   const contextText = `${meta.label} (HKT) — ${countdown} until ${phase === 'regular' ? 'close' : 'open'}`;
 
   return (
@@ -289,22 +369,20 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
     >
       <div className="flex flex-col items-center gap-2 py-1">
         {/* Clock face */}
-        <svg
-          width={svgSize}
-          height={svgSize}
-          viewBox={`0 0 ${svgSize} ${svgSize}`}
-          className="shrink-0"
-        >
-          {/* Background ring */}
-          <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="currentColor" strokeOpacity={0.08} />
-          <circle cx={cx} cy={cy} r={r}     fill="none" stroke="currentColor" strokeOpacity={0.12} />
+        <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`} className="shrink-0">
+          {/* Background rings */}
+          <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="currentColor" strokeOpacity={0.06} />
+          <circle cx={cx} cy={cy} r={r}      fill="none" stroke="currentColor" strokeOpacity={0.12} />
 
           {/* Phase arcs */}
-          <PhaseArc cx={cx} cy={cy} r={innerR} openMin={PRE_MARKET.open}  closeMin={PRE_MARKET.close}  color="#f59e0b" />
-          <PhaseArc cx={cx} cy={cy} r={innerR} openMin={REGULAR.open}    closeMin={REGULAR.close}    color="#22c55e" />
-          <PhaseArc cx={cx} cy={cy} r={innerR} openMin={AFTER_HOURS.open} closeMin={AFTER_HOURS.close} color="#a78bfa" />
+          <PhaseArc cx={cx} cy={cy} r={innerR}
+            openMins={session.preMkt.open}   closeMins={session.preMkt.close}   color={session.preMkt.color} />
+          <PhaseArc cx={cx} cy={cy} r={innerR}
+            openMins={session.regular.open}  closeMins={session.regular.close}  color={session.regular.color} />
+          <PhaseArc cx={cx} cy={cy} r={innerR}
+            openMins={session.afterHrs.open} closeMins={session.afterHrs.close} color={session.afterHrs.color} />
 
-          {/* Hour markers */}
+          {/* 24h hour markers */}
           <g color="currentColor">
             <HourMarkers cx={cx} cy={cy} r={r} />
           </g>
@@ -313,7 +391,7 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
           <ClockFace cx={cx} cy={cy} r={r} />
         </svg>
 
-        {/* Phase badge + HKT time — side by side */}
+        {/* Countdown + Status side by side */}
         <div className="flex items-center gap-6 w-full justify-center">
           {/* Left: countdown */}
           <div className="flex flex-col items-center">
@@ -328,14 +406,11 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
           {/* Divider */}
           <div className="h-8 w-px bg-border" />
 
-          {/* Right: status badge + HKT time */}
+          {/* Right: badge + HKT time */}
           <div className="flex flex-col items-center">
-            <div
-              className="flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide mb-1"
-              style={{ backgroundColor: meta.color + '22', color: meta.color }}
-            >
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
+            <div className="flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-semibold uppercase tracking-wide mb-1"
+              style={{ backgroundColor: meta.color + '22', color: meta.color }}>
+              <span className="inline-block h-1.5 w-1.5 rounded-full"
                 style={{
                   backgroundColor: meta.color,
                   boxShadow: phase !== 'closed' ? `0 0 4px ${meta.color}` : undefined,
@@ -345,17 +420,17 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
               {meta.badge}
             </div>
             <div className="font-mono text-sm text-muted-foreground">
-              HKT {String(hkHours).padStart(2, '0')}:{String(hkMinutes).padStart(2, '0')}
+              HKT {String(hkt.getHours()).padStart(2, '0')}:{String(hkt.getMinutes()).padStart(2, '0')}
             </div>
           </div>
         </div>
 
-        {/* Phase legend */}
+        {/* Phase legend — now with correct hours */}
         <div className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-0.5">
           {[
-            { label: 'Pre-Market',  color: '#f59e0b', range: '21:30 – 00:00' },
-            { label: 'Regular',     color: '#22c55e', range: '00:00 – 04:00' },
-            { label: 'After-Hours', color: '#a78bfa', range: '04:00 – 08:00' },
+            { label: session.preMkt.label,   color: session.preMkt.color,   range: session.preMkt.range },
+            { label: session.regular.label,  color: session.regular.color,  range: session.regular.range },
+            { label: session.afterHrs.label,  color: session.afterHrs.color, range: session.afterHrs.range },
           ].map(({ label, color, range }) => (
             <div key={label} className="flex items-center gap-1 text-xs text-muted-foreground">
               <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
