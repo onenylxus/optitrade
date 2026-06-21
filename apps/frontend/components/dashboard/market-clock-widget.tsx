@@ -187,26 +187,54 @@ function getGoodFriday(year: number): Date {
 function getCountdown(
   phase: Phase,
   hktMins: number,
+  hktDate: Date,       // full HKT Date (UTC+8)
   holiday: { closed: boolean; name?: string } | null,
   session: MarketSession,
 ) {
-  const minsTo = (target: number): string => {
-    let diff = target - hktMins;
-    if (diff <= 0) diff += 1440;
-    const rh = Math.floor(diff / 60);
-    const rm = diff % 60;
-    return `${String(rh).padStart(2, '0')}:${String(rm).padStart(2, '0')}`;
+  const fmt = (mins: number): string => {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   };
 
+  const preOpen  = session.preMkt.open;
+  const regClose = session.regular.close;
+
   if (phase === 'closed') {
-    if (holiday?.closed) {
-      return { label: `${holiday.name} — reopens in`, countdown: minsTo(session.preMkt.open) };
+    const dow       = hktDate.getUTCDay(); // 0=Sun, 6=Sat
+    const isWeekend = dow === 0 || dow === 6;
+    const isHoliday = !!holiday?.closed;
+
+    let targetMins: number;
+    if (isWeekend || isHoliday) {
+      // Next pre-market: Monday 16:00 (EDT) or 17:00 (EST)
+      targetMins = preOpen + 1440;
+    } else if (hktMins < preOpen) {
+      // Before today's pre-market → same calendar day
+      targetMins = preOpen;
+    } else {
+      // After today's pre-market → next calendar day
+      targetMins = preOpen + 1440;
     }
-    return { label: 'Pre-market opens in', countdown: minsTo(session.preMkt.open) };
+
+    const diff  = targetMins - hktMins;
+    const label = isHoliday
+      ? `${holiday.name} — reopens in`
+      : dow === 0 ? 'Pre-market reopens in'
+      : 'Pre-market opens in';
+    return { label, countdown: fmt(diff) };
   }
-  if (phase === 'pre_market') return { label: 'Regular opens in', countdown: minsTo(session.regular.open) };
-  if (phase === 'regular')    return { label: 'Closes in',          countdown: minsTo(session.regular.close) };
-  return { label: 'Reopens in',            countdown: minsTo(session.preMkt.open + 1440) };
+
+  if (phase === 'pre_market') {
+    return { label: 'Regular opens in', countdown: fmt(session.regular.open - hktMins) };
+  }
+
+  if (phase === 'regular') {
+    const diff = regClose - hktMins;
+    return { label: 'Closes in', countdown: fmt(diff > 0 ? diff : diff + 1440) };
+  }
+
+  // after-hours: next pre-market open (always next day)
+  return { label: 'Reopens in', countdown: fmt((preOpen + 1440) - hktMins) };
 }
 
 // SVG arc — draw a circular arc from startAngle to endAngle degrees
@@ -228,9 +256,7 @@ function minsToAngle(mins: number): number {
 }
 
 // ── Clock face — hour / minute / second hands (時針分針秒針) ───────────────────
-function ClockFace({ cx, cy, r }: { cx: number; cy: number; r: number }) {
-  const now  = new Date();
-  const hkt  = new Date(now.getTime() + 8 * 3600000);
+function ClockFace({ cx, cy, r, hkt }: { cx: number; cy: number; r: number; hkt: Date }) {
   const sec  = hkt.getUTCSeconds();
   const min  = hkt.getUTCMinutes();
   const hrs  = hkt.getUTCHours();
@@ -346,7 +372,7 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
   const { session, phase } = getPhaseAndSession();
   const meta     = PHASE_META[phase];
   const holiday  = isUSHoliday(hkt);
-  const { label: countdownLabel, countdown } = getCountdown(phase, hktMins, holiday, session);
+  const { label: countdownLabel, countdown } = getCountdown(phase, hktMins, hkt, holiday, session);
 
   const svgSize = 180;
   const cx = svgSize / 2;
@@ -384,7 +410,7 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
           </g>
 
           {/* 24h clock hands (時針分針秒針) */}
-          <ClockFace cx={cx} cy={cy} r={r} />
+          <ClockFace cx={cx} cy={cy} r={r} hkt={hkt} />
         </svg>
 
         {/* Countdown + Status side by side */}
