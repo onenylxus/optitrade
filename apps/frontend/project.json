@@ -5,7 +5,7 @@
   "projectType": "application",
   "targets": {
     "dev": {
-      "command": "next dev -H 0.0.0.0",
+      "command": "next dev -H ${NEXT_DEV_HOST:-127.0.0.1}",
       "options": {
         "cwd": "apps/frontend"
       }
