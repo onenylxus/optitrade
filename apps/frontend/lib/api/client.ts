@@ -212,6 +212,7 @@ export interface PortfolioAnalysisResponse {
   riskLabel: string;
   riskTone: 'low' | 'medium' | 'high';
   strategy: PortfolioStrategyAction[];
+  signals: PortfolioPositionSignal[];
   modelId: string;
 }
 
@@ -219,6 +220,15 @@ export interface PortfolioStrategyAction {
   label: string;
   symbols: string[];
   reason: string;
+}
+
+export interface PortfolioPositionSignal {
+  symbol: string;
+  bias: string;
+  confidence?: number | null;
+  pattern?: string | null;
+  status?: string | null;
+  explanation?: string | null;
 }
 
 /**

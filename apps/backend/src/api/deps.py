@@ -82,6 +82,7 @@ def get_portfolio_service() -> PortfolioService:
 def get_portfolio_analysis_service(
     request: Request,
     portfolio: Annotated[PortfolioService, Depends(get_portfolio_service)],
+    chart: Annotated[StockChartService, Depends(get_stock_chart_service)],
 ) -> PortfolioAnalysisService:
     or_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not or_key:
@@ -93,6 +94,7 @@ def get_portfolio_analysis_service(
     return PortfolioAnalysisService(
         portfolio,
         openrouter_api_key=or_key,
+        stock_chart_service=chart,
         http_async_client=http,
     )
 

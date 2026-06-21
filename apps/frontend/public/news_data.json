@@ -1,12 +1,62 @@
 {
-  "metadata": {
-    "total_news": 50,
-    "yahoo_count": 12,
-    "et_count": 38,
-    "analyzed_at": "2026-06-19T23:03:19.422993",
-    "model": "openrouter/free"
-  },
   "news": [
+    {
+      "id": "yahoo_1782004035_46",
+      "source": "yahoo",
+      "headline": "Optical Networking Is AI's Most Overlooked Bottleneck. Here's Why This Nvidia-Backed Company Is the Stock to Own.",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/optical-networking-ais-most-overlooked-185600348.html",
+      "published_at": "2026-06-19T18:56:00Z",
+      "summary": "Optical Networking Is AI's Most Overlooked Bottleneck. Here's Why This Nvidia-Backed Company Is the Stock to Own.",
+      "highlights": [
+        "Mock highlight 1",
+        "Mock highlight 2",
+        "Mock highlight 3"
+      ],
+      "sentiment": 0.5,
+      "risk_tag": "Low Risk",
+      "reasoning": "This is a mock analysis for UI testing purposes.",
+      "related_symbols": [],
+      "readiness_score": 95,
+      "analyzed_at": "2026-06-21T09:07:16.335914"
+    },
+    {
+      "id": "yahoo_1782000431_31",
+      "source": "yahoo",
+      "headline": "Analyst Warns Intel Valuation ‘Doesn’t Make Sense.’ Suggests NVIDIA, AMD, Micron, and Broadcom as Alternatives.",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/analyst-warns-intel-valuation-doesn-173648448.html",
+      "published_at": "2026-06-19T17:36:48Z",
+      "summary": "Analyst Warns Intel Valuation ‘Doesn’t Make Sense.’ Suggests NVIDIA, AMD, Micron, and Broadcom as Alternatives.",
+      "highlights": [
+        "Mock highlight 1",
+        "Mock highlight 2",
+        "Mock highlight 3"
+      ],
+      "sentiment": 0.5,
+      "risk_tag": "Low Risk",
+      "reasoning": "This is a mock analysis for UI testing purposes.",
+      "related_symbols": [],
+      "readiness_score": 95,
+      "analyzed_at": "2026-06-21T08:07:11.667481"
+    },
+    {
+      "id": "et_1781979451_12",
+      "source": "economic_times",
+      "headline": "Stock picks of the week: 5 stocks with consistent score improvement and upside potential of up to 26%",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/stock-picks-of-the-week-5-stocks-with-consistent-score-improvement-and-upside-potential-of-up-to-26/articleshow/131864203.cms",
+      "published_at": "Fri, 19 Jun 2026 23:16:26 +0530",
+      "summary": "The bulls, who were making a comeback attempt after the US-Iran peace deal, have been hit by the global meltdown in IT services stocks. As IT stocks have significant weightage in the Nifty and Sensex,",
+      "highlights": [
+        "Mock highlight 1",
+        "Mock highlight 2",
+        "Mock highlight 3"
+      ],
+      "sentiment": 0.5,
+      "risk_tag": "Low Risk",
+      "reasoning": "This is a mock analysis for UI testing purposes.",
+      "related_symbols": [],
+      "readiness_score": 95,
+      "analyzed_at": "2026-06-21T02:17:31.601537"
+    },
     {
       "id": "et_1781874642_1",
       "source": "economic_times",
@@ -908,62 +958,6 @@
       "reasoning": "The title predicts significant upward momentum for two specific stocks. Technical calls suggest potential gains, though trading on momentum carries inherent market risk.",
       "related_symbols": [],
       "analyzed_at": "2026-06-19T17:33:04.551814"
-    },
-    {
-      "id": "et_1781860832_42",
-      "source": "economic_times",
-      "headline": "Bharat Forge, GE Vernova among 10 midcap stocks that hit 52-week highs &amp; rallied up to 20% in a month",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/bharat-forge-ge-vernova-among-10-midcap-stocks-that-hit-52-week-highs-amp-rallied-up-to-20-in-a-month/slideshow/131828391.cms",
-      "published_at": "Thu, 18 Jun 2026 16:45:14 +0530",
-      "summary": "The Sensex rose 254 points to close at 77,409 on Thursday, lifting broader markets. Ten BSE 150 MidCap stocks touched fresh 52-week highs, signalling strong investor confidence. GE Vernova T&amp;D Ind",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [
-        "NIFTY"
-      ],
-      "analyzed_at": "2026-06-19T17:33:13.198461"
-    },
-    {
-      "id": "et_1781860832_43",
-      "source": "economic_times",
-      "headline": "Madhu Kela to become investor in Lloyds Engineering as part of SISCOL acquisition, to receive nearly 73 lakh shares",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/madhu-kela-to-become-investor-in-lloyds-engineering-as-part-of-siscol-acquisition-to-receive-nearly-73-lakh-shares/articleshow/131827306.cms",
-      "published_at": "Thu, 18 Jun 2026 16:41:51 +0530",
-      "summary": "Lloyds Engineering will acquire an 88.12% stake in Steel Infra Solutions Company (SISCOL) for about Rs 1,073 crore through cash and share swaps. The deal expands its engineering, EPC and infrastructur",
-      "highlights": [
-        "Standard market event",
-        "No clear directional catalysts",
-        "Monitor standard developments"
-      ],
-      "sentiment": 0.0,
-      "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "analyzed_at": "2026-06-19T17:33:22.153272"
-    },
-    {
-      "id": "et_1781860832_45",
-      "source": "economic_times",
-      "headline": "Bajaj Auto sets June 24 as record date for Rs 5,632 crore share buyback. Here’s all you need to know",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/bajaj-auto-sets-june-24-as-record-date-for-rs-5632-crore-share-buyback-heres-all-you-need-to-know/articleshow/131825425.cms",
-      "published_at": "Thu, 18 Jun 2026 15:20:08 +0530",
-      "summary": "Bajaj Auto has set June 24 as the record date for its substantial Rs 5,633 crore share buyback. Shareholders will be eligible to tender shares at Rs 12,000 each. This price offers a significant premiu",
-      "highlights": [
-        "Buyback size Rs 5,633 crore",
-        "Record date set for June 24",
-        "Tender price Rs 12,000 per share"
-      ],
-      "sentiment": 0.2,
-      "risk_tag": "Low Risk",
-      "reasoning": "The announcement of a large share buyback at a premium signals confidence, but no immediate market-moving catalysts are present.",
-      "related_symbols": [],
-      "analyzed_at": "2026-06-19T17:33:30.815937"
     }
   ]
 }
