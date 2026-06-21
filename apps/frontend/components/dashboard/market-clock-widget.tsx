@@ -96,6 +96,13 @@ function getPhaseAndSession(): { session: MarketSession; phase: Phase } {
   const now = new Date();
   const hkt = new Date(now.getTime() + 8 * 3600000);
   const hktMins = hkt.getUTCHours() * 60 + hkt.getUTCMinutes(); // 0–1439 HKT
+  const dow = hkt.getUTCDay(); // 0=Sun, 6=Sat
+
+  // Weekends: always closed (no NYSE trading)
+  if (dow === 0 || dow === 6) {
+    session.phase = 'closed';
+    return { session, phase: 'closed' };
+  }
 
   const { preMkt, regular, afterHrs } = session;
 
