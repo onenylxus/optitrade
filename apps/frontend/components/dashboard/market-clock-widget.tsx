@@ -94,8 +94,8 @@ function getPhaseAndSession(): { session: MarketSession; phase: Phase } {
 
   // HKT minutes from today's midnight
   const now = new Date();
-  const hkt = new Date(now.getTime() + (8 * 3600000) - (now.getTimezoneOffset() * 60000));
-  const hktMins = hkt.getHours() * 60 + hkt.getMinutes(); // 0–1439
+  const hkt = new Date(now.getTime() + 8 * 3600000);
+  const hktMins = hkt.getUTCHours() * 60 + hkt.getUTCMinutes(); // 0–1439 HKT
 
   const { preMkt, regular, afterHrs } = session;
 
@@ -230,10 +230,10 @@ function minsToAngle(mins: number): number {
 // ── Clock face — hour / minute / second hands (時針分針秒針) ───────────────────
 function ClockFace({ cx, cy, r }: { cx: number; cy: number; r: number }) {
   const now  = new Date();
-  const hkt  = new Date(now.getTime() + (8 * 3600000) - (now.getTimezoneOffset() * 60000));
-  const sec  = hkt.getSeconds();
-  const min  = hkt.getMinutes();
-  const hrs  = hkt.getHours();
+  const hkt  = new Date(now.getTime() + 8 * 3600000);
+  const sec  = hkt.getUTCSeconds();
+  const min  = hkt.getUTCMinutes();
+  const hrs  = hkt.getUTCHours();
 
   // 24h clock: hour hand completes one full rotation in 24h
   const secDeg = (sec / 60) * 360;
@@ -416,7 +416,7 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
               {meta.badge}
             </div>
             <div className="font-mono text-sm text-muted-foreground">
-              HKT {String(hkt.getHours()).padStart(2, '0')}:{String(hkt.getMinutes()).padStart(2, '0')}
+              HKT {String(hkt.getUTCHours()).padStart(2, '0')}:{String(hkt.getUTCMinutes()).padStart(2, '0')}
             </div>
           </div>
         </div>
