@@ -28,7 +28,6 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_DIR)))
 FRONTEND_PUBLIC_DIR = os.path.join(PROJECT_ROOT, "apps", "frontend", "public")
 OUTPUT_FILE = os.path.join(FRONTEND_PUBLIC_DIR, "news_data.json")
 print(f"DEBUG: Loaded API Key: {OPENROUTER_API_KEY[:5]}***")
-print(f"DEBUG: Output Path: {OUTPUT_FILE}")
 os.makedirs(FRONTEND_PUBLIC_DIR, exist_ok=True)
 # ============================================================
 # News Source Configuration

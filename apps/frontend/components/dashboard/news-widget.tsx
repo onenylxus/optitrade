@@ -538,9 +538,10 @@ const matchesPortfolio = useCallback(
     // >
     //   ✅ {news.readiness_score}%
     // </span>
-    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary/50 text-muted-foreground border border-border">
-  ✅ Reliability:{news.readiness_score}%
-</span>
+      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary/50 text-muted-foreground border border-border">
+        ✅ Reliability:{news.readiness_score}%
+      </span>
+
   )}
                       </div>
                     </>
