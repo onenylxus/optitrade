@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Loader2, Send, Wifi, WifiOff } from 'lucide-react';
+import { ChevronRight, Loader2, Send, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Renderer } from '@openuidev/react-lang';
@@ -116,23 +116,71 @@ function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: bool
   );
 }
 
+function ThinkingBlock({
+  text,
+  streaming,
+}: {
+  text: string;
+  streaming: boolean;
+}) {
+  // Always show the model's reasoning. Default open so the chain-of-thought
+  // is visible the moment it starts arriving — mirrors the official nanobot
+  // webui's ``ReasoningBubble`` (open while streaming, stays open on end so
+  // the user can re-read what the model considered).
+  const [open, setOpen] = useState(true);
+  const hasText = text.trim().length > 0;
+  if (!hasText && !streaming) return null;
+  return (
+    <div className="mb-1.5 w-full">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="text-muted-foreground hover:bg-muted/40 hover:text-foreground/80 flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-colors"
+      >
+        <Sparkles className={`size-3 shrink-0 ${streaming ? 'animate-pulse' : ''}`} aria-hidden />
+        <span>{streaming ? 'Thinking…' : 'Thought process'}</span>
+        <ChevronRight
+          className={`ml-auto size-3 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+          aria-hidden
+        />
+      </button>
+      {open && hasText && (
+        <div className="border-muted-foreground/20 mt-1 border-l pl-3 text-[11.5px] leading-relaxed">
+          <div className="text-muted-foreground/90 whitespace-pre-wrap italic">
+            {text}
+            {streaming && (
+              <span className="ml-0.5 inline-block h-2 w-1 animate-pulse rounded-sm bg-current opacity-60" />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MessageBubble({
   role,
   text,
   isStreaming,
+  reasoning,
+  reasoningStreaming,
 }: {
   role: string;
   text: string;
   isStreaming?: boolean;
+  reasoning?: string;
+  reasoningStreaming?: boolean;
 }) {
   const isUser = role === 'user';
   // Hide phantom empty assistant bubbles (e.g. whitespace-only streams or
   // reasoning/tool channels with no user-visible text). The global typing
   // indicator already conveys "assistant is working", so an empty card adds
   // no signal — drop it whether streaming or finished.
-  if (!isUser && !text.trim()) {
+  if (!isUser && !text.trim() && !(reasoningStreaming || (reasoning && reasoning.trim()))) {
     return null;
   }
+  const showThinking = !isUser && (Boolean(reasoningStreaming) || Boolean(reasoning?.trim()));
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start w-full'}`}>
       <div
@@ -142,6 +190,9 @@ function MessageBubble({
             : 'w-full rounded-bl-sm border border-border bg-card text-card-foreground overflow-hidden wrap-break-word'
         }`}
       >
+        {showThinking && (
+          <ThinkingBlock text={reasoning ?? ''} streaming={Boolean(reasoningStreaming)} />
+        )}
         {isUser ? text : <SmartRenderer text={text} isStreaming={isStreaming} />}
         {isStreaming && (
           <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse rounded-sm bg-current opacity-60" />
@@ -282,6 +333,8 @@ export function ChatPanel({ onClose }: { onClose?: () => void }) {
                   role={message.role}
                   text={message.text}
                   isStreaming={message.isStreaming}
+                  reasoning={message.reasoning}
+                  reasoningStreaming={message.reasoningStreaming}
                 />
               ))}
               {isProcessing && (
