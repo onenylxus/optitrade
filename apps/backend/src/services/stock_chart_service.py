@@ -156,6 +156,21 @@ def _normalize_fmp_payload(data: Any) -> list[dict[str, Any]]:
     return out
 
 
+def _friendly_http_error(exc: httpx.HTTPStatusError) -> RuntimeError:
+    status_code = exc.response.status_code
+    if status_code == 429:
+        return RuntimeError(
+            "Financial Modeling Prep rate limit reached. Please wait a moment and try again."
+        )
+    if 400 <= status_code < 500:
+        return RuntimeError(
+            f"Financial Modeling Prep request failed with HTTP {status_code}."
+        )
+    return RuntimeError(
+        f"Financial Modeling Prep is unavailable right now (HTTP {status_code})."
+    )
+
+
 class StockChartService:
     """Calls FMP stable endpoints for intraday ``historical-chart`` and EOD ``full``."""
 
@@ -214,13 +229,19 @@ class StockChartService:
         q = {**query, "apikey": self._api_key}
         url = f"{self._base}{path}?{urlencode(q)}"
         if self._client is not None:
-            r = await self._client.get(url)
-            r.raise_for_status()
+            try:
+                r = await self._client.get(url)
+                r.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                raise _friendly_http_error(exc) from exc
             return r.json()
 
         async with httpx.AsyncClient(timeout=60.0) as client:
-            r = await client.get(url)
-            r.raise_for_status()
+            try:
+                r = await client.get(url)
+                r.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                raise _friendly_http_error(exc) from exc
             return r.json()
 
     async def _fetch_eod_full(self, params: StockChartParams) -> list[dict[str, Any]]:

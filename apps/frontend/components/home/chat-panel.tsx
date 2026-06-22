@@ -151,7 +151,7 @@ function MessageBubble({
   );
 }
 
-export function ChatPanel() {
+export function ChatPanel({ onClose }: { onClose?: () => void }) {
   const { messages, status, isProcessing, send, reconnect } = useNanobot();
   const { contexts, removeContext, clearAll } = useChatContextStore();
   const [input, setInput] = useState('');
@@ -241,7 +241,7 @@ export function ChatPanel() {
   const isConnected = status === 'connected';
 
   return (
-    <aside className="h-full min-h-0 p-3 sm:p-4">
+    <aside className="flex h-full min-h-0 flex-col">
       <Card className="flex h-full min-h-0 flex-col">
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Chat</CardTitle>
@@ -254,6 +254,17 @@ export function ChatPanel() {
               <StatusDot status={status} />
               <span className="capitalize">{status}</span>
             </button>
+            {onClose && (
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Close chat"
+                onClick={onClose}
+                className="size-7 rounded-full"
+              >
+                <X className="size-4" />
+              </Button>
+            )}
           </div>
         </CardHeader>
 
@@ -349,7 +360,7 @@ export function ChatPanel() {
                 setInput(value);
                 const command = detectSlashCommand(value.trim());
                 setDetectedCommand(command ? command.command : null);
-                
+
                 const filtered = getFilteredCommands(value);
                 setFilteredCommands(filtered);
                 setShowCommandMenu(filtered.length > 0);

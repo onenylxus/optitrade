@@ -19,6 +19,7 @@ import { BaseWidget } from './base-widget';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BACKEND_URL, getPortfolioAnalysis } from '@/lib/api/client';
 import type { PortfolioStrategyAction } from '@/lib/api/client';
+import type { PortfolioPositionSignal } from '@/lib/api/client';
 import type {
   PortfolioBrokerOption,
   PortfolioChatContextValue,
@@ -74,6 +75,7 @@ interface PortfolioAiSignals {
   riskLabel: string;
   riskTone: 'low' | 'medium' | 'high';
   strategy: PortfolioStrategyAction[];
+  signals: PortfolioPositionSignal[];
 }
 
 interface PortfolioApiPosition extends Stock {
@@ -242,26 +244,26 @@ function buildTopHoldings(stocks: Stock[]) {
 function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): PortfolioAiSignals {
   if (stocks.length === 0 || data.totalValue <= 0) {
     return {
-      insight: 'Add a few holdings to unlock AI insight on concentration and diversification.',
+      insight: 'Add a few holdings to unlock portfolio insight.',
       riskLabel: 'No active exposure yet',
       riskTone: 'low',
       strategy: [],
+      signals: [],
     };
   }
 
   const holdings = buildTopHoldings(stocks);
   const largest = holdings[0];
   const topTwoWeight = holdings.slice(0, 2).reduce((sum, holding) => sum + holding.weight, 0);
-  const profitableCount = stocks.filter((stock) => stock.currentPrice >= stock.avgPrice).length;
-  const profitableRatio = profitableCount / stocks.length;
+  const topTwoSymbols = holdings.slice(0, 2).map((holding) => holding.symbol);
 
-  let insight = `${largest.symbol} is the anchor holding at ${largest.weight.toFixed(0)}% of portfolio value.`;
+  let insight = `${largest.symbol} is the largest position at ${largest.weight.toFixed(0)}% of portfolio value, so it still carries the most influence over the portfolio's behavior.`;
   if (topTwoWeight >= 55) {
-    insight = `The top two holdings make up ${topTwoWeight.toFixed(0)}% of the portfolio, so performance is being driven by a narrow core.`;
-  } else if (stocks.length >= 5 && profitableRatio >= 0.7) {
-    insight = `${profitableCount} of ${stocks.length} holdings are above cost basis, which suggests the mock portfolio currently has broad positive momentum.`;
+    insight = `${topTwoSymbols.join(' and ')} make up ${topTwoWeight.toFixed(0)}% of the portfolio, so near-term performance is being driven by a relatively narrow core.`;
   } else if (data.pnlPercent < 0) {
-    insight = `The portfolio is below cost basis by ${Math.abs(data.pnlPercent).toFixed(1)}%, so a few weaker positions are outweighing current winners.`;
+    insight = `The portfolio is below cost basis by ${Math.abs(data.pnlPercent).toFixed(1)}%, so weakness in the larger holdings is still outweighing the rest of the book.`;
+  } else {
+    insight = `Exposure looks fairly balanced across ${stocks.length} holdings, although the larger names still set the tone for short-term portfolio movement.`;
   }
 
   if (largest.weight >= 35) {
@@ -269,18 +271,8 @@ function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): P
       insight,
       riskLabel: `High concentration in ${largest.symbol}`,
       riskTone: 'high',
-      strategy: [
-        {
-          label: 'trim',
-          symbols: [largest.symbol],
-          reason: 'This holding is driving too much of total portfolio risk.',
-        },
-        {
-          label: 'add candidate',
-          symbols: holdings.slice(1, 3).map((holding) => holding.symbol),
-          reason: 'Smaller positions can broaden exposure better than adding to the lead name.',
-        },
-      ],
+      strategy: [],
+      signals: [],
     };
   }
   if (topTwoWeight >= 55) {
@@ -288,18 +280,8 @@ function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): P
       insight,
       riskLabel: 'Top-two concentration is elevated',
       riskTone: 'medium',
-      strategy: [
-        {
-          label: 'reduce risk',
-          symbols: [largest.symbol],
-          reason: 'The top of the portfolio is carrying an outsized share of exposure.',
-        },
-        {
-          label: 'add candidate',
-          symbols: holdings.slice(1, 3).map((holding) => holding.symbol),
-          reason: 'Broader participation would improve overall balance.',
-        },
-      ],
+      strategy: [],
+      signals: [],
     };
   }
   if (stocks.length <= 3) {
@@ -307,32 +289,52 @@ function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): P
       insight,
       riskLabel: 'Limited diversification across holdings',
       riskTone: 'medium',
-      strategy: [
-        {
-          label: 'hold sizing steady',
-          symbols: [largest.symbol],
-          reason: 'A concentrated book benefits from slower sizing changes.',
-        },
-      ],
+      strategy: [],
+      signals: [],
     };
   }
   return {
     insight,
     riskLabel: 'Risk is relatively balanced',
     riskTone: 'low',
-    strategy: [
-      {
-        label: 'hold',
-        symbols: [largest.symbol],
-        reason: 'The leading position is not yet forcing an urgent rebalance.',
-      },
-      {
-        label: 'add candidate',
-        symbols: holdings.slice(1, 3).map((holding) => holding.symbol),
-        reason: 'Selective adds to smaller holdings can improve diversification.',
-      },
-    ],
+    strategy: [],
+    signals: [],
   };
+}
+
+function PositionSignalTag({ signal }: { signal: PortfolioPositionSignal }) {
+  const bias = signal.bias.toLowerCase();
+  const toneClasses =
+    bias === 'strong bullish'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : bias === 'strong bearish'
+        ? 'border-rose-200 bg-rose-50 text-rose-700'
+        : bias === 'possible bullish'
+          ? 'border-teal-200 bg-teal-50 text-teal-700'
+          : bias === 'possible bearish'
+            ? 'border-amber-200 bg-amber-50 text-amber-700'
+            : bias === 'neutral'
+              ? 'border-slate-200 bg-slate-100 text-slate-500'
+            : 'border-slate-200 bg-slate-100 text-slate-500';
+
+  const title =
+    signal.explanation ??
+    (signal.pattern
+      ? `${signal.pattern}${signal.status ? ` • ${signal.status}` : ''}${signal.confidence ? ` • ${signal.confidence}%` : ''}`
+      : signal.bias);
+
+  return (
+    <span className="group/label relative inline-flex">
+      <span
+        className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.14em] ${toneClasses}`}
+      >
+        {signal.bias}
+      </span>
+      <span className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-44 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[9px] font-medium normal-case tracking-normal text-slate-600 opacity-0 shadow-lg transition duration-100 ease-out group-hover/label:translate-y-0 group-hover/label:opacity-100">
+        {title}
+      </span>
+    </span>
+  );
 }
 
 function RiskFlag({ label, tone }: { label: string; tone: PortfolioAiSignals['riskTone'] }) {
@@ -353,11 +355,9 @@ function RiskFlag({ label, tone }: { label: string; tone: PortfolioAiSignals['ri
 
 function PortfolioInsightCard({
   insight,
-  strategy = [],
   isLoading = false,
 }: {
   insight: string;
-  strategy?: PortfolioStrategyAction[];
   isLoading?: boolean;
 }) {
   return (
@@ -378,19 +378,6 @@ function PortfolioInsightCard({
       ) : (
         <>
           <div className="text-[10px] leading-4 text-slate-700">{insight}</div>
-          {strategy.length > 0 ? (
-            <div className="mt-2 space-y-1 border-t border-slate-200 pt-2 text-[9px] text-slate-700">
-              {strategy.map((item, index) => (
-                <div key={`${item.label}-${item.symbols.join('-')}-${index}`}>
-                  <span className="font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    {item.label}:
-                  </span>{' '}
-                  <span>{item.symbols.join(', ') || 'N/A'}</span>
-                  <span className="text-slate-500"> - {item.reason}</span>
-                </div>
-              ))}
-            </div>
-          ) : null}
         </>
       )}
     </div>
@@ -1040,9 +1027,13 @@ function PortfolioWidgetMedium({
   data,
   source,
   sourceLabel,
+  aiSignals,
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
+  const signalBySymbol = new Map(
+    aiSignals.signals.map((signal) => [signal.symbol.toUpperCase(), signal] as const),
+  );
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-2.5">
@@ -1098,8 +1089,15 @@ function PortfolioWidgetMedium({
                 return (
                   <tr key={stock.id} className="transition-colors hover:bg-slate-50/50">
                     <td className="py-1.5 first:pl-0">
-                      <div className="text-[11px] font-bold leading-tight text-slate-900">
-                        {stock.symbol}
+                      <div className="flex items-center gap-1.5">
+                        <div className="text-[11px] font-bold leading-tight text-slate-900">
+                          {stock.symbol}
+                        </div>
+                        {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
+                          <PositionSignalTag
+                            signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
+                          />
+                        ) : null}
                       </div>
                       <div className="font-mono text-[7px] tracking-tight text-slate-400">
                         {stock.quantity} <span className="opacity-70">shs</span>
@@ -1139,6 +1137,9 @@ function PortfolioWidgetLarge({
   onOpenEditor,
 }: PortfolioVariantProps) {
   const topHoldings = buildTopHoldings(stocks);
+  const signalBySymbol = new Map(
+    aiSignals.signals.map((signal) => [signal.symbol.toUpperCase(), signal] as const),
+  );
   const chartConfig = Object.fromEntries(
     topHoldings.map((holding, index) => [
       holding.symbol,
@@ -1204,7 +1205,6 @@ function PortfolioWidgetLarge({
         </div>
         <PortfolioInsightCard
           insight={aiSignals.insight}
-          strategy={aiSignals.strategy}
           isLoading={Boolean(isAiLoading)}
         />
       </div>
@@ -1232,7 +1232,16 @@ function PortfolioWidgetLarge({
                   return (
                     <tr key={stock.id} className="group transition-colors hover:bg-slate-50/50">
                       <td className="py-2 first:pl-0">
-                        <div className="font-bold leading-tight text-slate-900">{stock.symbol}</div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="font-bold leading-tight text-slate-900">
+                            {stock.symbol}
+                          </div>
+                          {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
+                            <PositionSignalTag
+                              signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
+                            />
+                          ) : null}
+                        </div>
                         <div className="font-mono text-[8px] tracking-tighter text-slate-400">
                           {stock.quantity} <span className="text-[7px] opacity-70">shs</span>
                         </div>
@@ -1502,6 +1511,7 @@ const PortfolioWidgetRoot = ({
           riskLabel: response.riskLabel,
           riskTone: response.riskTone,
           strategy: response.strategy ?? [],
+          signals: response.signals ?? [],
         });
         setIsAiLoading(false);
       })

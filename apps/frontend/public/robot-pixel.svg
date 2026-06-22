@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- antenna -->
+  <rect x="7" y="0" width="2" height="1" fill="#facc15"/>
+  <rect x="7" y="1" width="2" height="1" fill="#e5e7eb"/>
+  <!-- head outline -->
+  <rect x="3" y="2" width="10" height="9" fill="#cbd5e1"/>
+  <rect x="3" y="2" width="10" height="1" fill="#e2e8f0"/>
+  <rect x="3" y="10" width="10" height="1" fill="#94a3b8"/>
+  <rect x="3" y="2" width="1" height="9" fill="#e2e8f0"/>
+  <rect x="12" y="2" width="1" height="9" fill="#94a3b8"/>
+  <!-- face screen -->
+  <rect x="4" y="3" width="8" height="6" fill="#0f172a"/>
+  <!-- eyes -->
+  <rect x="5" y="4" width="2" height="2" fill="#38bdf8"/>
+  <rect x="9" y="4" width="2" height="2" fill="#38bdf8"/>
+  <rect x="5" y="4" width="1" height="1" fill="#bae6fd"/>
+  <rect x="9" y="4" width="1" height="1" fill="#bae6fd"/>
+  <!-- smile -->
+  <rect x="6" y="7" width="4" height="1" fill="#38bdf8"/>
+  <rect x="5" y="6" width="1" height="1" fill="#38bdf8"/>
+  <rect x="10" y="6" width="1" height="1" fill="#38bdf8"/>
+  <!-- ears -->
+  <rect x="2" y="5" width="1" height="3" fill="#94a3b8"/>
+  <rect x="13" y="5" width="1" height="3" fill="#94a3b8"/>
+  <!-- neck -->
+  <rect x="7" y="11" width="2" height="1" fill="#94a3b8"/>
+  <!-- body -->
+  <rect x="4" y="12" width="8" height="4" fill="#6366f1"/>
+  <rect x="4" y="12" width="8" height="1" fill="#818cf8"/>
+  <rect x="6" y="13" width="4" height="2" fill="#c7d2fe"/>
+  <rect x="7" y="13" width="2" height="2" fill="#4f46e5"/>
+</svg>

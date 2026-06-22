@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { HomeHeader } from '@/components/home/home-header';
-import { ChatPanel } from '@/components/home/chat-panel';
+import { FloatingChat } from '@/components/home/floating-chat';
 import { EditWidgetDrawer } from '@/components/home/edit-widget-drawer';
 import { WidgetCanvas } from '@/components/home/widget-canvas';
 import { PortfolioProvider } from '@/contexts/portfolio-context';
@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(true);
   const [firebaseAuth] = useState<ReturnType<typeof getFirebaseAuth> | null>(() => {
     if (!isFirebaseConfigReady()) {
       return null;
@@ -71,8 +70,6 @@ export default function HomePage() {
           <HomeHeader
             isEditMode={isEditMode}
             onEditModeChange={setIsEditMode}
-            isChatOpen={isChatOpen}
-            onChatOpenChange={setIsChatOpen}
             firebaseUser={firebaseUser}
             backendProfile={backendProfile}
             onSignOut={handleSignOut}
@@ -81,7 +78,7 @@ export default function HomePage() {
             <div
               className={cn(
                 'h-full min-h-0 transition-[padding-left,padding-right] duration-300 ease-out',
-                isEditMode ? 'lg:pl-90 lg:pr-0' : isChatOpen ? 'lg:pr-180 lg:pl-0' : '',
+                isEditMode ? 'lg:pl-90 lg:pr-0' : '',
               )}
             >
               <WidgetCanvas isEditMode={isEditMode} />
@@ -97,20 +94,10 @@ export default function HomePage() {
               <EditWidgetDrawer open={isEditMode} mode="inline" className="h-full" />
             </div>
 
-            <div
-              className={cn(
-                'absolute inset-y-0 right-0 hidden w-180 transition-all duration-300 ease-out lg:block',
-                isEditMode || !isChatOpen
-                  ? 'pointer-events-none translate-x-full opacity-0'
-                  : 'pointer-events-auto translate-x-0 opacity-100',
-              )}
-              aria-hidden={isEditMode || !isChatOpen}
-            >
-              <ChatPanel />
-            </div>
-
             <EditWidgetDrawer open={isEditMode} className="lg:hidden" />
           </main>
+
+          {!isEditMode && <FloatingChat />}
         </div>
       </ChatContextStoreProvider>
     </PortfolioProvider>

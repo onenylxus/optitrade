@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
+import time
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +14,8 @@ from src import portfolio as portfolio_module
 from src.ibkr_client import (
     IbkrConnectionSettings,
 )
+from src.api.schemas.stock_chart import ChartInterval, ChartRange
+from src.services.stock_chart_service import StockChartService, resolve_stock_chart_params
 
 
 @dataclass(frozen=True)
@@ -52,6 +56,29 @@ DEFAULT_POSITIONS: tuple[Position, ...] = (
 )
 
 
+def _parse_bounded_int_env(name: str, default: int, *, minimum: int, maximum: int) -> int:
+    raw = os.environ.get(name, str(default)).strip()
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    return max(minimum, min(value, maximum))
+
+
+PAPER_PRICE_CACHE_TTL_SECONDS = _parse_bounded_int_env(
+    "PAPER_PRICE_CACHE_TTL_SECONDS",
+    3600,
+    minimum=60,
+    maximum=86400,
+)
+PAPER_PRICE_ERROR_TTL_SECONDS = _parse_bounded_int_env(
+    "PAPER_PRICE_ERROR_TTL_SECONDS",
+    120,
+    minimum=30,
+    maximum=3600,
+)
+
+
 class PortfolioService:
     def __init__(
         self,
@@ -64,6 +91,11 @@ class PortfolioService:
         self.paper_portfolios_path = self.data_dir / "paper_portfolios.json"
         self.editable_portfolio_path = self.data_dir / "editable_portfolio.json"
         self.broker_connection_path = self.data_dir / "broker_connection.json"
+        self._price_cache: dict[str, tuple[float, float | None]] = {}
+        fmp_api_key = os.environ.get("FMP_API_KEY", "").strip()
+        self._chart_service = (
+            StockChartService(api_key=fmp_api_key) if fmp_api_key else None
+        )
 
     def build_portfolio_snapshot(self) -> dict[str, Any]:
         connection = self._read_broker_connection()
@@ -284,6 +316,7 @@ class PortfolioService:
         positions = self._normalize_positions_payload(
             editable_record.get("positions", [])
         ) or self.positions
+        positions = self._refresh_paper_prices(positions)
         total_value = sum(position.market_value for position in positions)
         total_cost = sum(position.cost_basis for position in positions)
         pnl = total_value - total_cost
@@ -459,6 +492,70 @@ class PortfolioService:
     def _read_editable_positions(self) -> tuple[Position, ...]:
         record = self._read_editable_portfolio()
         return self._normalize_positions_payload(record.get("positions", []))
+
+    def _refresh_paper_prices(self, positions: tuple[Position, ...]) -> tuple[Position, ...]:
+        if not positions or self._chart_service is None:
+            return positions
+
+        refreshed: list[Position] = []
+        for position in positions:
+            latest_price = self._get_cached_paper_price(position.symbol)
+            if latest_price is None:
+                refreshed.append(position)
+                continue
+            refreshed.append(
+                Position(
+                    id=position.id,
+                    symbol=position.symbol,
+                    quantity=position.quantity,
+                    avg_price=position.avg_price,
+                    current_price=latest_price,
+                    sector=position.sector,
+                )
+            )
+        return tuple(refreshed)
+
+    def _get_cached_paper_price(self, symbol: str) -> float | None:
+        now = time.monotonic()
+        cached = self._price_cache.get(symbol)
+        if cached is not None and cached[0] > now:
+            return cached[1]
+
+        ttl_seconds = PAPER_PRICE_CACHE_TTL_SECONDS
+        try:
+            price = self._fetch_latest_close(symbol)
+        except RuntimeError:
+            price = None
+            ttl_seconds = PAPER_PRICE_ERROR_TTL_SECONDS
+
+        self._price_cache[symbol] = (time.monotonic() + ttl_seconds, price)
+        return price
+
+    def _fetch_latest_close(self, symbol: str) -> float | None:
+        if self._chart_service is None:
+            return None
+
+        end_date = date.today()
+        params = resolve_stock_chart_params(
+            symbol=symbol,
+            interval=ChartInterval.DAY_1,
+            chart_range=ChartRange.MONTH_1,
+            from_date=None,
+            to_date=end_date,
+        )
+        chart = self._run_chart_fetch(params)
+        if not chart.candles:
+            return None
+        return float(chart.candles[-1].close)
+
+    def _run_chart_fetch(self, params: Any):
+        import asyncio
+
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self._chart_service.fetch_chart(params))
+        raise RuntimeError("Unable to refresh paper prices from a running event loop.")
 
     def _write_editable_portfolio(self, record: dict[str, Any]) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
