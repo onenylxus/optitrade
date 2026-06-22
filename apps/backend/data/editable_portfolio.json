@@ -1,0 +1,30 @@
+{
+  "name": "AI4Trade Copy Portfolio",
+  "positions": [
+    {
+      "id": "paper-AMD-2026-06-19T22",
+      "symbol": "AMD",
+      "quantity": 10,
+      "avgPrice": 536.75,
+      "currentPrice": 537.37,
+      "sector": "AI / Tech"
+    },
+    {
+      "id": "paper-AVGO-2026-06-19T22",
+      "symbol": "AVGO",
+      "quantity": 10,
+      "avgPrice": 411.38,
+      "currentPrice": 411.35,
+      "sector": "AI / Tech"
+    },
+    {
+      "id": "paper-AXP-2026-06-19T22",
+      "symbol": "AXP",
+      "quantity": 10,
+      "avgPrice": 339.98,
+      "currentPrice": 338.0,
+      "sector": "AI / Tech"
+    }
+  ],
+  "updatedAt": "2026-06-22T18:41:50.255812+08:00"
+}
