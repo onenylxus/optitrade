@@ -40,4 +40,4 @@ next-env.d.ts
 storybook-static
 
 # newsdata
-/public/newsdata.json
+/public/news_data.json
