@@ -136,3 +136,17 @@
     @apply font-sans;
   }
 }
+
+/* Fix for OpenUI nested button hydration error */
+.openui-renderer-wrapper .openui-foldable-section-trigger {
+  /* Override button styling to prevent nested button issues */
+  all: unset;
+  display: block;
+  cursor: pointer;
+  width: 100%;
+}
+
+.openui-renderer-wrapper .openui-foldable-section-trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

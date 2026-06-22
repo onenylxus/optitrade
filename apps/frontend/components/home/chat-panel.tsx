@@ -104,7 +104,9 @@ function SmartRenderer({ text, isStreaming }: { text: string; isStreaming?: bool
             </Markdown>
           </div>
         )}
-        <Renderer library={openuiChatLibrary} response={openui} isStreaming={isStreaming} />
+        <div className="openui-renderer-wrapper">
+          <Renderer library={openuiChatLibrary} response={openui} isStreaming={isStreaming} />
+        </div>
       </>
     );
   }

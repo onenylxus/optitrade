@@ -281,17 +281,17 @@ function ClockFace({ cx, cy, r, hkt }: { cx: number; cy: number; r: number; hkt:
       <line x1={cx} y1={cy}
         x2={cx + (r - 6)  * Math.cos(toRad(secDeg))}
         y2={cy + (r - 6)  * Math.sin(toRad(secDeg))}
-        stroke="#ef4444" strokeWidth={1.5} strokeLinecap="round" />
+        stroke="#ef4444" strokeWidth={1.5} strokeLinecap="round" suppressHydrationWarning />
       {/* Minute hand — slate, medium */}
       <line x1={cx} y1={cy}
         x2={cx + (r - 16) * Math.cos(toRad(minDeg))}
         y2={cy + (r - 16) * Math.sin(toRad(minDeg))}
-        stroke="#475569" strokeWidth={2.5} strokeLinecap="round" />
+        stroke="#475569" strokeWidth={2.5} strokeLinecap="round" suppressHydrationWarning />
       {/* Hour hand — navy, thickest, shortest (52% radius) */}
       <line x1={cx} y1={cy}
         x2={cx + r * 0.52 * Math.cos(toRad(hrDeg))}
         y2={cy + r * 0.52 * Math.sin(toRad(hrDeg))}
-        stroke="#0f172a" strokeWidth={3.5} strokeLinecap="round" />
+        stroke="#0f172a" strokeWidth={3.5} strokeLinecap="round" suppressHydrationWarning />
       {/* Centre cap */}
       <circle cx={cx} cy={cy} r={4.5} fill="#0f172a" />
       <circle cx={cx} cy={cy} r={2}   fill="#f8fafc" />
@@ -316,6 +316,7 @@ function HourMarkers({ cx, cy, r }: { cx: number; cy: number; r: number }) {
             stroke="currentColor"
             strokeWidth={isMajor ? 2 : 1}
             strokeOpacity={isMajor ? 0.6 : 0.3}
+            suppressHydrationWarning
           />
         );
       })}
@@ -328,6 +329,7 @@ function HourMarkers({ cx, cy, r }: { cx: number; cy: number; r: number }) {
             y={cy + labelR * Math.sin(rad)}
             textAnchor="middle" dominantBaseline="central"
             fontSize={9} fill="currentColor" fillOpacity={0.5}
+            suppressHydrationWarning
           >
             {h === 0 ? '00' : h === 12 ? '12' : h.toString()}
           </text>
@@ -424,10 +426,10 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
         <div className="flex items-center gap-6 w-full justify-center">
           {/* Left: countdown */}
           <div className="flex flex-col items-center">
-            <div className="text-xs text-muted-foreground text-right">
+            <div className="text-xs text-muted-foreground text-right" suppressHydrationWarning>
               {countdownLabel}
             </div>
-            <div className="font-mono text-xl font-bold tabular-nums" style={{ color: meta.color }}>
+            <div className="font-mono text-xl font-bold tabular-nums" style={{ color: meta.color }} suppressHydrationWarning>
               {countdown}
             </div>
           </div>
@@ -448,7 +450,7 @@ export function MarketClockWidget(props: MarketClockWidgetProps) {
               />
               {meta.badge}
             </div>
-            <div className="font-mono text-sm text-muted-foreground">
+            <div className="font-mono text-sm text-muted-foreground" suppressHydrationWarning>
               HKT {String(hkt.getUTCHours()).padStart(2, '0')}:{String(hkt.getUTCMinutes()).padStart(2, '0')}
             </div>
           </div>
