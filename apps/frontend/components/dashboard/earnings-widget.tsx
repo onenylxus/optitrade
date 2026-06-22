@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { BaseWidget } from './base-widget';
+import type { ComponentProps } from 'react';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
 import {
   Table,
@@ -118,7 +119,7 @@ const DEMO_EARNINGS: EarningItem[] = [
   },
 ];
 
-interface EarningsWidgetProps {
+interface EarningsWidgetProps extends Omit<ComponentProps<typeof BaseWidget>, 'title' | 'children'> {
   title?: string;
   summary?: string;
 }
@@ -143,6 +144,7 @@ function urgencyClass(days: number): string {
 export function EarningsWidget({
   title = 'Earnings Calendar',
   summary = 'Upcoming earnings & results',
+  ...props
 }: EarningsWidgetProps) {
   const { portfolio } = usePortfolioContext();
   const [filter, setFilter] = useState<'all' | 'portfolio'>('all');
@@ -198,7 +200,7 @@ export function EarningsWidget({
       : 'Earnings Calendar: No upcoming earnings in range';
 
   return (
-    <BaseWidget title={title} summary={summary} contextData={{ label: title, text: contextText }}>
+    <BaseWidget title={title} summary={summary} contextData={{ label: title, text: contextText }} createdByNanobot {...props}>
       {/* Filter bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex gap-1">
