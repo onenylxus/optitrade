@@ -1,4 +1,4 @@
-import type { CandlestickData, Time } from 'lightweight-charts';
+// import type { CandlestickData, Time } from 'lightweight-charts';
 
 export type WidgetType =
   | 'number'
@@ -38,7 +38,7 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   chart: { cols: 2, rows: 2 },
   table: { cols: 2, rows: 2 },
   text: { cols: 2, rows: 2 },
-  candlestick: { cols: 2, rows: 2 },
+  candlestick: { cols: 5, rows: 4 },
   'portfolio-small': { cols: 2, rows: 2 },
   'portfolio-medium': { cols: 3, rows: 3 },
   'portfolio-large': { cols: 4, rows: 4 },
@@ -48,7 +48,7 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
-  { id: 'candlestick', label: 'Candlestick Chart', sizeLabel: '2x2' },
+  { id: 'candlestick', label: 'Candlestick Chart', sizeLabel: '5x4' },
   { id: 'portfolio-small', label: 'Portfolio Widget (Small)', sizeLabel: '2x2' },
   { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '3x3' },
   { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '4x4' },
@@ -59,45 +59,85 @@ export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }
 
 export const initialPlacements: WidgetPlacement[] = [
   {
-    id: 'widget-portfolio-large-1',
+    id: 'candlestick-1',
+    widgetType: 'candlestick',
+    col: 0,
+    row: 0,
+    colSpan: 5,
+    rowSpan: 4,
+  },
+  {
+    id: 'earnings-1',
+    widgetType: 'earnings',
+    col: 5,
+    row: 0,
+    colSpan: 4,
+    rowSpan: 4,
+  },
+  {
+    id: 'market-clock-1',
+    widgetType: 'market-clock',
+    col: 9,
+    row: 0,
+    colSpan: 3,
+    rowSpan: 3,
+  },
+  {
+    id: 'portfolio-large-1',
     widgetType: 'portfolio-large',
     col: 0,
-    row: 0,
-    colSpan: 4,
-    rowSpan: 4,
-  },
-  {
-    id: 'widget-portfolio-medium-1',
-    widgetType: 'portfolio-medium',
-    col: 4,
-    row: 0,
-    colSpan: 3,
-    rowSpan: 3,
-  },
-  {
-    id: 'widget-earnings-1',
-    widgetType: 'earnings',
-    col: 0,
     row: 4,
     colSpan: 4,
     rowSpan: 4,
   },
   {
-    id: 'widget-portfolio-small-1',
-    widgetType: 'portfolio-small',
-    col: 2,
-    row: 4,
-    colSpan: 2,
-    rowSpan: 2,
-  },
-  {
-    id: 'widget-market-clock-1',
-    widgetType: 'market-clock',
+    id: 'news-1',
+    widgetType: 'news',
     col: 4,
-    row: 0,
-    colSpan: 3,
-    rowSpan: 3,
+    row: 4,
+    colSpan: 4,
+    rowSpan: 4,
   },
+  // {
+  //   id: 'widget-portfolio-large-1',
+  //   widgetType: 'portfolio-large',
+  //   col: 0,
+  //   row: 0,
+  //   colSpan: 4,
+  //   rowSpan: 4,
+  // },
+  // {
+  //   id: 'widget-portfolio-medium-1',
+  //   widgetType: 'portfolio-medium',
+  //   col: 4,
+  //   row: 0,
+  //   colSpan: 3,
+  //   rowSpan: 3,
+  // },
+  // {
+  //   id: 'widget-earnings-1',
+  //   widgetType: 'earnings',
+  //   col: 0,
+  //   row: 4,
+  //   colSpan: 4,
+  //   rowSpan: 4,
+  // },
+  // {
+  //   id: 'widget-portfolio-small-1',
+  //   widgetType: 'portfolio-small',
+  //   col: 2,
+  //   row: 4,
+  //   colSpan: 2,
+  //   rowSpan: 2,
+  // },
+  // {
+  //   id: 'widget-market-clock-1',
+  //   widgetType: 'market-clock',
+  //   col: 4,
+  //   row: 0,
+  //   colSpan: 3,
+  //   rowSpan: 3,
+  // },
 ];
 
 export const lineData = [
@@ -115,26 +155,26 @@ export const lineConfig = {
   },
 };
 
-export const candleData: CandlestickData<Time>[] = [
-  { time: '2026-03-20' as Time, open: 102, high: 108, low: 98, close: 106 },
-  { time: '2026-03-21' as Time, open: 106, high: 110, low: 103, close: 104 },
-  { time: '2026-03-22' as Time, open: 104, high: 112, low: 101, close: 109 },
-  { time: '2026-03-23' as Time, open: 109, high: 116, low: 107, close: 114 },
-  { time: '2026-03-24' as Time, open: 114, high: 117, low: 111, close: 112 },
-];
+// export const candleData: CandlestickData<Time>[] = [
+//   { time: '2026-03-20' as Time, open: 102, high: 108, low: 98, close: 106 },
+//   { time: '2026-03-21' as Time, open: 106, high: 110, low: 103, close: 104 },
+//   { time: '2026-03-22' as Time, open: 104, high: 112, low: 101, close: 109 },
+//   { time: '2026-03-23' as Time, open: 109, high: 116, low: 107, close: 114 },
+//   { time: '2026-03-24' as Time, open: 114, high: 117, low: 111, close: 112 },
+// ];
 
-export const chatMessages = [
-  { id: 1, role: 'assistant', text: 'Morning. Your risk is low and cash balance is healthy.' },
-  { id: 2, role: 'user', text: 'Show me the strongest movers for today.' },
-  {
-    id: 3,
-    role: 'assistant',
-    text: 'Top movers: NVDA +3.2%, AMD +2.8%, META +2.1%. Want them pinned as widgets?',
-  },
-  { id: 4, role: 'user', text: 'Yes, and suggest one hedge idea too.' },
-  {
-    id: 5,
-    role: 'assistant',
-    text: 'Consider a short-dated QQQ put spread to cap downside while keeping upside room.',
-  },
-] as const;
+// export const chatMessages = [
+//   { id: 1, role: 'assistant', text: 'Morning. Your risk is low and cash balance is healthy.' },
+//   { id: 2, role: 'user', text: 'Show me the strongest movers for today.' },
+//   {
+//     id: 3,
+//     role: 'assistant',
+//     text: 'Top movers: NVDA +3.2%, AMD +2.8%, META +2.1%. Want them pinned as widgets?',
+//   },
+//   { id: 4, role: 'user', text: 'Yes, and suggest one hedge idea too.' },
+//   {
+//     id: 5,
+//     role: 'assistant',
+//     text: 'Consider a short-dated QQQ put spread to cap downside while keeping upside room.',
+//   },
+// ] as const;

@@ -63,12 +63,12 @@ function candlestickVariantClassNames(variant: CandlestickWidgetVariant): {
   switch (variant) {
     case 'medium':
       return {
-        root: 'w-full min-w-0 sm:min-w-[34rem]',
+        root: 'w-full min-w-0',
         chart: 'h-56 min-h-56',
       };
     case 'large':
       return {
-        root: 'w-full min-w-0 sm:min-w-[40rem] lg:min-w-[46rem]',
+        root: 'w-full min-w-0',
         chart: 'h-72 min-h-72 sm:h-80 sm:min-h-80',
       };
     default:
