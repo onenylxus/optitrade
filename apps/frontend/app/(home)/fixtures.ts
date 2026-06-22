@@ -10,7 +10,8 @@ export type WidgetType =
   | 'portfolio-medium'
   | 'portfolio-large'
   | 'news'
-  | 'earnings';
+  | 'earnings'
+  | 'market-clock';
 
 export interface WidgetSpan {
   cols: number;
@@ -42,7 +43,8 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   'portfolio-medium': { cols: 3, rows: 3 },
   'portfolio-large': { cols: 4, rows: 4 },
   news: { cols: 4, rows: 4 },
-  earnings: { cols: 2, rows: 4 },
+  earnings: { cols: 4, rows: 4 },
+  'market-clock': { cols: 3, rows: 3 },
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
@@ -51,7 +53,8 @@ export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }
   { id: 'portfolio-medium', label: 'Portfolio Widget (Medium)', sizeLabel: '3x3' },
   { id: 'portfolio-large', label: 'Portfolio Widget (Large)', sizeLabel: '4x4' },
   { id: 'news', label: 'News Widget', sizeLabel: '4x4' },
-  { id: 'earnings', label: 'Earnings Calendar', sizeLabel: '2x4' },
+  { id: 'earnings', label: 'Earnings Calendar', sizeLabel: '4x4' },
+  { id: 'market-clock', label: 'Market Clock', sizeLabel: '3x3' },
 ];
 
 export const initialPlacements: WidgetPlacement[] = [
@@ -76,8 +79,8 @@ export const initialPlacements: WidgetPlacement[] = [
     widgetType: 'earnings',
     col: 0,
     row: 4,
-    colSpan: 2,
-    rowSpan: 2,
+    colSpan: 4,
+    rowSpan: 4,
   },
   {
     id: 'widget-portfolio-small-1',
@@ -86,6 +89,14 @@ export const initialPlacements: WidgetPlacement[] = [
     row: 4,
     colSpan: 2,
     rowSpan: 2,
+  },
+  {
+    id: 'widget-market-clock-1',
+    widgetType: 'market-clock',
+    col: 4,
+    row: 0,
+    colSpan: 3,
+    rowSpan: 3,
   },
 ];
 

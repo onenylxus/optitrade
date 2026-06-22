@@ -1,6 +1,8 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { MoreVertical, Plus, Trash2 } from 'lucide-react';
+import { Bot, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
 import type { ComponentProps, ReactNode } from 'react';
 import { Button } from '../ui/button';
@@ -17,6 +19,7 @@ interface BaseWidgetProps extends ComponentProps<typeof Card> {
   contextButtonActiveLabel?: string;
   contextButtonActive?: boolean;
   onContextButtonClick?: () => void;
+  createdByNanobot?: boolean;
 }
 const menuItemClass =
   'flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground';
@@ -31,6 +34,7 @@ export function BaseWidget({
   contextButtonActiveLabel = 'Added to Context',
   contextButtonActive = false,
   onContextButtonClick,
+  createdByNanobot = false,
   ...props
 }: BaseWidgetProps) {
   const { isEditMode, onDelete, widgetId } = useWidgetContext();
@@ -125,6 +129,13 @@ export function BaseWidget({
           {children}
         </CardContent>
       </div>
+
+      {createdByNanobot ? (
+        <div className="flex shrink-0 items-center justify-end gap-1 border-t px-0 py-1.5 pr-2">
+          <Bot className="size-3 text-muted-foreground" />
+          <span className="text-muted-foreground text-xs">Created by nanobot</span>
+        </div>
+      ) : null}
     </Card>
   );
 }
