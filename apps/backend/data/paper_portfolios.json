@@ -15,9 +15,9 @@
     "market": "us-stock",
     "created_at": "2026-06-19T22:58:11.900237+08:00",
     "updated_at": "2026-06-19T22:58:11.900237+08:00",
-    "current_price": 519.77,
-    "currentPrice": 519.77,
-    "pnl_pct": -3.16
+    "current_price": 519.85,
+    "currentPrice": 519.85,
+    "pnl_pct": -3.15
   },
   {
     "id": "paper-AVGO-2026-06-19T22",
@@ -35,9 +35,9 @@
     "market": "us-stock",
     "created_at": "2026-06-19T22:58:11.900505+08:00",
     "updated_at": "2026-06-19T22:58:11.900505+08:00",
-    "current_price": 382.365,
-    "currentPrice": 382.365,
-    "pnl_pct": -7.05
+    "current_price": 380.15,
+    "currentPrice": 380.15,
+    "pnl_pct": -7.59
   },
   {
     "id": "paper-AXP-2026-06-19T22",
@@ -55,8 +55,8 @@
     "market": "us-stock",
     "created_at": "2026-06-19T22:58:11.900578+08:00",
     "updated_at": "2026-06-19T22:58:11.900578+08:00",
-    "current_price": 337.77,
-    "currentPrice": 337.77,
+    "current_price": 337.78,
+    "currentPrice": 337.78,
     "pnl_pct": -0.65
   }
 ]
