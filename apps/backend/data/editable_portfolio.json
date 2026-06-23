@@ -6,7 +6,7 @@
       "symbol": "AMD",
       "quantity": 10,
       "avgPrice": 536.75,
-      "currentPrice": 522.27,
+      "currentPrice": 525.765,
       "sector": "AI / Tech"
     },
     {
@@ -14,7 +14,7 @@
       "symbol": "AVGO",
       "quantity": 10,
       "avgPrice": 411.38,
-      "currentPrice": 380.95,
+      "currentPrice": 382.1401,
       "sector": "AI / Tech"
     },
     {
@@ -22,9 +22,9 @@
       "symbol": "AXP",
       "quantity": 10,
       "avgPrice": 339.98,
-      "currentPrice": 336.94,
+      "currentPrice": 337.32,
       "sector": "AI / Tech"
     }
   ],
-  "updatedAt": "2026-06-23T23:58:38.137003+08:00"
+  "updatedAt": "2026-06-24T00:28:54.931520+08:00"
 }
