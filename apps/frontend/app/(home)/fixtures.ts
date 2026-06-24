@@ -11,7 +11,9 @@ export type WidgetType =
   | 'portfolio-large'
   | 'news'
   | 'earnings'
-  | 'market-clock';
+  | 'market-clock'
+  | 'paper-trading-history'
+  | 'daily-prediction';
 
 export interface WidgetSpan {
   cols: number;
@@ -45,6 +47,8 @@ export const widgetDefaultSpans: Record<WidgetType, WidgetSpan> = {
   news: { cols: 4, rows: 4 },
   earnings: { cols: 4, rows: 4 },
   'market-clock': { cols: 3, rows: 3 },
+  'paper-trading-history': { cols: 4, rows: 5 },
+  'daily-prediction': { cols: 4, rows: 6 },
 };
 
 export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }[] = [
@@ -55,6 +59,8 @@ export const widgetLibrary: { id: WidgetType; label: string; sizeLabel: string }
   { id: 'news', label: 'News Widget', sizeLabel: '4x4' },
   { id: 'earnings', label: 'Earnings Calendar', sizeLabel: '4x4' },
   { id: 'market-clock', label: 'Market Clock', sizeLabel: '3x3' },
+  { id: 'paper-trading-history', label: 'Paper Trading History', sizeLabel: '4x5' },
+  { id: 'daily-prediction', label: 'Daily Market Prediction', sizeLabel: '4x6' },
 ];
 
 export const initialPlacements: WidgetPlacement[] = [

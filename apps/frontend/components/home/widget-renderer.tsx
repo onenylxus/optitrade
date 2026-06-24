@@ -7,6 +7,8 @@ import { TextWidget } from '@/components/dashboard/text-widget';
 import { NewsWidget } from '@/components/dashboard/news-widget';
 import { EarningsWidget } from '@/components/dashboard/earnings-widget';
 import { MarketClockWidget } from '@/components/dashboard/market-clock-widget';
+import { PaperTradingHistoryWidget } from '@/components/dashboard/paper-trading-history-widget';
+import { DailyPredictionWidget } from '@/components/dashboard/daily-prediction-widget';
 import { lineConfig, lineData } from '@/app/(home)/fixtures';
 import type { WidgetType } from '@/app/(home)/fixtures';
 
@@ -84,6 +86,14 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
 
   if (widgetType === 'market-clock') {
     return <MarketClockWidget />;
+  }
+
+  if (widgetType === 'paper-trading-history') {
+    return <PaperTradingHistoryWidget />;
+  }
+
+  if (widgetType === 'daily-prediction') {
+    return <DailyPredictionWidget />;
   }
 
   return (

@@ -21,6 +21,7 @@ from .api.deps import get_portfolio_service
 from .api.routes.ai_routes import router as ai_router
 from .api.routes.portfolio_routes import router as portfolio_router
 from .api.routes.stock_routes import router as stock_router
+from .api.routes.price_routes import router as price_router
 from .firebase_auth import verify_firebase_id_token
 from .firestore_store import get_authenticated_user as load_authenticated_user_profile
 from .firestore_store import upsert_authenticated_user
@@ -200,6 +201,7 @@ def create_app() -> FastAPI:
             )
 
     app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
+    app.include_router(price_router, prefix="/api/price", tags=["price"])
     app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
     app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
 
