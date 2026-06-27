@@ -23,7 +23,6 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.6",
-    "grpcio>=1.78.0",
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.0.0",
     "firebase-admin>=7.1.0",
@@ -36,7 +35,8 @@ dependencies = [
     "ib-insync>=0.9.86",
     "futu-api>=9.4.5408",
     "beautifulsoup4>=4.14.3",
-    "lxml>=6.1.0"
+    "lxml>=6.1.0",
+    "yfinance>=1.4.1",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -48,14 +48,13 @@ allow-direct-references = true
 [dependency-groups]
 dev = [
   "autopep8>=2.3.1",
+  "httpx>=0.24.0",
   "ruff>=0.8.2",
   "pytest>=8.3.4",
   "pytest-sugar>=1.0.0",
   "pytest-cov>=6.0.0",
   "pytest-html>=4.1.1",
   "pytest-asyncio>=0.21.0",
-  "httpx>=0.24.0",
-  "grpcio-tools>=1.78.0",
 ]
 
 [build-system]

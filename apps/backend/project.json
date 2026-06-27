@@ -54,22 +54,12 @@
       },
       "cache": true
     },
-    "proto": {
-      "executor": "@nxlv/python:run-commands",
-      "outputs": [],
-      "options": {
-        "command": "uv run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. protos/helloworld.proto",
-        "cwd": "{projectRoot}"
-      },
-      "cache": true
-    },
     "test": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [
         "{workspaceRoot}/reports/{projectRoot}/unittests",
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
-      "dependsOn": ["proto"],
       "options": {
         "command": "uv run pytest tests/",
         "cwd": "{projectRoot}"
@@ -79,7 +69,6 @@
     "start": {
       "executor": "@nxlv/python:run-commands",
       "outputs": [],
-      "dependsOn": ["proto"],
       "options": {
         "command": "uv run python main.py",
         "cwd": "{projectRoot}"

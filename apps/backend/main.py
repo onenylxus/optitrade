@@ -4,55 +4,11 @@ import logging
 import threading
 from concurrent import futures
 
-# import grpc
 import uvicorn
 
-# from protos import helloworld_pb2, helloworld_pb2_grpc
 from src.rest_server import create_app
-# from src.services import GreeterService
 
 from news_fetcher.pipeline import NewsAnalysisPipeline
-
-# class Greeter(helloworld_pb2_grpc.GreeterServicer):
-#     def __init__(self, service: GreeterService):
-#         self.service = service
-
-#     def SayHello(self, request, context):
-#         message = self.service.say_hello(request.name)
-#         return helloworld_pb2.HelloReply(message=message)
-
-#     def SayHelloServerStream(self, request, context):
-#         base_name = request.name
-#         for i in range(1, 4):
-#             message = self.service.say_hello_with_prefix(base_name, prefix=f"Hello #{i}")
-#             yield helloworld_pb2.HelloReply(message=message)
-
-#     def SayHelloClientStream(self, request_iterator, context):
-#         names = [request.name for request in request_iterator]
-#         message = self.service.aggregate_hellos(names)
-#         return helloworld_pb2.HelloReply(message=message)
-
-#     def SayHelloBidirectional(self, request_iterator, context):
-#         for request in request_iterator:
-#             message = self.service.say_hello(request.name)
-#             yield helloworld_pb2.HelloReply(message=message)
-
-
-# def run_grpc_server(service: GreeterService, port: str = "50051"):
-#     """
-#     Run gRPC server in a separate thread.
-
-#     Args:
-#         service: The greeter service instance.
-#         port: The port to listen on.
-#     """
-#     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-#     helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(service), server)
-#     server.add_insecure_port(f"[::]:{port}")
-#     server.start()
-#     print(f"gRPC server started on port {port}")
-#     server.wait_for_termination()
-
 
 def run_rest_server(rest_port: int = 8000):
     """
@@ -82,21 +38,11 @@ def run_news_pipeline_loop(limit: int = 50):
         print(f"News: Pipeline daemon thread experiences critical crash: {e}")
 
 def main():
-    """Start both gRPC and REST servers."""
+    """Start REST server."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-
-    # service = GreeterService()
-
-    # Start gRPC server in a separate thread
-    # grpc_thread = threading.Thread(
-    #     target=run_grpc_server,
-    #     args=(service, "50051"),
-    #     daemon=False,
-    # )
-    # grpc_thread.start()
 
     # news_thread = threading.Thread(
     #     target=run_news_pipeline_loop,
@@ -106,7 +52,7 @@ def main():
     # )
     # news_thread.start()
     # print("Background news pipeline thread started")
-    
+
     # Start REST server in main thread
     try:
         run_rest_server(8000)
