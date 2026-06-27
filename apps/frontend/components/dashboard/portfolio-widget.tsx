@@ -25,6 +25,7 @@ import type {
   PortfolioChatContextValue,
 } from '@/contexts/portfolio-context';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
+import { requestStockChartSymbolSelection } from '@/lib/stock-chart-bridge';
 
 export interface Stock {
   id: string;
@@ -161,6 +162,9 @@ const formatCurrency = (value: number, maxDigits = 0) =>
   }).format(value);
 
 const percentClass = (value: number) => (value >= 0 ? 'text-emerald-600' : 'text-rose-600');
+
+const stockLinkButtonClass =
+  'flex w-full items-start gap-1.5 rounded-sm text-left transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300';
 
 const portfolioApiUrl = (path: string) => {
   const baseUrl = PORTFOLIO_API_BASE_URL.endsWith('/')
@@ -1034,6 +1038,9 @@ function PortfolioWidgetMedium({
   const signalBySymbol = new Map(
     aiSignals.signals.map((signal) => [signal.symbol.toUpperCase(), signal] as const),
   );
+  const handleSelectStock = useCallback((symbol: string) => {
+    requestStockChartSymbolSelection(symbol);
+  }, []);
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-2.5">
@@ -1089,19 +1096,28 @@ function PortfolioWidgetMedium({
                 return (
                   <tr key={stock.id} className="transition-colors hover:bg-slate-50/50">
                     <td className="py-1.5 first:pl-0">
-                      <div className="flex items-center gap-1.5">
-                        <div className="text-[11px] font-bold leading-tight text-slate-900">
-                          {stock.symbol}
+                      <button
+                        type="button"
+                        className={stockLinkButtonClass}
+                        onClick={() => handleSelectStock(stock.symbol)}
+                        title={`Show ${stock.symbol} in stock chart`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="text-[11px] font-bold leading-tight text-slate-900">
+                              {stock.symbol}
+                            </div>
+                            {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
+                              <PositionSignalTag
+                                signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
+                              />
+                            ) : null}
+                          </div>
+                          <div className="font-mono text-[7px] tracking-tight text-slate-400">
+                            {stock.quantity} <span className="opacity-70">shs</span>
+                          </div>
                         </div>
-                        {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
-                          <PositionSignalTag
-                            signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
-                          />
-                        ) : null}
-                      </div>
-                      <div className="font-mono text-[7px] tracking-tight text-slate-400">
-                        {stock.quantity} <span className="opacity-70">shs</span>
-                      </div>
+                      </button>
                     </td>
                     <td className="py-1.5 text-right font-mono text-[8px] text-slate-400">
                       {formatCurrency(stock.avgPrice, 0)}
@@ -1140,6 +1156,9 @@ function PortfolioWidgetLarge({
   const signalBySymbol = new Map(
     aiSignals.signals.map((signal) => [signal.symbol.toUpperCase(), signal] as const),
   );
+  const handleSelectStock = useCallback((symbol: string) => {
+    requestStockChartSymbolSelection(symbol);
+  }, []);
   const chartConfig = Object.fromEntries(
     topHoldings.map((holding, index) => [
       holding.symbol,
@@ -1232,19 +1251,28 @@ function PortfolioWidgetLarge({
                   return (
                     <tr key={stock.id} className="group transition-colors hover:bg-slate-50/50">
                       <td className="py-2 first:pl-0">
-                        <div className="flex items-center gap-1.5">
-                          <div className="font-bold leading-tight text-slate-900">
-                            {stock.symbol}
+                        <button
+                          type="button"
+                          className={stockLinkButtonClass}
+                          onClick={() => handleSelectStock(stock.symbol)}
+                          title={`Show ${stock.symbol} in stock chart`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="font-bold leading-tight text-slate-900">
+                                {stock.symbol}
+                              </div>
+                              {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
+                                <PositionSignalTag
+                                  signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
+                                />
+                              ) : null}
+                            </div>
+                            <div className="font-mono text-[8px] tracking-tighter text-slate-400">
+                              {stock.quantity} <span className="text-[7px] opacity-70">shs</span>
+                            </div>
                           </div>
-                          {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
-                            <PositionSignalTag
-                              signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
-                            />
-                          ) : null}
-                        </div>
-                        <div className="font-mono text-[8px] tracking-tighter text-slate-400">
-                          {stock.quantity} <span className="text-[7px] opacity-70">shs</span>
-                        </div>
+                        </button>
                       </td>
                       <td className="py-2 text-right font-mono text-[9px] text-slate-400">
                         {formatCurrency(stock.avgPrice, 0)}

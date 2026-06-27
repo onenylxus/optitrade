@@ -1,9 +1,9 @@
 {
   "metadata": {
     "total_news": 50,
-    "yahoo_count": 15,
-    "et_count": 35,
-    "analyzed_at": "2026-06-22T19:06:40.853451",
+    "yahoo_count": 24,
+    "et_count": 26,
+    "analyzed_at": "2026-06-15T03:39:00.050908",
     "model": "openrouter/free"
   },
   "news": [
@@ -350,6 +350,24 @@
       "related_symbols": [],
       "readiness_score": 95,
       "analyzed_at": "2026-06-22T12:08:35.375734"
+    },
+    {
+      "id": "yahoo_1781466844_30",
+      "source": "yahoo",
+      "headline": "Oracle Stock Has Shed More Than 20% in Just 5 Days. Bulls Are Hoping a New Federal Government Win Can Turn Things Around.",
+      "link": "https://finance.yahoo.com/markets/stocks/articles/oracle-stock-shed-more-20-133002009.html",
+      "published_at": "2026-06-14T13:30:02Z",
+      "summary": "Oracle Stock Has Shed More Than 20% in Just 5 Days. Bulls Are Hoping a New Federal Government Win Can Turn Things Around.",
+      "highlights": [
+        "Oracle stock down over 20% in 5 days",
+        "Bulls link recovery to new federal government win",
+        "Market uncertainty persists despite potential policy changes"
+      ],
+      "sentiment": -0.45,
+      "risk_tag": "High Risk",
+      "reasoning": "Sharp stock decline reflects market pessimism. Hopes for government intervention suggest unresolved underlying issues.",
+      "related_symbols": [],
+      "analyzed_at": "2026-06-15T03:54:07.348761"
     },
     {
       "id": "et_1782100405_1",
@@ -941,18 +959,19 @@
       ],
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
-      "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "readiness_score": 50,
-      "analyzed_at": "2026-06-22T18:39:37.221513"
+      "reasoning": "The Nifty Bank index surged to a one-month high driven by positive geopolitical news. Strengthening rupee and falling oil prices further bolstered market sentiment.",
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-15T02:51:37.429961"
     },
     {
-      "id": "et_1782124762_42",
+      "id": "et_1781462608_42",
       "source": "economic_times",
-      "headline": "Two Trades for Today: A top solar PV cell maker for a 7.95% upmove, a mid-cap telecom sector stock for a 7% gain",
-      "link": "https://economictimes.indiatimes.com/markets/stocks/news/two-trades-for-today-a-top-solar-pv-cell-maker-for-a-7-95-upmove-a-mid-cap-telecom-sector-stock-for-a-7-gain/articleshow/131891698.cms",
-      "published_at": "Sun, 21 Jun 2026 18:56:19 +0530",
-      "summary": "Our technical analysts identify select stocks every trading day that may gain momentum even in volatile markets. Here are the technical calls for today.",
+      "headline": "High conviction picks! PL Capital sees up to 40% upside potential in these 16 stocks",
+      "link": "https://economictimes.indiatimes.com/markets/stocks/news/high-conviction-picks-pl-capital-sees-up-to-40-upside-potential-in-these-16-stocks/slideshow/131675458.cms",
+      "published_at": "Fri, 12 Jun 2026 11:19:34 +0530",
+      "summary": "Prabhudas Lilladher has revealed 16 high conviction stock picks. These selections offer investors potential upside of up to forty percent. The brokerage firm has also adjusted its Nifty 50 target down",
       "highlights": [
         "Standard market event",
         "No clear directional catalysts",
@@ -961,9 +980,10 @@
       "sentiment": 0.0,
       "risk_tag": "Low Risk",
       "reasoning": "Neutral sentiment, standard market activity without clear directional signal.",
-      "related_symbols": [],
-      "readiness_score": 50,
-      "analyzed_at": "2026-06-22T18:48:59.554997"
+      "related_symbols": [
+        "NIFTY"
+      ],
+      "analyzed_at": "2026-06-15T02:51:53.629836"
     }
   ]
 }

@@ -38,6 +38,7 @@ import {
   normalizeSymbolList,
   normalizeTicker,
   stockApiCandlesToChartData,
+  subscribeToStockChartSymbolSelection,
   type StockChartPatternDetection,
 } from '@/lib/stock-chart-bridge';
 import {
@@ -55,6 +56,8 @@ export type { ChartInterval, ChartTimeframe };
 
 /** Layout footprint: default (compact), medium (same chart height, wider card), large (taller + wider chart). */
 export type CandlestickWidgetVariant = 'default' | 'medium' | 'large';
+
+const MAX_WATCHLIST_SYMBOLS = 8;
 
 function candlestickVariantClassNames(variant: CandlestickWidgetVariant): {
   root: string;
@@ -1218,7 +1221,7 @@ export interface CandlestickWidgetProps extends Omit<
    * the returned markdown in the summary (GFM: headings, lists, tables). Default: true.
    */
   useAiAnalysis?: boolean;
-  /** Watchlist symbols (max 3) when ``useStockApi`` is enabled. */
+  /** Watchlist symbols when ``useStockApi`` is enabled. */
   defaultSymbols?: string[];
 }
 
@@ -1277,7 +1280,7 @@ export function CandlestickWidget({
   const [showPatterns, setShowPatterns] = React.useState(true);
 
   const [symbols, setSymbols] = React.useState<string[]>(() =>
-    normalizeSymbolList(defaultSymbols, 3),
+    normalizeSymbolList(defaultSymbols, MAX_WATCHLIST_SYMBOLS),
   );
   const [activeSymbolIndex, setActiveSymbolIndex] = React.useState(0);
   const [symbolDraft, setSymbolDraft] = React.useState('');
@@ -1623,7 +1626,7 @@ export function CandlestickWidget({
   const addSymbol = React.useCallback(() => {
     setSymbols((s) => {
       const t = normalizeTicker(symbolDraft);
-      if (!t || s.includes(t) || s.length >= 3) {
+      if (!t || s.includes(t) || s.length >= MAX_WATCHLIST_SYMBOLS) {
         return s;
       }
       setActiveSymbolIndex(s.length);
@@ -1631,6 +1634,30 @@ export function CandlestickWidget({
       return [...s, t];
     });
   }, [symbolDraft]);
+
+  React.useEffect(() => {
+    if (!useStockApi || dataProp !== undefined) {
+      return;
+    }
+
+    return subscribeToStockChartSymbolSelection((symbol) => {
+      setSymbols((currentSymbols) => {
+        const existingIndex = currentSymbols.indexOf(symbol);
+        if (existingIndex >= 0) {
+          setActiveSymbolIndex(existingIndex);
+          return currentSymbols;
+        }
+
+        if (currentSymbols.length < MAX_WATCHLIST_SYMBOLS) {
+          setActiveSymbolIndex(currentSymbols.length);
+          return [...currentSymbols, symbol];
+        }
+
+        setActiveSymbolIndex(currentSymbols.length - 1);
+        return currentSymbols;
+      });
+    });
+  }, [useStockApi, dataProp]);
 
   const removeSymbol = React.useCallback((index: number) => {
     setSymbols((s) => s.filter((_, i) => i !== index));
@@ -2265,7 +2292,7 @@ export function CandlestickWidget({
                 </button>
               </div>
             ))}
-            {symbols.length < 3 ? (
+            {symbols.length < MAX_WATCHLIST_SYMBOLS ? (
               <div className="ml-1 flex items-center gap-1">
                 <input
                   className={cn(selectClass, 'h-7 w-22')}
