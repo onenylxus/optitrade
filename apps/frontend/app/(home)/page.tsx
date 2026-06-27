@@ -8,6 +8,7 @@ import { EditWidgetDrawer } from '@/components/home/edit-widget-drawer';
 import { WidgetCanvas } from '@/components/home/widget-canvas';
 import { PortfolioProvider } from '@/contexts/portfolio-context';
 import { ChatContextStoreProvider } from '@/contexts/chat-context-store';
+import { LayoutProvider } from '@/contexts/layout-context';
 import { loadBackendAuthProfile } from '@/lib/api/auth';
 import type { AuthenticatedUserResponse } from '@/lib/api/types';
 import { getFirebaseAuth } from '@/lib/firebase/client';
@@ -66,39 +67,41 @@ export default function HomePage() {
   return (
     <PortfolioProvider>
       <ChatContextStoreProvider>
-        <div className="bg-background text-foreground relative flex h-screen w-full flex-col overflow-hidden">
-          <HomeHeader
-            isEditMode={isEditMode}
-            onEditModeChange={setIsEditMode}
-            firebaseUser={firebaseUser}
-            backendProfile={backendProfile}
-            onSignOut={handleSignOut}
-          />
-          <main className="relative flex-1 overflow-hidden">
-            <div
-              className={cn(
-                'h-full min-h-0 transition-[padding-left,padding-right] duration-300 ease-out',
-                isEditMode ? 'lg:pl-90 lg:pr-0' : '',
-              )}
-            >
-              <WidgetCanvas isEditMode={isEditMode} />
-            </div>
+        <LayoutProvider userId={firebaseUser?.uid ?? null}>
+          <div className="bg-background text-foreground relative flex h-screen w-full flex-col overflow-hidden">
+            <HomeHeader
+              isEditMode={isEditMode}
+              onEditModeChange={setIsEditMode}
+              firebaseUser={firebaseUser}
+              backendProfile={backendProfile}
+              onSignOut={handleSignOut}
+            />
+            <main className="relative flex-1 overflow-hidden">
+              <div
+                className={cn(
+                  'h-full min-h-0 transition-[padding-left,padding-right] duration-300 ease-out',
+                  isEditMode ? 'lg:pl-90 lg:pr-0' : '',
+                )}
+              >
+                <WidgetCanvas isEditMode={isEditMode} />
+              </div>
 
-            <div
-              className={cn(
-                'pointer-events-none absolute inset-y-0 left-0 hidden w-90 transition-all duration-300 ease-out lg:block',
-                isEditMode ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
-              )}
-              aria-hidden={!isEditMode}
-            >
-              <EditWidgetDrawer open={isEditMode} mode="inline" className="h-full" />
-            </div>
+              <div
+                className={cn(
+                  'pointer-events-none absolute inset-y-0 left-0 hidden w-90 transition-all duration-300 ease-out lg:block',
+                  isEditMode ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
+                )}
+                aria-hidden={!isEditMode}
+              >
+                <EditWidgetDrawer open={isEditMode} mode="inline" className="h-full" />
+              </div>
 
-            <EditWidgetDrawer open={isEditMode} className="lg:hidden" />
-          </main>
+              <EditWidgetDrawer open={isEditMode} className="lg:hidden" />
+            </main>
 
-          {!isEditMode && <FloatingChat />}
-        </div>
+            {!isEditMode && <FloatingChat />}
+          </div>
+        </LayoutProvider>
       </ChatContextStoreProvider>
     </PortfolioProvider>
   );

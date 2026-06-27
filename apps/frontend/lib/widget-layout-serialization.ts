@@ -3,6 +3,7 @@ import { widgetDefaultSpans } from '@/app/(home)/fixtures';
 
 const WIDGET_LAYOUT_VERSION = 1;
 
+// TODO: Use WidgetType directly with no filter?
 const ALLOWED_WIDGET_TYPES = new Set<WidgetType>([
   'number',
   'chart',
@@ -13,6 +14,10 @@ const ALLOWED_WIDGET_TYPES = new Set<WidgetType>([
   'portfolio-medium',
   'portfolio-large',
   'news',
+  'earnings',
+  'market-clock',
+  'paper-trading-history',
+  'daily-prediction',
 ]);
 
 interface SerializedWidgetLayoutV1 {

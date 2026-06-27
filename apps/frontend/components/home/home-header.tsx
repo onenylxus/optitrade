@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Typography } from '@/components/ui/typography';
 import type { AuthenticatedUserResponse } from '@/lib/api/types';
+import { LayoutSwitcher } from '@/components/home/layout-switcher';
 
 interface HomeHeaderProps {
   isEditMode: boolean;
@@ -39,7 +40,7 @@ export function HomeHeader({
   const isAuthenticated = firebaseUser != null;
 
   return (
-    <header className="border-border/60 bg-card/70 flex h-16 items-center justify-between gap-4 border-b px-4 backdrop-blur sm:px-6">
+    <header className="border-border/60 bg-card/70 relative z-20 flex h-16 items-center justify-between gap-4 border-b px-4 backdrop-blur sm:px-6">
       <div className="min-w-0 shrink-0">
         <Typography variant="h4" className="text-primary scroll-m-0 text-left text-xl">
           OptiTrade
@@ -56,6 +57,8 @@ export function HomeHeader({
           <PenLine className="size-4" />
           {isEditMode ? 'Editing' : 'Edit Layout'}
         </Button>
+
+        {isAuthenticated && <LayoutSwitcher isEditMode={isEditMode} />}
 
         <Button asChild variant="outline" size="sm">
           {isAuthenticated ? (

@@ -17,7 +17,8 @@ import { WidgetProvider } from '@/contexts/widget-context';
 import { WidgetRenderer } from '@/components/home/widget-renderer';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { loadWidgetLayoutString, saveWidgetLayoutString } from '@/lib/firebase/widget-layout-store';
+import { saveLayoutString } from '@/lib/firebase/widget-layout-store';
+import { useLayoutContext } from '@/contexts/layout-context';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { isFirebaseConfigReady } from '@/lib/firebase/config';
 import {
@@ -224,7 +225,8 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     normalizePlacements(initialPlacements, getInitialNormalizationColumns(initialPlacements)),
   );
   const [authenticatedUserId, setAuthenticatedUserId] = useState<string | null>(null);
-  const [isRemoteLayoutReady, setIsRemoteLayoutReady] = useState(false);
+  const { activeLayoutId, activeLayoutContent, updateCachedLayoutContent } = useLayoutContext();
+  const prevActiveLayoutIdRef = useRef<string | null>(null);
   const [draggedWidget, setDraggedWidget] = useState<{
     widgetType: WidgetType;
     sourceWidgetId: string | null;
@@ -267,9 +269,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
   useEffect(() => {
     const element = canvasWidthRef.current;
 
-    if (!element) {
-      return;
-    }
+    if (!element) return;
 
     const updateColumns = () => {
       const remInPixels = getRemInPixels();
@@ -314,90 +314,56 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     let unsubscribe: (() => void) | null = null;
 
     void (async () => {
-      if (!isFirebaseConfigReady()) {
-        setIsRemoteLayoutReady(true);
-        return;
-      }
+      if (!isFirebaseConfigReady()) return;
 
       try {
         const firebaseAuth = getFirebaseAuth();
         unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-          setIsRemoteLayoutReady(!user);
           setAuthenticatedUserId(user?.uid ?? null);
         });
-      } catch {
-        setIsRemoteLayoutReady(true);
-      }
+      } catch {}
     })();
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      unsubscribe?.();
     };
   }, []);
 
   useEffect(() => {
-    let isCancelled = false;
+    if (activeLayoutContent === null || !activeLayoutId) return;
 
-    void (async () => {
-      if (!authenticatedUserId) {
-        setIsRemoteLayoutReady(true);
-        return;
-      }
+    if (
+      prevActiveLayoutIdRef.current !== null &&
+      prevActiveLayoutIdRef.current !== activeLayoutId &&
+      authenticatedUserId
+    ) {
+      saveLayoutString(
+        authenticatedUserId,
+        prevActiveLayoutIdRef.current,
+        serializedLayoutRef.current,
+      );
+      updateCachedLayoutContent(prevActiveLayoutIdRef.current, serializedLayoutRef.current);
+    }
 
-      setIsRemoteLayoutReady(false);
+    prevActiveLayoutIdRef.current = activeLayoutId;
 
-      try {
-        const layoutString = await loadWidgetLayoutString(authenticatedUserId);
+    const parsedPlacements = deserializeWidgetLayout(activeLayoutContent);
 
-        if (isCancelled) {
-          return;
-        }
+    if (!parsedPlacements) return;
 
-        if (!layoutString) {
-          lastSavedLayoutRef.current = serializedLayoutRef.current;
-          return;
-        }
-
-        const parsedPlacements = deserializeWidgetLayout(layoutString);
-        if (!parsedPlacements) {
-          lastSavedLayoutRef.current = serializedLayoutRef.current;
-          return;
-        }
-
-        const migratedPlacements = applyWidgetLayoutMigrations(parsedPlacements);
-        const normalizedLoadedPlacements = normalizePlacements(
-          migratedPlacements,
-          getInitialNormalizationColumns(migratedPlacements),
-        );
-        const normalizedLoadedLayout = serializeWidgetLayout(normalizedLoadedPlacements);
-        lastSavedLayoutRef.current = normalizedLoadedLayout;
-        setPlacements(normalizedLoadedPlacements);
-      } catch {
-        if (!isCancelled) {
-          lastSavedLayoutRef.current = serializedLayoutRef.current;
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsRemoteLayoutReady(true);
-        }
-      }
-    })();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [authenticatedUserId]);
+    const migratedPlacements = applyWidgetLayoutMigrations(parsedPlacements);
+    const normalizedLoadedPlacements = normalizePlacements(
+      migratedPlacements,
+      getInitialNormalizationColumns(migratedPlacements),
+    );
+    const normalizedLoadedLayout = serializeWidgetLayout(normalizedLoadedPlacements);
+    lastSavedLayoutRef.current = normalizedLoadedLayout;
+    setPlacements(normalizedLoadedPlacements);
+  }, [activeLayoutContent, activeLayoutId, authenticatedUserId, updateCachedLayoutContent]);
 
   useEffect(() => {
-    if (!authenticatedUserId || !isRemoteLayoutReady) {
-      return;
-    }
-
-    if (lastSavedLayoutRef.current === serializedLayout) {
-      return;
-    }
+    if (!authenticatedUserId || !activeLayoutId) return;
+    if (lastSavedLayoutRef.current === serializedLayout) return;
 
     if (backgroundSaveTimeoutRef.current) {
       clearTimeout(backgroundSaveTimeoutRef.current);
@@ -406,7 +372,8 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     backgroundSaveTimeoutRef.current = setTimeout(() => {
       void (async () => {
         try {
-          await saveWidgetLayoutString(authenticatedUserId, serializedLayout);
+          await saveLayoutString(authenticatedUserId, activeLayoutId, serializedLayout);
+          updateCachedLayoutContent(activeLayoutId, serializedLayout);
           lastSavedLayoutRef.current = serializedLayout;
         } catch {
           // Ignore transient save failures and retry on the next layout edit.
@@ -419,7 +386,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
         clearTimeout(backgroundSaveTimeoutRef.current);
       }
     };
-  }, [authenticatedUserId, isRemoteLayoutReady, serializedLayout]);
+  }, [authenticatedUserId, activeLayoutId, serializedLayout]);
 
   useEffect(() => {
     return () => {
@@ -561,9 +528,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     widgetType: WidgetType,
     sourceWidgetId: string,
   ) => {
-    if (!isEditMode) {
-      return;
-    }
+    if (!isEditMode) return;
 
     event.dataTransfer.setData(DRAWER_WIDGET_MIME, widgetType);
     event.dataTransfer.setData('text/plain', widgetType);
@@ -583,9 +548,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     event.preventDefault();
     event.stopPropagation();
 
-    if (!isEditMode) {
-      return;
-    }
+    if (!isEditMode) return;
 
     const draggedWidgetType =
       draggedWidget?.widgetType ??
