@@ -262,12 +262,21 @@ def list_news_with_analyses(
 
     Shape matches what /api/news used to return out of the JSON file, so the
     frontend widget can consume it unchanged.
+
+    COALESCE fills in safe defaults for articles that haven't been analyzed
+    yet (LEFT JOIN on news_analyses returns NULL fields). Without this the
+    NewsWidget crashes on `news.sentiment.toFixed(2)` for raw articles.
     """
     base_sql = (
         "SELECT a.id, a.source, a.published_at, a.url, a.headline, a.summary, "
         "       a.tickers, a.raw, "
-        "       n.sentiment, n.impact, n.highlights, n.reasoning, "
-        "       n.related_symbols, n.readiness_score, n.analyzed_at "
+        "       COALESCE(n.sentiment, 0.0) AS sentiment, "
+        "       COALESCE(n.impact, 'Low Risk') AS impact, "
+        "       COALESCE(n.highlights, '[]') AS highlights, "
+        "       COALESCE(n.reasoning, '') AS reasoning, "
+        "       COALESCE(n.related_symbols, '[]') AS related_symbols, "
+        "       COALESCE(n.readiness_score, 0) AS readiness_score, "
+        "       COALESCE(n.analyzed_at, a.created_at) AS analyzed_at "
         "FROM news_articles a "
         "LEFT JOIN news_analyses n ON n.article_id = a.id "
         "ORDER BY a.published_at DESC "
@@ -284,10 +293,11 @@ def list_news_with_analyses(
         item["related_symbols"] = json_loads(item.get("related_symbols"), default=[])
         # The frontend expects the `link` field, not `url`
         item["link"] = item.get("url")
-        if item.get("impact"):
-            item["risk_tag"] = item["impact"]
-        if item.get("analyzed_at"):
-            item["analyzed_at"] = item["analyzed_at"]
+        # The frontend widget reads `risk_tag`, not `impact`
+        item["risk_tag"] = item.get("impact") or "Low Risk"
+        # Ensure sentiment is a real number, not None
+        if item.get("sentiment") is None:
+            item["sentiment"] = 0.0
         out.append(item)
 
     if symbols:
