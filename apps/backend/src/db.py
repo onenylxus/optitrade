@@ -203,6 +203,123 @@ def list_paper_trades(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+# ── News accessors ────────────────────────────────────────────────────────────
+def upsert_news_article(
+    conn: sqlite3.Connection,
+    article: dict[str, Any],
+    analysis: dict[str, Any] | None = None,
+) -> None:
+    """Insert or replace a news article + its analysis (if provided)."""
+    conn.execute(
+        "INSERT OR REPLACE INTO news_articles "
+        "(id, source, published_at, url, headline, summary, tickers, raw) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            article["id"],
+            article.get("source"),
+            article.get("published_at"),
+            article.get("url") or article.get("link"),
+            article.get("headline") or article.get("title") or "",
+            article.get("summary"),
+            json_dumps(article.get("tickers") or article.get("related_symbols") or []),
+            json_dumps(article),
+        ),
+    )
+    if analysis is not None:
+        conn.execute(
+            "INSERT OR REPLACE INTO news_analyses "
+            "(article_id, sentiment, impact, highlights, reasoning, "
+            " related_symbols, readiness_score, analyzed_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                article["id"],
+                analysis.get("sentiment"),
+                analysis.get("impact") or analysis.get("risk_tag"),
+                json_dumps(analysis.get("highlights") or []),
+                analysis.get("reasoning"),
+                json_dumps(analysis.get("related_symbols") or []),
+                analysis.get("readiness_score"),
+                analysis.get("analyzed_at") or now_iso(),
+            ),
+        )
+
+
+def list_news_with_analyses(
+    conn: sqlite3.Connection,
+    *,
+    limit: int = 100,
+    symbols: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Return news articles joined with their analyses.
+
+    Shape matches what /api/news used to return out of the JSON file, so the
+    frontend widget can consume it unchanged.
+    """
+    base_sql = (
+        "SELECT a.id, a.source, a.published_at, a.url, a.headline, a.summary, "
+        "       a.tickers, a.raw, "
+        "       n.sentiment, n.impact, n.highlights, n.reasoning, "
+        "       n.related_symbols, n.readiness_score, n.analyzed_at "
+        "FROM news_articles a "
+        "LEFT JOIN news_analyses n ON n.article_id = a.id "
+        "ORDER BY a.published_at DESC "
+        "LIMIT ?"
+    )
+    rows = conn.execute(base_sql, (limit,)).fetchall()
+
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        item = dict(r)
+        # Restore the JSON arrays / objects
+        item["tickers"] = json_loads(item.get("tickers"), default=[])
+        item["highlights"] = json_loads(item.get("highlights"), default=[])
+        item["related_symbols"] = json_loads(item.get("related_symbols"), default=[])
+        # The frontend expects the `link` field, not `url`
+        item["link"] = item.get("url")
+        if item.get("impact"):
+            item["risk_tag"] = item["impact"]
+        if item.get("analyzed_at"):
+            item["analyzed_at"] = item["analyzed_at"]
+        out.append(item)
+
+    if symbols:
+        syms = {s.upper() for s in symbols if s}
+        if syms:
+            def matches(it: dict[str, Any]) -> bool:
+                if any((s.upper() in syms) for s in it.get("related_symbols", []) or []):
+                    return True
+                if any((s.upper() in syms) for s in it.get("tickers", []) or []):
+                    return True
+                haystack = f"{it.get('headline', '')} {it.get('summary', '')}".upper()
+                return any(s.upper() in haystack for s in syms)
+
+            out = [it for it in out if matches(it)]
+
+    return out
+
+
+def get_news_metadata(conn: sqlite3.Connection) -> dict[str, Any]:
+    """Top-of-payload metadata for the news response."""
+    total = conn.execute("SELECT COUNT(*) FROM news_articles").fetchone()[0]
+    yahoo = conn.execute(
+        "SELECT COUNT(*) FROM news_articles WHERE source = 'yahoo'"
+    ).fetchone()[0]
+    et = conn.execute(
+        "SELECT COUNT(*) FROM news_articles WHERE source = 'economic_times'"
+    ).fetchone()[0]
+    last_analyzed = conn.execute(
+        "SELECT MAX(analyzed_at) FROM news_analyses"
+    ).fetchone()[0]
+    return {
+        "total_news": total,
+        "yahoo_count": yahoo,
+        "et_count": et,
+        "analyzed_at": last_analyzed,
+        "model": "openrouter/free",
+        "source": "news_articles + news_analyses (sqlite)",
+    }
+
+
 # ── Self-test ─────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     init_schema()

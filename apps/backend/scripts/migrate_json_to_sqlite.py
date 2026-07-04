@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT))
 from src import db  # noqa: E402
 
 DATA = ROOT / "data"
+FRONTEND_PUBLIC = ROOT.parent / "frontend" / "public"
 
 
 def iso(value: str | None) -> str | None:
@@ -151,43 +152,63 @@ def migrate_news(conn) -> int:
     Articles and analyses are kept in separate tables. We prefer news_analysis
     rows (the AI-analyzed output) and fall back to raw news_data rows for the
     headline/source/published_at, deduping by id.
+
+    news_data.json actually lives at apps/frontend/public/news_data.json (the
+    pipeline wrote it there for the frontend to serve). news_analysis_result.json
+    is at apps/backend/data/. We try both locations for each file.
     """
     by_id: dict[str, dict] = {}
     analyses: dict[str, dict] = {}
 
-    news_data_path = DATA / "news_data.json"
-    if news_data_path.exists():
-        try:
-            data = json.loads(news_data_path.read_text())
-        except json.JSONDecodeError:
-            data = {}
-        for art in data.get("news", []) or []:
-            meta = _news_meta_for(art)
-            if meta["id"]:
-                by_id[meta["id"]] = meta
-
-    analysis_path = DATA / "news_analysis_result.json"
-    if analysis_path.exists():
-        try:
-            data = json.loads(analysis_path.read_text())
-        except json.JSONDecodeError:
-            data = {}
-        for art in data.get("news", []) or []:
-            meta = _news_meta_for(art)
-            if not meta["id"]:
+    news_data_candidates = [
+        FRONTEND_PUBLIC / "news_data.json",
+        DATA / "news_data.json",
+    ]
+    for news_data_path in news_data_candidates:
+        if news_data_path.exists():
+            try:
+                data = json.loads(news_data_path.read_text())
+            except json.JSONDecodeError:
                 continue
-            # Prefer the analyzed article's metadata for headline/summary
-            existing = by_id.get(meta["id"], {})
-            by_id[meta["id"]] = {**existing, **meta}
-            analyses[meta["id"]] = {
-                "sentiment": art.get("sentiment"),
-                "impact": art.get("risk_tag") or art.get("impact"),
-                "highlights": art.get("highlights") or [],
-                "reasoning": art.get("reasoning"),
-                "related_symbols": art.get("related_symbols") or [],
-                "readiness_score": art.get("readiness_score"),
-                "analyzed_at": iso(art.get("analyzed_at")) or db.now_iso(),
-            }
+            for art in data.get("news", []) or []:
+                meta = _news_meta_for(art)
+                if meta["id"]:
+                    by_id[meta["id"]] = meta
+            print(f"  read {news_data_path.relative_to(ROOT.parent)} for news_data")
+            break
+    else:
+        print("  skip news_data.json (not found in either location)")
+
+    analysis_candidates = [
+        DATA / "news_analysis_result.json",
+        FRONTEND_PUBLIC / "news_analysis_result.json",
+    ]
+    for analysis_path in analysis_candidates:
+        if analysis_path.exists():
+            try:
+                data = json.loads(analysis_path.read_text())
+            except json.JSONDecodeError:
+                continue
+            for art in data.get("news", []) or []:
+                meta = _news_meta_for(art)
+                if not meta["id"]:
+                    continue
+                # Prefer the analyzed article's metadata for headline/summary
+                existing = by_id.get(meta["id"], {})
+                by_id[meta["id"]] = {**existing, **meta}
+                analyses[meta["id"]] = {
+                    "sentiment": art.get("sentiment"),
+                    "impact": art.get("risk_tag") or art.get("impact"),
+                    "highlights": art.get("highlights") or [],
+                    "reasoning": art.get("reasoning"),
+                    "related_symbols": art.get("related_symbols") or [],
+                    "readiness_score": art.get("readiness_score"),
+                    "analyzed_at": iso(art.get("analyzed_at")) or db.now_iso(),
+                }
+            print(f"  read {analysis_path.relative_to(ROOT.parent)} for news_analysis_result")
+            break
+    else:
+        print("  skip news_analysis_result.json (not found in either location)")
 
     if not by_id:
         print("  skip news_* (no articles found)")
