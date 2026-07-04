@@ -63,6 +63,20 @@ def migrate_paper_trades(conn) -> int:
         status = (r.get("status") or "open").lower()
         if status not in ("open", "closed"):
             continue
+        # Closed trades in paper_portfolios.json use `currentPrice` (camelCase)
+        # as the exit price (the poller never set an explicit `exit_price`).
+        # We promote that to exit_price so downstream routes don't have to
+        # guess.
+        if status == "closed":
+            exit_price = (
+                r.get("exit_price")
+                or r.get("currentPrice")
+                or r.get("current_price")
+                or r.get("live_price")
+            )
+        else:
+            exit_price = r.get("exit_price")
+
         db.upsert_paper_trade(conn, {
             "id": r["id"],
             "symbol": r["symbol"].upper(),
@@ -70,7 +84,7 @@ def migrate_paper_trades(conn) -> int:
             "side": side,
             "status": status,
             "entry_price": float(r["entry_price"]),
-            "exit_price": r.get("exit_price"),
+            "exit_price": exit_price,
             "target_price": r.get("target_price"),
             "stop_loss": r.get("stop_loss"),
             "quantity": float(r.get("quantity", 0) or 0),
