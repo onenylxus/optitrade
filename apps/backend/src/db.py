@@ -226,22 +226,30 @@ def upsert_news_article(
         ),
     )
     if analysis is not None:
-        conn.execute(
-            "INSERT OR REPLACE INTO news_analyses "
-            "(article_id, sentiment, impact, highlights, reasoning, "
-            " related_symbols, readiness_score, analyzed_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (
-                article["id"],
-                analysis.get("sentiment"),
-                analysis.get("impact") or analysis.get("risk_tag"),
-                json_dumps(analysis.get("highlights") or []),
-                analysis.get("reasoning"),
-                json_dumps(analysis.get("related_symbols") or []),
-                analysis.get("readiness_score"),
-                analysis.get("analyzed_at") or now_iso(),
-            ),
+        # Skip empty analyses (all fields None) so we don't pollute the table
+        # with NULL rows that came from the raw article migration.
+        meaningful = any(
+            analysis.get(k) not in (None, "", [], {})
+            for k in ("sentiment", "impact", "highlights", "reasoning",
+                      "related_symbols", "readiness_score")
         )
+        if meaningful:
+            conn.execute(
+                "INSERT OR REPLACE INTO news_analyses "
+                "(article_id, sentiment, impact, highlights, reasoning, "
+                " related_symbols, readiness_score, analyzed_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    article["id"],
+                    analysis.get("sentiment"),
+                    analysis.get("impact") or analysis.get("risk_tag"),
+                    json_dumps(analysis.get("highlights") or []),
+                    analysis.get("reasoning"),
+                    json_dumps(analysis.get("related_symbols") or []),
+                    analysis.get("readiness_score"),
+                    analysis.get("analyzed_at") or now_iso(),
+                ),
+            )
 
 
 def list_news_with_analyses(

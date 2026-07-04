@@ -237,7 +237,13 @@ def migrate_news(conn) -> int:
         inserted_articles += 1
 
         ana = analyses.get(art_id)
-        if ana:
+        # Only insert the analysis row when the source JSON actually had AI
+        # analysis fields — otherwise we'd end up with rows of NULLs.
+        if ana and any(
+            ana.get(k) not in (None, "", [], {})
+            for k in ("sentiment", "impact", "highlights", "reasoning",
+                      "related_symbols", "readiness_score")
+        ):
             conn.execute(
                 "INSERT OR REPLACE INTO news_analyses "
                 "(article_id, sentiment, impact, highlights, reasoning, "
