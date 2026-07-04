@@ -22,6 +22,8 @@ from .api.routes.ai_routes import router as ai_router
 from .api.routes.portfolio_routes import router as portfolio_router
 from .api.routes.stock_routes import router as stock_router
 from .api.routes.price_routes import router as price_router
+from .api.routes.paper_trading_routes import router as paper_trading_router
+from . import db as app_db
 from .firebase_auth import verify_firebase_id_token
 from .firestore_store import get_authenticated_user as load_authenticated_user_profile
 from .firestore_store import upsert_authenticated_user
@@ -204,6 +206,10 @@ def create_app() -> FastAPI:
     app.include_router(price_router, prefix="/api/price", tags=["price"])
     app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
     app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
+    app.include_router(paper_trading_router, prefix="/api/paper-trading", tags=["paper-trading"])
+
+    # Initialize the SQLite runtime store (creates optitrade.db + schema if needed)
+    app_db.init_schema()
 
     service = GreeterService()
 

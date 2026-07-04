@@ -55,3 +55,10 @@ apps/backend/optitrade-hku-firebase-adminsdk.json
 
 
 .dw_local/
+
+# Runtime data — owned by the SQLite DB, not by git
+apps/backend/data/*.json
+apps/backend/data/*.db
+apps/backend/data/*.db-wal
+apps/backend/data/*.db-shm
+apps/frontend/public/news_data.json

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""
-AI4Trade Signal Poller — Copy-Trading Decision Engine
-Runs every 30 mins via cron. Reports only if important (new follow, stop-loss, target).
+"""AI4Trade Signal Poller — Copy-Trading Decision Engine.
+
+Runs every 30 minutes via cron. Reads signals from ai4trade.ai, decides whether
+to follow them, and persists paper trades into the SQLite `paper_trades` table
+(was paper_portfolios.json). Cross-machine sync now goes through the SQLite
+file instead of git.
 """
 
-import json
 import re
 import sys
 from datetime import datetime, timezone, timedelta
@@ -12,11 +14,16 @@ from pathlib import Path
 
 import requests
 
+# ── Make `src` importable when run as a standalone script ────────────────────
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from src import db  # noqa: E402
+
 # ── Config ────────────────────────────────────────────────────────────────────
 TOKEN = "9dYToQwfOLY1paF6FX6s2MhnkrG9Hypdn5LH_S1WtsA"
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 BASE_URL = "https://ai4trade.ai/api"
-PAPER_FILE = Path("/root/optitrade-clone/apps/backend/data/paper_portfolios.json")
 HKT = timezone(timedelta(hours=8))
 LOG_FILE = Path("/root/.nanobot/workspace/logs/ai4trade_poll.log")
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -29,28 +36,33 @@ MIN_SCORE_FOLLOW = 3
 MIN_SCORE_REPORT = 2
 # ─────────────────────────────────────────────────────────────────────────────
 
-def hkt_now():
+
+def hkt_now() -> datetime:
     return datetime.now(HKT)
 
-def log(msg: str):
+
+def log(msg: str) -> None:
     ts = hkt_now().strftime("%Y-%m-%d %H:%M")
     line = f"[{ts}] {msg}"
     print(line)
     with LOG_FILE.open("a") as f:
         f.write(line + "\n")
 
-def load_paper_portfolios():
-    if not PAPER_FILE.exists():
-        return []
-    with PAPER_FILE.open() as f:
-        data = json.load(f)
-        return data if isinstance(data, list) else []
 
-def save_paper_portfolios(records):
-    with PAPER_FILE.open("w") as f:
-        json.dump(records, f, indent=2)
+# ── Trade persistence ─────────────────────────────────────────────────────────
+def load_open_trades() -> list[dict]:
+    """All trades for analysis. Open positions drive the stop/target check."""
+    conn = db.get_conn()
+    return db.list_paper_trades(conn)
 
-def fetch_signals(limit=15):
+
+def upsert_trade(row: dict) -> None:
+    with db.transaction() as conn:
+        db.upsert_paper_trade(conn, row)
+
+
+# ── Signals / heartbeat ───────────────────────────────────────────────────────
+def fetch_signals(limit: int = 15) -> list[dict]:
     try:
         resp = requests.get(
             f"{BASE_URL}/signals/feed",
@@ -64,7 +76,8 @@ def fetch_signals(limit=15):
         log(f"ERROR fetching signals: {e}")
         return []
 
-def fetch_heartbeat():
+
+def fetch_heartbeat() -> dict:
     try:
         resp = requests.get(f"{BASE_URL}/heartbeat", headers=HEADERS, timeout=10)
         resp.raise_for_status()
@@ -73,39 +86,33 @@ def fetch_heartbeat():
         log(f"ERROR fetching heartbeat: {e}")
         return {}
 
+
 def get_live_price(symbol: str) -> float | None:
     try:
-        import yfinance
+        import yfinance  # local import — keeps the poller usable when yfinance is missing
+
         ticker = yfinance.Ticker(symbol)
         info = ticker.fast_info
-        # Use attribute access (fast_info is not a plain dict)
-        price = getattr(info, 'last_price', None) or getattr(info, 'previous_close', None)
+        price = getattr(info, "last_price", None) or getattr(info, "previous_close", None)
         return float(price) if price else None
     except Exception:
         return None
 
-# ── Strategy parser ────────────────────────────────────────────────────────────
-# Parses content like:
-#   ### AMD: **BUY** (Score: 7.9)
-#   - Price: $536.75
-# Returns list of {symbol, side, score, price}
-def parse_strategy_content(content: str) -> list[dict]:
-    recommendations = []
 
-    # Direct regex: extract all symbol/side/score triples
+# ── Strategy parser ───────────────────────────────────────────────────────────
+def parse_strategy_content(content: str) -> list[dict]:
+    """Parse markdown blocks like `### AMD: **BUY** (Score: 7.9)` into recs."""
+    recommendations: list[dict] = []
+
     triples = re.findall(
         r'###\s+([A-Z]{1,10})\s*:\s+\*\*([A-Z_]+)\*\*\s*\(Score:\s*([-\d.]+)\)',
-        content
+        content,
     )
 
-    # For each symbol, find its price from the surrounding context
-    # Split content into blocks per "### SYM:" section
     sections = re.split(r'\n(?=###\s+[A-Z])', content)
-
-    # Build a price lookup: {"AMD": 536.75, ...}
-    price_lookup = {}
+    price_lookup: dict[str, float] = {}
     for sec in sections:
-        sym_m = re.search(r'###\s+([A-Z]{1,10})', sec)  # not anchored
+        sym_m = re.search(r'###\s+([A-Z]{1,10})', sec)
         price_m = re.search(r'Price:\s*\$?([\d,]+(?:\.\d+)?)', sec)
         if sym_m and price_m:
             price_lookup[sym_m.group(1)] = float(price_m.group(1).replace(",", ""))
@@ -128,14 +135,15 @@ def parse_strategy_content(content: str) -> list[dict]:
 
     return recommendations
 
-# ── Evaluate a single stock recommendation ────────────────────────────────────
+
+# ── Evaluate one recommendation ───────────────────────────────────────────────
 def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market: str) -> dict | None:
     sym = rec["symbol"]
     side = rec["side"]
     agent_score = rec["score"]
     price = rec["price"]
 
-    if not side or not price:  # HOLD has no action
+    if not side or not price:
         return None
 
     # Time decay: only act on fresh strategies (<6h old)
@@ -148,18 +156,15 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
             pass
 
     if age_hours > 6:
-        return None  # Too stale to act on
+        return None
 
-    # Fetch live price
     live_price = get_live_price(sym)
     if not live_price:
         return None
 
-    # Score based on agent score + our own verification
-    score = 0
-    reasons = []
+    score = 0.0
+    reasons: list[str] = []
 
-    # Agent signal quality
     if agent_score >= 7:
         score += 2
         reasons.append(f"Agent score {agent_score} (strong)")
@@ -167,7 +172,6 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         score += 1
         reasons.append(f"Agent score {agent_score}")
 
-    # Price proximity — entry within 3% of current
     if price:
         diff_pct = abs(live_price - price) / price * 100
         if diff_pct <= 3:
@@ -176,21 +180,18 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         elif diff_pct <= 10:
             reasons.append(f"Entry price ${price:.2f} vs live ${live_price:.2f} ({diff_pct:.1f}% diff)")
 
-    # Market filter — prefer US stocks for now
     if market == "us-stock":
         score += 0.5
         reasons.append(f"US stock ({market})")
 
-    # AI/semiconductor theme bonus (aligned with Timmy's interests)
     ai_stocks = {"NVDA", "AMD", "AVGO", "MSFT", "MU", "QCOM", "TSLA", "LIN", "AXP", "BA"}
     if sym in ai_stocks:
         score += 1
         reasons.append(f"AI/tech theme match ({sym})")
 
-    # Calculate rough stop-loss and target
     if side == "LONG":
-        stop_loss = round(price * 0.92, 2)  # -8% default stop
-        target = round(price * 1.15, 2)     # +15% default target
+        stop_loss = round(price * 0.92, 2)
+        target = round(price * 1.15, 2)
     else:
         stop_loss = round(price * 1.08, 2)
         target = round(price * 0.85, 2)
@@ -217,14 +218,12 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         "created_at": created_at,
     }
 
-# ── Check existing positions ──────────────────────────────────────────────────
-def check_positions(paper: list[dict]) -> tuple[list[dict], list[dict]]:
-    """
-    Review open positions. Returns (updated_paper, events).
-    events: list of {type, symbol, details} to report if important.
-    """
-    updated = list(paper)
-    events = []
+
+# ── Check existing positions against stop / target ────────────────────────────
+def check_positions(trades: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Returns (updated_trades, events)."""
+    updated = [dict(t) for t in trades]
+    events: list[dict] = []
 
     for i, pos in enumerate(updated):
         if pos.get("status") != "open":
@@ -232,135 +231,128 @@ def check_positions(paper: list[dict]) -> tuple[list[dict], list[dict]]:
 
         sym = pos.get("symbol")
         side = pos.get("side", "LONG")
-        entry = pos.get("avgPrice") or pos.get("entry_price")
+        entry = pos.get("entry_price")
         stop = pos.get("stop_loss")
         target = pos.get("target_price")
         pid = pos.get("id")
 
+        if not sym or entry is None:
+            continue
+
         price = get_live_price(sym)
-        if not price or not entry:
+        if not price:
             continue
 
         try:
             ep = float(entry)
             sp = float(stop) if stop else None
             tp = float(target) if target else None
+        except (TypeError, ValueError):
+            continue
 
-            if side in ("LONG", "BUY"):
-                pct = (price - ep) / ep * 100
-                if sp and price <= sp:
-                    updated[i]["status"] = "closed"
-                    updated[i]["closed_at"] = hkt_now().isoformat()
-                    updated[i]["close_reason"] = "STOP_LOSS"
-                    updated[i]["pnl_pct"] = round((price - ep) / ep * 100, 2)
-                    events.append({
-                        "type": "STOP_LOSS",
-                        "symbol": sym,
-                        "details": f"STOP-LOSS hit — ${price:.2f} ≤ ${sp:.2f} | PnL: {pct:.2f}%",
-                    })
-                elif tp and price >= tp:
-                    updated[i]["status"] = "closed"
-                    updated[i]["closed_at"] = hkt_now().isoformat()
-                    updated[i]["close_reason"] = "TARGET_HIT"
-                    updated[i]["pnl_pct"] = round((price - ep) / ep * 100, 2)
-                    events.append({
-                        "type": "TARGET_HIT",
-                        "symbol": sym,
-                        "details": f"TARGET reached — ${price:.2f} ≥ ${tp:.2f} | PnL: {pct:.2f}%",
-                    })
-                else:
-                    updated[i]["current_price"] = round(price, 4)
-                    updated[i]["currentPrice"] = round(price, 4)
-                    updated[i]["pnl_pct"] = round(pct, 2)
-                    if pct <= -8:
-                        events.append({
-                            "type": "WARNING",
-                            "symbol": sym,
-                            "details": f"Down {pct:.2f}% — review stop-loss (currently ${sp:.2f})",
-                        })
-            else:  # SHORT
-                pct = (ep - price) / ep * 100
-                if sp and price >= sp:
-                    updated[i]["status"] = "closed"
-                    updated[i]["closed_at"] = hkt_now().isoformat()
-                    updated[i]["close_reason"] = "STOP_LOSS"
-                    updated[i]["pnl_pct"] = round((ep - price) / ep * 100, 2)
-                    events.append({
-                        "type": "STOP_LOSS",
-                        "symbol": sym,
-                        "details": f"STOP-LOSS hit — ${price:.2f} ≥ ${sp:.2f} | PnL: {pct:.2f}%",
-                    })
-                elif tp and price <= tp:
-                    updated[i]["status"] = "closed"
-                    updated[i]["closed_at"] = hkt_now().isoformat()
-                    updated[i]["close_reason"] = "TARGET_HIT"
-                    updated[i]["pnl_pct"] = round((ep - price) / ep * 100, 2)
-                    events.append({
-                        "type": "TARGET_HIT",
-                        "symbol": sym,
-                        "details": f"TARGET reached — ${price:.2f} ≤ ${tp:.2f} | PnL: {pct:.2f}%",
-                    })
-                else:
-                    updated[i]["current_price"] = round(price, 4)
-                    updated[i]["currentPrice"] = round(price, 4)
-                    updated[i]["pnl_pct"] = round(pct, 2)
-                    if pct <= -8:
-                        events.append({
-                            "type": "WARNING",
-                            "symbol": sym,
-                            "details": f"Short down {pct:.2f}% — review stop-loss (currently ${sp:.2f})",
-                        })
-        except (ValueError, TypeError):
-            pass
+        now_iso = hkt_now().isoformat()
+        pct = ((price - ep) / ep * 100) if side in ("LONG", "BUY") else ((ep - price) / ep * 100)
+
+        triggered_stop = sp is not None and ((side in ("LONG", "BUY") and price <= sp) or (side == "SHORT" and price >= sp))
+        triggered_target = tp is not None and ((side in ("LONG", "BUY") and price >= tp) or (side == "SHORT" and price <= tp))
+
+        if triggered_stop:
+            updated[i]["status"] = "closed"
+            updated[i]["closed_at"] = now_iso
+            updated[i]["updated_at"] = now_iso
+            updated[i]["close_reason"] = "STOP_LOSS"
+            updated[i]["pnl_pct"] = round(pct, 2)
+            updated[i]["exit_price"] = round(price, 4)
+            events.append({
+                "type": "STOP_LOSS",
+                "symbol": sym,
+                "details": f"STOP-LOSS hit — ${price:.2f} | PnL: {pct:.2f}%",
+            })
+        elif triggered_target:
+            updated[i]["status"] = "closed"
+            updated[i]["closed_at"] = now_iso
+            updated[i]["updated_at"] = now_iso
+            updated[i]["close_reason"] = "TARGET_HIT"
+            updated[i]["pnl_pct"] = round(pct, 2)
+            updated[i]["exit_price"] = round(price, 4)
+            events.append({
+                "type": "TARGET_HIT",
+                "symbol": sym,
+                "details": f"TARGET reached — ${price:.2f} | PnL: {pct:.2f}%",
+            })
+        else:
+            updated[i]["current_price"] = round(price, 4)
+            updated[i]["updated_at"] = now_iso
+            updated[i]["pnl_pct"] = round(pct, 2)
+            if pct <= -8:
+                events.append({
+                    "type": "WARNING",
+                    "symbol": sym,
+                    "details": f"Down {pct:.2f}% — review stop-loss (currently ${sp:.2f})",
+                })
 
     return updated, events
 
-# ── Build paper position record ───────────────────────────────────────────────
-def build_position(ev: dict) -> dict:
+
+# ── Build a new trade row ─────────────────────────────────────────────────────
+def build_trade_row(ev: dict) -> dict:
     now = hkt_now().isoformat()
     entry = ev["entry_price"]
     live = ev.get("live_price") or entry
+    sym = ev["symbol"]
     return {
-        "id": f"paper-{ev['symbol']}-{now[:13].replace(':', '-')}",
-        "name": f"AI4Trade Copy — {ev['symbol']}",
+        "id": f"paper-{sym}-{now[:13].replace(':', '-')}",
+        "symbol": sym,
+        "name": f"AI4Trade Copy — {sym}",
         "status": "open",
         "side": ev["side"],
-        "symbol": ev["symbol"],
-        # Schema for editable_portfolio.json (PortfolioWidget uses this)
-        "quantity": 10,
-        "avgPrice": entry,
-        "currentPrice": live,
-        "sector": "AI / Tech",
-        # Extended fields for our own tracking
         "entry_price": entry,
+        "exit_price": None,
+        "current_price": live,
+        "live_price": live,
         "target_price": ev["target_price"],
         "stop_loss": ev["stop_loss"],
-        "live_price": live,
+        "quantity": 10,
+        "pnl_pct": 0.0,
+        "pnl_abs": 0.0,
+        "strategy": f"AI4Trade — {ev['agent']}",
+        "sector": "AI / Tech",
+        "notes": (
+            f"{ev['agent']} entry on "
+            f"{hkt_now().strftime('%b %d')} (score {ev.get('score')}/5). "
+            f"{ev['side']} @ ${entry:.2f} → target +15.0% / stop -8.0%."
+        ),
+        "close_reason": None,
         "agent": ev["agent"],
         "agent_score": ev.get("score"),
         "market": ev.get("market"),
         "created_at": now,
         "updated_at": now,
+        "closed_at": None,
     }
 
-# ── Main ───────────────────────────────────────────────────────────────────────
-def main():
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+def main() -> list[dict]:
+    db.init_schema()  # no-op if already initialized
+
     log("=" * 55)
     log("AI4Trade Poller START")
     log("=" * 55)
 
-    signals = fetch_signals(limit=15)
-    paper = load_paper_portfolios()
-    events = []  # Things to report to user
+    trades = load_open_trades()
+    events: list[dict] = []
 
     # 1. Check existing positions
-    log(f"Checking {len([p for p in paper if p.get('status')=='open'])} open positions...")
-    paper, pos_events = check_positions(paper)
+    open_count = sum(1 for t in trades if t.get("status") == "open")
+    log(f"Checking {open_count} open positions...")
+    trades, pos_events = check_positions(trades)
     events.extend(pos_events)
 
     # 2. Parse strategy signals and evaluate recommendations
-    new_follows = []
-    open_symbols = {p.get("symbol") for p in paper if p.get("status") == "open"}
+    signals = fetch_signals(limit=15)
+    new_follows: list[dict] = []
+    open_symbols = {t.get("symbol") for t in trades if t.get("status") == "open"}
 
     for sig in signals:
         msg_type = sig.get("message_type", "")
@@ -380,74 +372,42 @@ def main():
                         open_symbols.add(ev["symbol"])
 
     # 3. Auto-follow (up to MAX_POSITIONS)
-    open_count = len([p for p in paper if p.get("status") == "open"])
+    open_count = sum(1 for t in trades if t.get("status") == "open")
     for ev in new_follows:
         if open_count >= MAX_POSITIONS:
             log(f"  Max positions ({MAX_POSITIONS}) reached — skipping {ev['symbol']}")
             break
-        pos = build_position(ev)
-        paper.append(pos)
+        row = build_trade_row(ev)
+        upsert_trade(row)
+        trades.append(row)
         open_count += 1
         events.append({
             "type": "NEW_POSITION",
             "symbol": ev["symbol"],
-            "details": f"🤖 FOLLOWED {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f} "
-                       f"(live ${ev['live_price']:.2f}) | SL: ${ev['stop_loss']:.2f} | "
-                       f"Target: ${ev['target_price']:.2f} | Score: {ev['score']}★ | by {ev['agent']}",
+            "details": (
+                f"🤖 FOLLOWED {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f} "
+                f"(live ${ev['live_price']:.2f}) | SL: ${ev['stop_loss']:.2f} | "
+                f"Target: ${ev['target_price']:.2f} | Score: {ev['score']}★ | by {ev['agent']}"
+            ),
         })
         log(f"  ✅ AUTO-FOLLOW: {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f}")
 
-    save_paper_portfolios(paper)
+    # 4. Persist any position-state changes (closed_at, current_price, pnl)
+    for t in trades:
+        if t.get("status") == "closed" and t.get("close_reason"):
+            upsert_trade(t)
 
-    # Also write to editable_portfolio.json so PortfolioWidget sees it
-    EDITABLE_FILE = Path("/root/optitrade-clone/apps/backend/data/editable_portfolio.json")
-    editable = {
-        "name": "AI4Trade Copy Portfolio",
-        "positions": [
-            {
-                "id": p["id"],
-                "symbol": p["symbol"],
-                "quantity": p.get("quantity", 10),
-                "avgPrice": p.get("avgPrice") or p.get("entry_price"),
-                "currentPrice": p.get("currentPrice") or p.get("live_price") or p.get("avgPrice") or p.get("entry_price"),
-                "sector": p.get("sector", "AI / Tech"),
-            }
-            for p in paper if p.get("status") == "open"
-        ],
-        "updatedAt": hkt_now().isoformat(),
-    }
-    with EDITABLE_FILE.open("w") as f:
-        json.dump(editable, f, indent=2)
-
-    # Sync to GitHub for cross-machine access
-    try:
-        import subprocess
-        repo = Path("/root/optitrade-clone")
-        msg = f"AI4Trade sync {hkt_now().strftime('%Y-%m-%d %H:%M')}"
-        subprocess.run(["git", "add", "apps/backend/data/paper_portfolios.json",
-                        "apps/backend/data/editable_portfolio.json"],
-                       cwd=repo, capture_output=True)
-        result = subprocess.run(["git", "commit", "-m", msg], cwd=repo, capture_output=True, text=True)
-        if result.returncode == 0:
-            subprocess.run(["git", "push", "origin", "master"], cwd=repo, capture_output=True)
-            log("  📤 Synced to GitHub")
-        # if nothing to commit, that's fine — no-op
-    except Exception as e:
-        log(f"  ⚠️  Git sync failed: {e}")
-
-    # 4. Portfolio summary
-    open_p = [p for p in paper if p.get("status") == "open"]
-    closed = [p for p in paper if p.get("status") == "closed"]
-    total_pnl = sum(p.get("pnl_pct", 0) or 0 for p in closed)
-
+    # 5. Portfolio summary
+    open_p = [t for t in trades if t.get("status") == "open"]
+    closed = [t for t in trades if t.get("status") == "closed"]
+    total_pnl = sum(t.get("pnl_pct", 0) or 0 for t in closed)
     log(f"Portfolio: {len(open_p)} open | {len(closed)} closed | Closed PnL: {total_pnl:.2f}%")
-    for p in open_p:
-        pnl = p.get("pnl_pct", 0)
-        entry_disp = p.get("avgPrice") or p.get("entry_price") or "?"
-        cur = p.get("current_price") or p.get("currentPrice") or p.get("live_price") or "?"
-        log(f"  💼 {p['symbol']} {p['side']} | entry ${p['entry_price']} | cur ${cur} | {pnl:+.2f}%")
+    for t in open_p:
+        pnl = t.get("pnl_pct", 0)
+        cur = t.get("current_price") or t.get("live_price") or "?"
+        log(f"  💼 {t['symbol']} {t['side']} | entry ${t['entry_price']} | cur ${cur} | {pnl:+.2f}%")
 
-    # 5. Report important events
+    # 6. Report important events
     if events:
         log("EVENTS:")
         for e in events:
@@ -455,8 +415,8 @@ def main():
 
     log("AI4Trade Poller END")
     log("-" * 55)
+    return events
 
-    return events  # cron job will use this
 
 if __name__ == "__main__":
     main()
