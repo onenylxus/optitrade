@@ -7,7 +7,6 @@ to follow them, and persists paper trades into the SQLite `paper_trades` table
 file instead of git.
 """
 
-import json
 import re
 import sys
 from datetime import datetime, timezone, timedelta
@@ -29,117 +28,12 @@ HKT = timezone(timedelta(hours=8))
 LOG_FILE = Path("/root/.nanobot/workspace/logs/ai4trade_poll.log")
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-# ── Notification deduplication (only ping Discord when something happened) ──────
-# Persist a state snapshot after every run. Next run diffs against it; if nothing
-# material changed, poller logs silently and never publishes a reminder. This is
-# what stops the 30-min "Flat, no triggers" spam during flat / closed-market hours.
-STATE_FILE = Path("/root/.nanobot/workspace/logs/ai4trade_poller_state.json")
-STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-PNL_ALERT_PCT = 3.0  # re-notify if any open position moves >= ±3% since last alert
-
-# Max open paper positions (5 slots per USER.md aggressive mode)
-MAX_POSITIONS = 4
-# Minimum score to auto-follow (Tier 1: raised from 3 → 4; 3.5★ signals
-# averaged -4.41% across 4 trades vs 4.5★ +0.84% across 9 trades)
-MIN_SCORE_FOLLOW = 4
+# Max open paper positions
+MAX_POSITIONS = 3
+# Minimum score to auto-follow
+MIN_SCORE_FOLLOW = 3
 # Only report if score >= this
 MIN_SCORE_REPORT = 2
-# ── Aggressive rotation defaults (was -8% stop / +15% target) ───────────────
-DEFAULT_STOP_PCT = 5.0          # -5% stop-loss
-DEFAULT_TARGET_PCT = 10.0       # +10% target
-# Stagnation exit: a position flat for STAGNATION_DAYS trading days
-# with PnL in [STAGNATION_LOW, STAGNATION_HIGH]% is force-closed to free slot
-STAGNATION_DAYS = 3
-STAGNATION_LOW = -2.0
-STAGNATION_HIGH = 3.0
-# Earlier partial take-profit signal at +PARTIAL_TP_PCT% — trim half & move stop
-PARTIAL_TP_PCT = 5.0
-# ── Tier 1 follow-filters (added 2026-07-08, tightened 2026-07-09) ──────────
-# Don't re-enter the same symbol within this many hours of a prior WIN/TP.
-# Stops same-day whipsaw churn while still letting overnight setups through.
-SAME_SYMBOL_COOLDOWN_HOURS = 24
-# After a LOSS-close on a symbol, the cooldown is extended to this many hours
-# — losing twice on the same ticker in 48h has historically never worked.
-SAME_SYMBOL_LOSS_COOLDOWN_HOURS = 72
-# Maximum open positions allowed in the same symbol at any one time
-MAX_POSITIONS_PER_SYMBOL = 1
-
-# Position sizing — 50 shares per signal as per AI4Trade 2026 Aggressive strategy.
-# (Was 10 in initial scaffold; corrected 2026-07-09 to align with USER.md spec.)
-TRADE_QUANTITY = 50
-
-# SQLite retention — keep last 30 days of high-frequency tables.
-# Older rows purged by run_cleanup() at end of each poller pass.
-SQLITE_RETENTION_DAYS = 30
-
-
-def run_cleanup(retention_days: int = SQLITE_RETENTION_DAYS) -> dict:
-    """Purge rows older than retention_days from high-frequency tables.
-
-    Targets (cron-driven, end-of-pass):
-      - signal_log    (~450 rows/day, cap 30d ≈ 13.5k rows)
-      - price_cache   (TTL-managed but expired rows linger)
-      - news_articles / news_analyses (mirror 30d)
-
-    Kept indefinitely:
-      - paper_trades   (audit trail, ~50 rows/month)
-      - follow_list_cache, editable_portfolio (1 row / user data)
-    """
-    deleted = {}
-    try:
-        with db.transaction() as conn:
-            for table, ts_col in [
-                ("signal_log",    "received_at"),
-                ("news_articles", "created_at"),
-                # news_analyses has no created_at; use analyzed_at or join
-                # to news_articles.created_at via article_id.
-                ("price_cache",   "fetched_at"),
-            ]:
-                cur = conn.execute(
-                    f"DELETE FROM {table} "
-                    f"WHERE {ts_col} < datetime('now', ?)",
-                    (f"-{retention_days} days",),
-                )
-                deleted[table] = cur.rowcount
-            # news_analyses: cascade-style — delete orphans whose parent
-            # article is older than retention.
-            cur = conn.execute(
-                """DELETE FROM news_analyses
-                   WHERE article_id IN (
-                       SELECT id FROM news_articles
-                       WHERE created_at < datetime('now', ?)
-                   )""",
-                (f"-{retention_days} days",),
-            )
-            deleted["news_analyses"] = cur.rowcount
-    except Exception as e:
-        log(f"WARNING: cleanup failed: {e}")
-    return deleted
-# Hard blacklist: symbols where historical win-rate is too poor to keep
-# re-entering. MU has 1 win / 7 losses-or-flat across 8 attempts (12.5%).
-BLACKLIST_SYMBOLS = {"MU"}
-# Agents that have produced persistent garbage / crypto-only output; never
-# auto-add them to follow_list even if their leaderboard activity spikes.
-BLACKLIST_AGENTS: set[str] = set()
-# Cap follow_list size to prevent runaway expansion from polluting cache
-# with test agents or one-off noise sources.
-MAX_FOLLOW_LIST_SIZE = 10
-# Skip auto-include for agent names matching these patterns (test fixtures,
-# CI bots, temporary handles — anything that wouldn't be a real production
-# trader we want to follow long-term).
-TEST_AGENT_PATTERNS: tuple[str, ...] = (
-    "TestAgent_", "E2E_", "MockAgent", "test_", "Mock", "TEST_",
-    "FinalClean_", "AuditE2E_", "FinalE2E_",
-)
-def _is_test_agent(name: str) -> bool:
-    n = name or ""
-    return any(p in n for p in TEST_AGENT_PATTERNS)
-# Signal freshness — reject signals older than this many minutes. Was 6h
-# which let through stale entries (2026-07-09 03:33 OKLO/HST were hours old).
-SIGNAL_MAX_AGE_MINUTES = 15
-# US-only scope: ignore crypto/A-share signals entirely (was relying on
-# score gate, now hard filter per scope guardrail).
-ALLOWED_MARKETS = {"us-stock"}
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -167,193 +61,13 @@ def upsert_trade(row: dict) -> None:
         db.upsert_paper_trade(conn, row)
 
 
-def _load_follow_list_cache() -> tuple[list[str], str] | None:
-    """Read cached (list, refreshed_at_iso) from SQLite. None if missing."""
-    try:
-        with db.transaction() as conn:
-            row = conn.execute(
-                "SELECT list_json, refreshed_at FROM follow_list_cache WHERE id=1"
-            ).fetchone()
-        if not row:
-            return None
-        return (db.json_loads(row["list_json"]), row["refreshed_at"])
-    except Exception:
-        return None
-
-
-def _save_follow_list_cache(names: list[str]) -> None:
-    """Persist the chosen follow list + refresh timestamp."""
-    with db.transaction() as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO follow_list_cache (id, list_json, refreshed_at) "
-            "VALUES (1, ?, ?)",
-            (db.json_dumps(sorted(set(names))), hkt_now().isoformat()),
-        )
-
-
-def reconcile_follow_list_cache() -> list[str]:
-    """Reconcile cached follow_list against current leaderboard + pinned.
-
-    Drops test-pattern agents from cache and refills from a fresh
-    leaderboard fetch. Run this on startup or on a daily cron to ensure
-    the cache doesn't carry stale entries from prior mock/test runs.
-
-    Returns the reconciled list (also persisted to cache).
-    """
-    try:
-        board = fetch_agent_leaderboard(limit=20, market="us-stock",
-                                          min_last_signal_hours=168)
-        eligible = [a for a in board if a.get("signal_count", 0) >= MIN_AGENT_SIGNAL_COUNT]
-        top = eligible[:DYNAMIC_FOLLOW_LIMIT]
-        top_names = [a["agent_name"] for a in top if a.get("agent_name")]
-        # Pinned + top dynamic, drop test agents, cap to MAX
-        healthy = sorted(set(PINNED_AGENTS) | set(top_names))
-        healthy = [n for n in healthy if not _is_test_agent(n)]
-        # Also drop any test-pattern names that accidentally got cached previously
-        if cached:
-            cached_names, _ = cached
-            test_leak = [n for n in cached_names if _is_test_agent(n)]
-            if test_leak:
-                log(f"Reconcile: dropping test-leak agents from cache: {test_leak}")
-        # Always include pinned first, then dynamic
-        pinned_first = [n for n in healthy if n in PINNED_AGENTS]
-        dynamic = [n for n in healthy if n not in PINNED_AGENTS]
-        cap = max(MAX_FOLLOW_LIST_SIZE - len(pinned_first), DYNAMIC_FOLLOW_LIMIT)
-        dynamic = dynamic[:cap]
-        result = sorted(pinned_first + dynamic)
-        _save_follow_list_cache(result)
-        log(f"Reconciled follow_list: {len(result)} agents")
-        return result
-    except Exception as e:
-        log(f"ERROR reconciling follow_list: {e}")
-        # Fall back to current cache as-is
-        cached = _load_follow_list_cache()
-        return cached[0] if cached else list(PINNED_AGENTS)
-
-
-def refresh_follow_list(force: bool = False) -> list[str]:
-    """Return current dynamic follow list. Hit leaderboard every
-    LEADERBOARD_REFRESH_HOURS hours; otherwise return cached list.
-
-    Selection logic:
-        1. Always include PINNED_AGENTS (raftapart, etc.) — these are our
-           trusted workhorses regardless of recent activity.
-        2. Pull top DYNAMIC_FOLLOW_LIMIT active agents from the platform's
-           /signals/grouped endpoint (sorted by signal_count).
-        3. Dedupe, cache in SQLite, return.
-
-    Cache invalidation (force=True):
-        - Triggered by caller when we detect high-value agents outside the
-          current cache (e.g., fresh us-stock activity).
-        - Triggered manually via API.
-    """
-    cached = _load_follow_list_cache()
-    if cached and not force:
-        names, refreshed_at = cached
-        try:
-            dt = datetime.fromisoformat(refreshed_at)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=HKT)
-            age_hours = (hkt_now() - dt).total_seconds() / 3600
-            if age_hours < LEADERBOARD_REFRESH_HOURS:
-                return names
-        except Exception:
-            pass
-
-    # Stale cache or first run — fetch fresh from leaderboard
-    board = fetch_agent_leaderboard(limit=20, market="us-stock",
-                                      min_last_signal_hours=72)
-    # Filter by minimum signal count (kills one-off noise agents)
-    eligible = [a for a in board if a.get("signal_count", 0) >= MIN_AGENT_SIGNAL_COUNT]
-    top = eligible[:DYNAMIC_FOLLOW_LIMIT]
-    top_names = [a["agent_name"] for a in top if a.get("agent_name")]
-    # Merge with pinned (always include pinned, dedupe)
-    combined = sorted(set(top_names) | set(PINNED_AGENTS))
-    _save_follow_list_cache(combined)
-    return combined
-
-
-# ── State snapshot helpers (used to silence non-actionable runs) ──────────────
-def load_state() -> dict:
-    """Return last published state or empty defaults."""
-    if not STATE_FILE.exists():
-        return {"open_ids": [], "open_pnl": {}, "closed_ids": [], "last_published_at": None}
-    try:
-        return json.loads(STATE_FILE.read_text())
-    except Exception:
-        return {"open_ids": [], "open_pnl": {}, "closed_ids": [], "last_published_at": None}
-
-
-def save_state(state: dict) -> None:
-    """Atomic write so a crashed run never leaves a half-written file."""
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, indent=2))
-    tmp.replace(STATE_FILE)
-
-
-def compute_diff(trades: list[dict], prev: dict) -> list[str]:
-    """Return a list of human-readable messages worth notifying about.
-    Empty list = nothing material changed → poller runs silently.
-
-    State tracks (a) currently-open trade ids, (b) pnl per open id, and
-    (c) the set of closed trade ids already notified. New in this run =
-    open_ids - prev_open_ids, or closed_ids - prev_closed_ids. Big swings
-    on existing opens also fire when |Δpnl| >= PNL_ALERT_PCT.
-    """
-    msgs: list[str] = []
-    open_now = [t for t in trades if t.get("status") == "open"]
-    closed_now = [t for t in trades if t.get("status") == "closed" and t.get("close_reason")]
-
-    open_ids_now = {t.get("id") for t in open_now}
-    open_ids_prev = set(prev.get("open_ids") or [])
-    closed_ids_now = {t.get("id") for t in closed_now}
-    closed_ids_prev = set(prev.get("closed_ids") or [])
-    prev_pnl = prev.get("open_pnl") or {}
-
-    # 1. Newly opened positions (id not seen before)
-    new_open_ids = open_ids_now - open_ids_prev
-    for t in open_now:
-        if t.get("id") in new_open_ids:
-            msgs.append(
-                f"🟢 **OPENED** {t['symbol']} {t['side']} @ ${float(t['entry_price']):.2f} | "
-                f"SL ${float(t['stop_loss']):.2f} → TP ${float(t['target_price']):.2f} | "
-                f"score {t.get('agent_score')}/5 · {t.get('agent')}"
-            )
-
-    # 2. Newly closed positions (id not seen in prev closed_ids)
-    new_closed_ids = closed_ids_now - closed_ids_prev
-    for t in closed_now:
-        if t.get("id") in new_closed_ids:
-            msgs.append(
-                f"🔒 **{t['close_reason']}** {t['symbol']} {t['side']} | "
-                f"entry ${float(t['entry_price']):.2f} → exit ${float(t.get('exit_price') or 0):.2f} | "
-                f"**PnL {float(t.get('pnl_pct') or 0):+.2f}%**"
-            )
-
-    # 3. Big PnL swing on still-open positions (±3% since last snapshot)
-    for t in open_now:
-        pid = t.get("id")
-        cur_pnl = float(t.get("pnl_pct") or 0)
-        old_pnl = float(prev_pnl.get(pid) or 0.0)
-        if abs(cur_pnl - old_pnl) >= PNL_ALERT_PCT:
-            direction = "📈" if cur_pnl > old_pnl else "📉"
-            msgs.append(
-                f"{direction} **{t['symbol']}** PnL moved {old_pnl:+.2f}% → {cur_pnl:+.2f}% "
-                f"(entry ${float(t['entry_price']):.2f})"
-            )
-
-    return msgs
-
-
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
-def fetch_signals(limit: int = 15, market: str = "us-stock") -> list[dict]:
-    """Fetch raw signal feed filtered by market. Pre-filtering at the API
-    layer avoids wasting parse quota on signals we'll SKIP downstream."""
+def fetch_signals(limit: int = 15) -> list[dict]:
     try:
         resp = requests.get(
             f"{BASE_URL}/signals/feed",
             headers=HEADERS,
-            params={"limit": limit, "market": market},
+            params={"limit": limit},
             timeout=10,
         )
         resp.raise_for_status()
@@ -374,415 +88,18 @@ def fetch_heartbeat() -> dict:
 
 
 def get_live_price(symbol: str) -> float | None:
-    """Live price — yfinance first, fallback to FMP stable/quote-v1."""
     try:
-        import yfinance
+        import yfinance  # local import — keeps the poller usable when yfinance is missing
+
         ticker = yfinance.Ticker(symbol)
         info = ticker.fast_info
-        price = (
-            getattr(info, "last_price", None)
-            or getattr(info, "last_close", None)
-            or getattr(info, "previous_close", None)
-        )
-        if price:
-            return float(price)
-    except Exception:
-        pass
-
-    # FMP fallback (stable endpoint v1 — survives legacy deprecation)
-    try:
-        import os, requests
-        api_key = os.environ.get("FMP_API_KEY")
-        if not api_key:
-            return None
-        url = f"https://financialmodelingprep.com/stable/quote-v1?symbol={symbol}&apikey={api_key}"
-        r = requests.get(url, timeout=10)
-        if r.status_code == 200:
-            data = r.json()
-            if isinstance(data, list) and data:
-                return float(data[0].get("price"))
-            if isinstance(data, dict) and "price" in data:
-                return float(data["price"])
-    except Exception:
-        pass
-
-    return None
-
-
-def get_intraday_volatility(symbol: str) -> float | None:
-    """Return today's intraday range as % of opening price.
-    Used to widen stops for volatile / speculative names where a 5% tight
-    stop would routinely get wicked out before the move plays out.
-
-    Returns None on failure (caller falls back to default 5% stop).
-    """
-    try:
-        import yfinance
-        ticker = yfinance.Ticker(symbol)
-        hist = ticker.history(period="5d", interval="1d")
-        if hist is None or len(hist) < 1:
-            return None
-        last = hist.iloc[-1]
-        high = float(last.get("High") or 0)
-        low = float(last.get("Low") or 0)
-        open_ = float(last.get("Open") or 0)
-        if open_ <= 0 or high <= low:
-            return None
-        return (high - low) / open_ * 100
+        price = getattr(info, "last_price", None) or getattr(info, "previous_close", None)
+        return float(price) if price else None
     except Exception:
         return None
 
 
-# ── Enrichment layer (Phase 4 — analytical pre-execution gate) ────────────────
-_TREND_CACHE: dict[str, dict] = {}
-_TREND_CACHE_TTL_SECONDS = 300  # 5 min
-_SPY_TREND_CACHE: dict | None = None
-
-
-def _trend_cache_key(sym: str) -> str:
-    return sym
-
-
-def get_trend(sym: str) -> dict | None:
-    """Return {price, sma20, sma50, sma200, trend} for a symbol.
-    trend ∈ {'strong_up', 'up', 'sideways', 'down', 'strong_down'}.
-    Cached 5 min to keep cron snappy.
-    """
-    import time as _time
-    cached = _TREND_CACHE.get(_trend_cache_key(sym))
-    if cached and _time.time() - cached["ts"] < _TREND_CACHE_TTL_SECONDS:
-        return cached["data"]
-    try:
-        import yfinance
-        hist = yfinance.Ticker(sym).history(period="6mo", interval="1d")
-        if hist is None or len(hist) < 50:
-            return None
-        closes = hist["Close"].astype(float)
-        price = float(closes.iloc[-1])
-        sma20 = float(closes.tail(20).mean())
-        sma50 = float(closes.tail(50).mean())
-        sma200 = float(closes.tail(min(200, len(closes))).mean())
-        # Trend classification (simple but works):
-        if price > sma20 > sma50 > sma200:
-            trend = "strong_up"
-        elif price > sma20 > sma50:
-            trend = "up"
-        elif price < sma20 < sma50 < sma200:
-            trend = "strong_down"
-        elif price < sma20 < sma50:
-            trend = "down"
-        else:
-            trend = "sideways"
-        data = {"price": price, "sma20": sma20, "sma50": sma50,
-                "sma200": sma200, "trend": trend}
-        _TREND_CACHE[_trend_cache_key(sym)] = {"ts": _time.time(), "data": data}
-        return data
-    except Exception:
-        return None
-
-
-def get_spy_trend() -> str:
-    """Return SPY regime: 'up' / 'sideways' / 'down'."""
-    global _SPY_TREND_CACHE
-    import time as _time
-    if _SPY_TREND_CACHE and _time.time() - _SPY_TREND_CACHE["ts"] < 600:
-        return _SPY_TREND_CACHE["regime"]
-    t = get_trend("SPY")
-    if t is None:
-        return "unknown"
-    if t["trend"] in ("strong_up", "up"):
-        regime = "up"
-    elif t["trend"] in ("strong_down", "down"):
-        regime = "down"
-    else:
-        regime = "sideways"
-    _SPY_TREND_CACHE = {"ts": _time.time(), "regime": regime}
-    return regime
-
-
-def our_history_on_symbol(sym: str) -> dict:
-    """Query SQLite for our track record on this ticker.
-    Returns {count, wins, losses, avg_pnl, total_pnl}.
-    """
-    try:
-        with db.transaction() as conn:
-            row = conn.execute(
-                """SELECT
-                       COUNT(*) AS count,
-                       SUM(CASE WHEN pnl_pct > 0 THEN 1 ELSE 0 END) AS wins,
-                       SUM(CASE WHEN pnl_pct < 0 THEN 1 ELSE 0 END) AS losses,
-                       ROUND(AVG(pnl_pct), 2) AS avg_pnl,
-                       ROUND(SUM(pnl_pct), 2) AS total_pnl
-                   FROM paper_trades
-                   WHERE symbol = ? AND status = 'closed'""",
-                (sym,),
-            ).fetchone()
-        if not row or row["count"] == 0:
-            return {"count": 0}
-        return dict(row)
-    except Exception:
-        return {"count": 0}
-
-
-def parse_catalyst(signal_text: str) -> str:
-    """Classify catalyst strength from signal text — returns short label."""
-    t = (signal_text or "").lower()
-    # Quantitative beats first (most actionable)
-    import re
-    beat = re.search(r"(beat|miss|raise|raised).*?(\d+(\.\d+)?)\s*%", t)
-    if beat:
-        return f"{beat.group(1).upper()} {beat.group(2)}%"
-    for kw in ("earnings beat", "earnings miss", "fda approval", "merger",
-              "acquisition", "short squeeze", "activist", "guidance raise"):
-        if kw in t:
-            return kw.upper()
-    if any(k in t for k in ("earnings", "guidance", "fda", "approval",
-                              "merger", "acquisition", "buyback", "dividend",
-                              "split", "squeeze", "activist", "lawsuit",
-                              "contract", "partnership", "launch", "product")):
-        return "THEMED"
-    return "NONE"
-
-
-def enrich_signal(sym: str, side: str, agent_score: float, price: float,
-                   market: str, raw_content: str) -> dict:
-    """Pre-execution analytical layer.
-
-    Returns {score_bonus, reasons, risks, enrich_notes, thesis}.
-    The thesis string captures WHY we follow or reject — written into
-    paper_trades.notes so the paper-trading-history widget's "Why I
-    entered" section can show it later.
-    """
-    score_bonus = 0
-    reasons: list[str] = []
-    risks: list[str] = []
-    notes: dict = {}
-
-    # 1. Trend alignment
-    trend = get_trend(sym)
-    if trend:
-        notes["trend"] = trend["trend"]
-        notes["price_vs_sma20_pct"] = round(
-            (trend["price"] - trend["sma20"]) / trend["sma20"] * 100, 2
-        )
-        notes["price_vs_sma50_pct"] = round(
-            (trend["price"] - trend["sma50"]) / trend["sma50"] * 100, 2
-        )
-        if side == "LONG":
-            if trend["trend"] in ("strong_up", "up"):
-                score_bonus += 1
-                reasons.append(
-                    f"Trend: {trend['trend']} (price {trend['price']:.2f} > "
-                    f"SMA20 {trend['sma20']:.2f} > SMA50 {trend['sma50']:.2f})"
-                )
-            elif trend["trend"] in ("strong_down", "down"):
-                risks.append(
-                    f"Trend: {trend['trend']} (LONG against SMA20/SMA50 downtrend)"
-                )
-        else:  # SHORT
-            if trend["trend"] in ("strong_down", "down"):
-                score_bonus += 1
-                reasons.append(f"Trend: {trend['trend']} (supports SHORT)")
-            elif trend["trend"] in ("strong_up", "up"):
-                risks.append(f"Trend: {trend['trend']} (SHORT against uptrend)")
-
-    # 2. Our historical track record on this ticker
-    history = our_history_on_symbol(sym)
-    notes["our_history"] = history
-    if history.get("count", 0) >= 2:
-        avg = history.get("avg_pnl", 0) or 0
-        cnt = history["count"]
-        if avg > 1.0:
-            score_bonus += 1
-            reasons.append(f"Our history: {cnt} trades avg +{avg:.2f}% on {sym}")
-        elif avg < -3.0:
-            score_bonus -= 1
-            risks.append(f"Our history: {cnt} trades avg {avg:.2f}% on {sym} (poor)")
-
-    # 3. Market regime (SPY)
-    regime = get_spy_trend()
-    notes["spy_regime"] = regime
-    if regime == "down" and side == "LONG":
-        score_bonus -= 1
-        risks.append(f"Market regime: SPY down — tailwind against LONG")
-    elif regime == "up" and side == "LONG":
-        reasons.append(f"Market regime: SPY up — supportive for LONG")
-
-    # 4. Catalyst classification (qualitative)
-    catalyst = parse_catalyst(raw_content)
-    notes["catalyst"] = catalyst
-    if catalyst not in ("NONE", "THEMED"):
-        reasons.append(f"Catalyst strength: {catalyst}")
-    elif catalyst == "THEMED":
-        reasons.append(f"Catalyst: themed (qualitative)")
-    else:
-        risks.append("Catalyst: none detected in signal text")
-
-    # 5. Build thesis — captured in paper_trades.notes for later review
-    thesis = (
-        f"Entry: {side} {sym} @ ${price:.2f}\n"
-        f"Trend: {trend['trend'] if trend else 'unknown'} "
-        f"(vs SMA20 {trend['sma20']:.2f} / SMA50 {trend['sma50']:.2f})\n"
-        if trend else
-        f"Entry: {side} {sym} @ ${price:.2f}\n"
-    )
-    if history.get("count", 0):
-        thesis += f"Our history: {history['count']} trades avg {history.get('avg_pnl', 0):+.2f}% on {sym}\n"
-    thesis += f"Catalyst: {catalyst}\n"
-    thesis += f"Market: {market} | Regime: {regime}\n"
-    thesis += f"Agent: signal score {agent_score}★\n"
-
-    return {
-        "score_bonus": score_bonus,
-        "reasons": reasons,
-        "risks": risks,
-        "enrich_notes": notes,
-        "thesis": thesis.strip(),
-    }
-
-
-# ── Signal log persistence (audit trail) ──────────────────────────────────────
-def log_signal(received_at: str, agent_name: str, symbol: str | None,
-                side: str | None, agent_score: float | None,
-                market: str | None, raw_content: str | None,
-                parsed_action: str | None, score: float | None,
-                entry_price: float | None, live_price: float | None,
-                skip_reasons: list[str] | None, enrich_notes: dict | None,
-                thesis: str | None, signal_log_id: int | None = None) -> int | None:
-    """Persist every evaluated signal to signal_log — regardless of follow /
-    watch / skip outcome. Captures audit trail for later review.
-
-    Dedup: uq_signal_log_dedup on (agent, symbol, created_at, side). If the
-    same signal lands twice (re-poll within freshness window), we return the
-    existing row's id rather than failing.
-    """
-    try:
-        with db.transaction() as conn:
-            # Look up existing row first (cheap with uq index). The INSERT
-            # OR IGNORE below also guards against the race where two poller
-            # passes run concurrently; whichever loses the race gets rowcount=0.
-            if symbol and agent_name:
-                existing = conn.execute(
-                    """SELECT id FROM signal_log
-                       WHERE agent_name=? AND symbol=? AND created_at=?
-                         AND COALESCE(side,'')=COALESCE(?, '')""",
-                    (agent_name, symbol, received_at, side),
-                ).fetchone()
-                if existing:
-                    return existing["id"]
-
-            cur = conn.execute(
-                """INSERT OR IGNORE INTO signal_log
-                   (received_at, agent_name, symbol, side, agent_score,
-                    market, raw_content, parsed_action, score,
-                    entry_price, live_price, skip_reasons, enrich_notes, thesis)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    received_at, agent_name, symbol, side, agent_score,
-                    market, raw_content, parsed_action, score,
-                    entry_price, live_price,
-                    db.json_dumps(skip_reasons or []),
-                    db.json_dumps(enrich_notes or {}),
-                    thesis,
-                ),
-            )
-            # If INSERT OR IGNORE hit the unique constraint (race condition),
-            # fetch the existing row's id and return that instead.
-            if cur.lastrowid == 0:
-                existing = conn.execute(
-                    """SELECT id FROM signal_log
-                       WHERE agent_name=? AND symbol=? AND created_at=?
-                         AND COALESCE(side,'')=COALESCE(?, '')""",
-                    (agent_name, symbol, received_at, side),
-                ).fetchone()
-                return existing["id"] if existing else None
-            return cur.lastrowid
-    except Exception as e:
-        log(f"WARNING: signal_log insert failed: {e}")
-        return None
-
-
-# ── Signals / heartbeat ───────────────────────────────────────────────────────
-def fetch_signals(limit: int = 15, market: str = "us-stock") -> list[dict]:
-    """Fetch raw signal feed filtered by market. Pre-filtering at the API
-    layer avoids wasting parse quota on signals we'll SKIP downstream."""
-    try:
-        resp = requests.get(
-            f"{BASE_URL}/signals/feed",
-            headers=HEADERS,
-            params={"limit": limit, "market": market},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        return resp.json().get("signals", [])
-    except Exception as e:
-        log(f"ERROR fetching signals: {e}")
-        return []
-
-
-def fetch_agent_leaderboard(limit: int = 20, market: str = "us-stock",
-                             min_last_signal_hours: int = 72) -> list[dict]:
-    """Fetch /api/signals/grouped and return active agents sorted by recent signal
-    activity. The platform's grouped endpoint already aggregates per-agent
-    signal_count + last_signal_at — we just rank by activity.
-
-    Args:
-        limit: How many agents to inspect from the leaderboard.
-        market: us-stock / crypto / forex. Hard-filter at the API layer.
-        min_last_signal_hours: Agents inactive for longer than this are dropped
-            (avoid auto-following dead traders).
-
-    Returns: list of agent dicts with at least {agent_id, agent_name,
-        signal_count, last_signal_at}.
-    """
-    try:
-        resp = requests.get(
-            f"{BASE_URL}/signals/grouped",
-            headers=HEADERS,
-            params={"limit": limit, "market": market},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        agents = data.get("agents", [])
-        # Filter by activity (skip dead traders — no signal in N hours)
-        from datetime import datetime, timezone
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=min_last_signal_hours)
-        active = []
-        for a in agents:
-            ts = a.get("last_signal_at")
-            if not ts:
-                continue
-            try:
-                dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
-                if dt < cutoff:
-                    continue
-                a["_last_signal_dt"] = dt
-                active.append(a)
-            except Exception:
-                continue
-        # Sort by signal_count desc (more active = higher signal flow)
-        active.sort(key=lambda a: a.get("signal_count", 0), reverse=True)
-        return active
-    except Exception as e:
-        log(f"ERROR fetching leaderboard: {e}")
-        return []
-
-
-# Dynamic follow-list cache. Refreshed from leaderboard every
-# LEADERBOARD_REFRESH_HOURS hours, persisted in SQLite so restarts reuse it.
-LEADERBOARD_REFRESH_HOURS = 4
-DYNAMIC_FOLLOW_LIMIT = 5  # how many top agents to auto-follow
-# Minimum signals (lifetime) required before we trust an agent's activity
-# signal — keeps one-off lucky / brand-new accounts out.
-MIN_AGENT_SIGNAL_COUNT = 50
-
-# Manual override list — agents we always follow regardless of leaderboard
-# ranking (e.g. raftapart has been our primary workhorse even when activity
-# dips). Listed by name; resolved against the leaderboard.
-PINNED_AGENTS: list[str] = ["raftapart"]
+# ── Strategy parser ───────────────────────────────────────────────────────────
 def parse_strategy_content(content: str) -> list[dict]:
     """Parse markdown blocks like `### AMD: **BUY** (Score: 7.9)` into recs."""
     recommendations: list[dict] = []
@@ -820,7 +137,7 @@ def parse_strategy_content(content: str) -> list[dict]:
 
 
 # ── Evaluate one recommendation ───────────────────────────────────────────────
-def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market: str, recent_closed: list[dict] | None = None) -> dict | None:
+def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market: str) -> dict | None:
     sym = rec["symbol"]
     side = rec["side"]
     agent_score = rec["score"]
@@ -829,200 +146,55 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
     if not side or not price:
         return None
 
-    # ── Tier 1: Hard blacklist (MU historically 1 win / 7 losses-or-flat) ──
-    if sym in BLACKLIST_SYMBOLS:
-        return {
-            "skip": True,
-            "action": "SKIP",
-            "symbol": sym,
-            "score": 0,
-            "reasons": [f"Symbol {sym} is blacklisted (poor historical win-rate)"],
-            "risks": [],
-            "enrich_notes": {},
-            "thesis": "",
-        }
-
-    # ── Tier 1: Same-symbol cooldown (avoid same-day whipsaw re-entries) ──
-    # Loss-closes extend the cooldown to 72h; normal closes use 24h. This
-    # lets overnight winners through while protecting against repeated losses
-    # on the same ticker (e.g. AVGO 3-loss streak in June 2026).
-    if recent_closed:
-        now = hkt_now()
-        for c in recent_closed:
-            if c.get("symbol") != sym:
-                continue
-            closed_at = c.get("closed_at")
-            if not closed_at:
-                continue
-            try:
-                closed_dt = datetime.fromisoformat(closed_at.replace("Z", "+00:00").replace("+00:00", ""))
-                if closed_dt.tzinfo is None:
-                    closed_dt = closed_dt.replace(tzinfo=HKT)
-                hours_since = (now - closed_dt).total_seconds() / 3600
-                pnl = float(c.get("pnl_pct") or 0)
-                cooldown = SAME_SYMBOL_LOSS_COOLDOWN_HOURS if pnl < 0 else SAME_SYMBOL_COOLDOWN_HOURS
-                if hours_since < cooldown:
-                    return {
-                        "skip": True,
-                        "action": "SKIP",
-                        "symbol": sym,
-                        "score": 0,
-                        "reasons": [
-                            f"Same-symbol cooldown: {sym} closed {hours_since:.1f}h ago "
-                            f"({'loss' if pnl < 0 else 'win'}, {cooldown}h lockout)"
-                        ],
-                        "risks": [],
-                        "enrich_notes": {},
-                        "thesis": "",
-                    }
-            except Exception:
-                pass
-
-    # Time decay: only act on FRESH signals (tightened from 6h → 15min).
-    # Stale entries were responsible for 50% of skip-reasons on 2026-07-09.
-    age_minutes = 9999
+    # Time decay: only act on fresh strategies (<6h old)
+    age_hours = 999
     if created_at:
         try:
             dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-            age_minutes = (datetime.now(timezone.utc) - dt).total_seconds() / 60
+            age_hours = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
         except Exception:
             pass
 
-    if age_minutes > SIGNAL_MAX_AGE_MINUTES:
-        return {
-            "skip": True,
-            "action": "SKIP",
-            "symbol": sym,
-            "score": 0,
-            "reasons": [
-                f"Signal stale: {age_minutes:.0f}m old "
-                f"(max {SIGNAL_MAX_AGE_MINUTES}m)"
-            ],
-            "risks": [],
-            "enrich_notes": {},
-            "thesis": "",
-        }
-
-    # US-only scope: hard filter on market field (Tier 3)
-    if market and market not in ALLOWED_MARKETS:
-        return {
-            "skip": True,
-            "action": "SKIP",
-            "symbol": sym,
-            "score": 0,
-            "reasons": [f"Market '{market}' outside allowed {ALLOWED_MARKETS}"],
-            "risks": [],
-            "enrich_notes": {},
-            "thesis": "",
-        }
+    if age_hours > 6:
+        return None
 
     live_price = get_live_price(sym)
     if not live_price:
         return None
 
-    # Price-drift gate: if the live price has moved more than 1.5% from the
-    # signal's quoted entry, the setup is no longer valid — too much slippage.
-    # Was silently absorbed into the score; now a hard skip.
-    if price:
-        diff_pct = abs(live_price - price) / price * 100
-        if diff_pct > 1.5:
-            return {
-                "skip": True,
-                "action": "SKIP",
-                "symbol": sym,
-                "score": 0,
-                "reasons": [
-                    f"Price drift: signal ${price:.2f} vs live ${live_price:.2f} "
-                    f"({diff_pct:.1f}%, max 1.5%)"
-                ],
-            }
-
     score = 0.0
     reasons: list[str] = []
 
     if agent_score >= 7:
-        score += 3
-        reasons.append(f"Agent score {agent_score} (strong)")
-    elif agent_score >= 5:
         score += 2
-        reasons.append(f"Agent score {agent_score} (high)")
+        reasons.append(f"Agent score {agent_score} (strong)")
     elif agent_score >= 4:
         score += 1
         reasons.append(f"Agent score {agent_score}")
 
     if price:
         diff_pct = abs(live_price - price) / price * 100
-        if diff_pct <= 0.5:
-            score += 2
-            reasons.append(f"Entry price ${price:.2f} very close to live ${live_price:.2f} ({diff_pct:.1f}% diff)")
-        elif diff_pct <= 1.5:
+        if diff_pct <= 3:
             score += 1
             reasons.append(f"Entry price ${price:.2f} close to live ${live_price:.2f} ({diff_pct:.1f}% diff)")
+        elif diff_pct <= 10:
+            reasons.append(f"Entry price ${price:.2f} vs live ${live_price:.2f} ({diff_pct:.1f}% diff)")
 
     if market == "us-stock":
-        score += 1
+        score += 0.5
         reasons.append(f"US stock ({market})")
 
-    # Theme-aware bonus: any signal with a named catalyst — earnings surprise,
-    # FDA approval, M&A rumor, product launch, activist, short squeeze, etc —
-    # gets +1. Was previously restricted to AI/tech whitelist; expanded 2026-07-09
-    # so speculative / momentum names (GME, DJT, SMCI, emerging biotech) score
-    # equally when the signal carries a real catalyst.
-    THEMED_CATALYST_KEYWORDS = (
-        "earnings", "guidance", "beat", "miss", "fda", "approval", "merger",
-        "acquisition", "buyback", "dividend", "split", "squeeze", "activist",
-        "lawsuit", "contract", "partnership", "launch", "product",
-    )
-    sig_text = (rec.get("raw_content") or "").lower()
-    if any(k in sig_text for k in THEMED_CATALYST_KEYWORDS):
+    ai_stocks = {"NVDA", "AMD", "AVGO", "MSFT", "MU", "QCOM", "TSLA", "LIN", "AXP", "BA"}
+    if sym in ai_stocks:
         score += 1
-        reasons.append(f"Catalyst-driven signal (theme/keyword match)")
-
-    # ── Phase 4: Pre-execution analytical enrichment ─────────────────────────
-    # Pulls trend + our history + market regime + catalyst classification.
-    # Adds bonus to score if trend/history agree, and ALWAYS records a thesis
-    # in paper_trades.notes for later review (whether we follow or not).
-    enrichment = enrich_signal(sym, side, agent_score, price, market, rec.get("raw_content") or "")
-    score += enrichment["score_bonus"]
-    reasons.extend(enrichment["reasons"])
-    risks = enrichment["risks"]
-
-    # Decide whether to apply analytical veto: a strongly negative
-    # enrichment score or 2+ risk flags without compensating reasons should
-    # drop us to WATCH even if base score ≥ 4. (Preserves the gate, doesn't
-    # silently re-promote SKIPs.)
-    if score >= MIN_SCORE_FOLLOW and len(risks) >= 2 and enrichment["score_bonus"] <= -1:
-        # Demote FOLLOW → WATCH
-        reasons.append(
-            f"Analytical veto: {len(risks)} risk flags + score_bonus {enrichment['score_bonus']}, "
-            f"demoted FOLLOW → WATCH"
-        )
-        for r in risks:
-            reasons.append(f"  risk: {r}")
-        risks = []
-        score = max(score - 2, MIN_SCORE_REPORT)  # push below 4 but ≥ 2
+        reasons.append(f"AI/tech theme match ({sym})")
 
     if side == "LONG":
-        stop_loss = round(price * (1 - DEFAULT_STOP_PCT / 100), 2)
-        target = round(price * (1 + DEFAULT_TARGET_PCT / 100), 2)
+        stop_loss = round(price * 0.92, 2)
+        target = round(price * 1.15, 2)
     else:
-        stop_loss = round(price * (1 + DEFAULT_STOP_PCT / 100), 2)
-        target = round(price * (1 - DEFAULT_TARGET_PCT / 100), 2)
-
-    # Wider stops for high-vol / speculative names — the 5%/-5% default assumes
-    # an S&P 500 member. GME / DJT / small-cap biotech routinely gap 10-15%
-    # on catalyst days; a 5% stop would routinely get wicked out before the
-    # setup played out.
-    vol = get_intraday_volatility(sym)
-    if vol is not None and vol >= 8.0:
-        # 8%+ intraday range = volatile name. Widen stop/target to 1.5x.
-        widened_stop = round(price * (1 - (DEFAULT_STOP_PCT * 1.5) / 100), 2) if side == "LONG" \
-            else round(price * (1 + (DEFAULT_STOP_PCT * 1.5) / 100), 2)
-        widened_target = round(price * (1 + (DEFAULT_TARGET_PCT * 1.5) / 100), 2) if side == "LONG" \
-            else round(price * (1 - (DEFAULT_TARGET_PCT * 1.5) / 100), 2)
-        reasons.append(f"Wide intraday range ({vol:.1f}%) → stop/target widened to {DEFAULT_STOP_PCT*1.5:.1f}%/{DEFAULT_TARGET_PCT*1.5:.1f}%")
-        stop_loss = widened_stop
-        target = widened_target
+        stop_loss = round(price * 1.08, 2)
+        target = round(price * 0.85, 2)
 
     action = "SKIP"
     if score >= MIN_SCORE_FOLLOW:
@@ -1042,9 +214,6 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         "live_price": live_price,
         "agent": agent_name,
         "reasons": reasons,
-        "risks": risks,
-        "enrich_notes": enrichment["enrich_notes"],
-        "thesis": enrichment["thesis"],
         "market": market,
         "created_at": created_at,
     }
@@ -1115,50 +284,11 @@ def check_positions(trades: list[dict]) -> tuple[list[dict], list[dict]]:
             updated[i]["current_price"] = round(price, 4)
             updated[i]["updated_at"] = now_iso
             updated[i]["pnl_pct"] = round(pct, 2)
-            updated[i]["_dirty"] = True  # mark for SQLite flush
             if pct <= -8:
                 events.append({
                     "type": "WARNING",
                     "symbol": sym,
                     "details": f"Down {pct:.2f}% — review stop-loss (currently ${sp:.2f})",
-                })
-
-            # ── Stagnation exit (rotate out of dead money) ──────────────
-            created = pos.get("created_at")
-            if created and STAGNATION_LOW < pct < STAGNATION_HIGH:
-                try:
-                    opened = datetime.fromisoformat(created)
-                    days_held = (hkt_now() - opened).total_seconds() / 86400
-                except Exception:
-                    days_held = 0
-                if days_held >= STAGNATION_DAYS:
-                    updated[i]["status"] = "closed"
-                    updated[i]["closed_at"] = now_iso
-                    updated[i]["updated_at"] = now_iso
-                    updated[i]["close_reason"] = "STAGNATION_EXIT"
-                    updated[i]["pnl_pct"] = round(pct, 2)
-                    updated[i]["exit_price"] = round(price, 4)
-                    events.append({
-                        "type": "STAGNATION_EXIT",
-                        "symbol": sym,
-                        "details": (
-                            f"Stagnation exit — {days_held:.1f}d flat @ {pct:+.2f}% "
-                            f"(range [{STAGNATION_LOW}, {STAGNATION_HIGH}]%). Free slot."
-                        ),
-                    })
-                    continue
-
-            # ── Partial TP signal at +PARTIAL_TP_PCT% ────────────────────
-            if pct >= PARTIAL_TP_PCT and not pos.get("partial_tp_taken"):
-                updated[i]["partial_tp_taken"] = True
-                updated[i]["_dirty"] = True
-                events.append({
-                    "type": "PARTIAL_TP",
-                    "symbol": sym,
-                    "details": (
-                        f"Partial TP level hit @ +{pct:.2f}% — consider trimming half. "
-                        f"Move stop to breakeven ${ep:.2f}."
-                    ),
                 })
 
     return updated, events
@@ -1170,16 +300,6 @@ def build_trade_row(ev: dict) -> dict:
     entry = ev["entry_price"]
     live = ev.get("live_price") or entry
     sym = ev["symbol"]
-
-    # Compose notes — include thesis (why we entered), risks identified at
-    # entry, and the strategy playbook. This is what shows in the
-    # paper-trading-history widget's "Why I entered" section.
-    thesis = ev.get("thesis") or ""
-    risks = ev.get("risks") or []
-    risk_block = ""
-    if risks:
-        risk_block = "\n\nRisks at entry:\n" + "\n".join(f"  • {r}" for r in risks)
-
     return {
         "id": f"paper-{sym}-{now[:13].replace(':', '-')}",
         "symbol": sym,
@@ -1192,23 +312,20 @@ def build_trade_row(ev: dict) -> dict:
         "live_price": live,
         "target_price": ev["target_price"],
         "stop_loss": ev["stop_loss"],
-        "quantity": TRADE_QUANTITY,
+        "quantity": 10,
         "pnl_pct": 0.0,
         "pnl_abs": 0.0,
         "strategy": f"AI4Trade — {ev['agent']}",
         "sector": "AI / Tech",
         "notes": (
-            f"{thesis}{risk_block}\n\n"
-            f"Strategy: target +{DEFAULT_TARGET_PCT}% / stop -{DEFAULT_STOP_PCT}%. "
-            f"Aggressive mode — stagnation exit after {STAGNATION_DAYS}d in "
-            f"[{STAGNATION_LOW}%, {STAGNATION_HIGH}%], partial TP at +{PARTIAL_TP_PCT}%."
+            f"{ev['agent']} entry on "
+            f"{hkt_now().strftime('%b %d')} (score {ev.get('score')}/5). "
+            f"{ev['side']} @ ${entry:.2f} → target +15.0% / stop -8.0%."
         ),
         "close_reason": None,
         "agent": ev["agent"],
         "agent_score": ev.get("score"),
         "market": ev.get("market"),
-        "signal_log_id": ev.get("_signal_log_id"),
-        "partial_tp_taken": 0,
         "created_at": now,
         "updated_at": now,
         "closed_at": None,
@@ -1224,77 +341,18 @@ def main() -> list[dict]:
     log("=" * 55)
 
     trades = load_open_trades()
-    prev_state = load_state()
-    new_events: list[dict] = []
+    events: list[dict] = []
 
     # 1. Check existing positions
     open_count = sum(1 for t in trades if t.get("status") == "open")
     log(f"Checking {open_count} open positions...")
     trades, pos_events = check_positions(trades)
-    new_events.extend(pos_events)
+    events.extend(pos_events)
 
     # 2. Parse strategy signals and evaluate recommendations
-    signals = fetch_signals(limit=15, market="us-stock")
+    signals = fetch_signals(limit=15)
     new_follows: list[dict] = []
     open_symbols = {t.get("symbol") for t in trades if t.get("status") == "open"}
-    # Pass recent closed positions (within last 7 days) so cooldown logic has data
-    recent_closed = [
-        t for t in trades
-        if t.get("status") == "closed" and t.get("closed_at")
-    ]
-
-    # 2a. Refresh dynamic follow-list from /api/signals/grouped leaderboard.
-    # Picks the most active US-stock traders + our pinned workhorse (raftapart).
-    # Force refresh on first run of the day (00:00–00:30 HKT) to catch any
-    # newly-active agents that emerged during overnight / pre-market.
-    force_refresh = hkt_now().hour == 0
-    if force_refresh:
-        # Daily reconciliation: drop test agents, refill from leaderboard
-        follow_list = reconcile_follow_list_cache()
-    else:
-        follow_list = refresh_follow_list(force=force_refresh)
-    log(f"Follow list ({len(follow_list)} agents, force={force_refresh}): {', '.join(follow_list)}")
-
-    # 2a-i. Detect active us-stock agents OUTSIDE current follow list.
-    # If any such agent has emitted ≥3 signals today, expand follow_list
-    # for the remainder of the day (auto-include). This catches the case
-    # where raftapart stops emitting us-stock but another agent picks up.
-    try:
-        all_board = fetch_agent_leaderboard(limit=20, market="us-stock",
-                                              min_last_signal_hours=24)
-        # Find recently active agents NOT in current follow list
-        outside = [a for a in all_board if a.get("agent_name") not in follow_list]
-        # Filter: must have emitted in the last 4 hours (i.e., market hours)
-        cutoff = (hkt_now() - timedelta(hours=4)).timestamp()
-        def recent_enough(a) -> bool:
-            try:
-                t = datetime.fromisoformat(a.get("last_signal_at", "").replace("Z", "+00:00"))
-                return t.timestamp() >= cutoff
-            except Exception:
-                return False
-        recently_active_outside = [a["agent_name"] for a in outside
-                                    if recent_enough(a)
-                                    and a.get("agent_name")
-                                    and a.get("agent_name") not in BLACKLIST_AGENTS
-                                    and not _is_test_agent(a.get("agent_name", ""))]
-        if recently_active_outside:
-            # Cap dynamic addition at 3 to avoid runaway expansion.
-            # Also enforce MAX_FOLLOW_LIST_SIZE so the cache can't grow unbounded.
-            to_add = recently_active_outside[:3]
-            new_list = sorted(set(follow_list) | set(to_add))
-            if len(new_list) > MAX_FOLLOW_LIST_SIZE:
-                # Trim: keep PINNED + recent dynamic additions (preserve order)
-                pinned = [n for n in new_list if n in PINNED_AGENTS]
-                dynamic = [n for n in new_list if n not in PINNED_AGENTS]
-                dynamic = dynamic[:MAX_FOLLOW_LIST_SIZE - len(pinned)]
-                new_list = pinned + dynamic
-            if new_list != follow_list:
-                log(f"Auto-expanding follow_list with active us-stock agents: {to_add}")
-                follow_list = new_list
-                # Persist expanded list for the day
-                _save_follow_list_cache(follow_list)
-    except Exception as e:
-        log(f"WARNING: follow-list auto-expand failed: {e}")
 
     for sig in signals:
         msg_type = sig.get("message_type", "")
@@ -1302,45 +360,13 @@ def main() -> list[dict]:
         agent = sig.get("agent_name", "Unknown")
         created = sig.get("created_at", "")
         content = sig.get("content", "")
-        received_at = hkt_now().isoformat()
 
         if msg_type == "strategy" and content:
             recs = parse_strategy_content(content)
             log(f"  [{agent}] {mkt} — {len(recs)} recommendations parsed")
             for rec in recs:
-                ev = evaluate_recommendation(rec, agent, created, mkt, recent_closed=recent_closed)
-                if ev is None:
-                    continue
-                # Persist every evaluated signal to signal_log — including skips.
-                # Audit trail lets us later answer "why didn't we trade X?"
-                sig_log_id = log_signal(
-                    received_at=received_at,
-                    agent_name=agent,
-                    symbol=rec.get("symbol"),
-                    side=rec.get("side"),
-                    agent_score=rec.get("score"),
-                    market=mkt,
-                    raw_content=rec.get("raw_content"),
-                    parsed_action=ev["action"],
-                    score=ev.get("score"),
-                    entry_price=rec.get("price"),
-                    live_price=ev.get("live_price"),
-                    skip_reasons=ev.get("reasons") if ev.get("skip") else [],
-                    enrich_notes=ev.get("enrich_notes"),
-                    thesis=ev.get("thesis"),
-                )
-                # Stash the audit id on the event for trade linkage below
-                ev["_signal_log_id"] = sig_log_id
-                # Log every skip reason so we can audit blacklist / cooldown hits
-                if ev.get("skip"):
-                    log(f"    SKIP {rec['symbol']}: {' | '.join(ev.get('reasons', []))}")
-                    continue
-                if ev["action"] == "FOLLOW":
-                    # Enforce single-position-per-symbol cap
-                    sym_count = sum(1 for s in open_symbols if s == ev["symbol"])
-                    if sym_count >= MAX_POSITIONS_PER_SYMBOL:
-                        log(f"    SKIP {ev['symbol']}: already {sym_count} open position(s) (max {MAX_POSITIONS_PER_SYMBOL})")
-                        continue
+                ev = evaluate_recommendation(rec, agent, created, mkt)
+                if ev and not ev.get("skip") and ev["action"] == "FOLLOW":
                     if ev["symbol"] not in open_symbols:
                         new_follows.append(ev)
                         open_symbols.add(ev["symbol"])
@@ -1355,25 +381,23 @@ def main() -> list[dict]:
         upsert_trade(row)
         trades.append(row)
         open_count += 1
-        new_events.append({
+        events.append({
             "type": "NEW_POSITION",
             "symbol": ev["symbol"],
             "details": (
-                f"FOLLOWED {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f} "
+                f"🤖 FOLLOWED {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f} "
                 f"(live ${ev['live_price']:.2f}) | SL: ${ev['stop_loss']:.2f} | "
-                f"Target: ${ev['target_price']:.2f} | Score: {ev['score']}* | by {ev['agent']}"
+                f"Target: ${ev['target_price']:.2f} | Score: {ev['score']}★ | by {ev['agent']}"
             ),
         })
-        log(f"  AUTO-FOLLOW: {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f}")
+        log(f"  ✅ AUTO-FOLLOW: {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f}")
 
-    # 4. Persist every dirty row (closed trades AND live-price updates for
-    # open trades). Without this, current_price / pnl_pct / updated_at for open
-    # positions stay frozen at entry values in SQLite.
+    # 4. Persist any position-state changes (closed_at, current_price, pnl)
     for t in trades:
-        if t.get("_dirty"):
+        if t.get("status") == "closed" and t.get("close_reason"):
             upsert_trade(t)
 
-    # 5. Portfolio summary (log-only)
+    # 5. Portfolio summary
     open_p = [t for t in trades if t.get("status") == "open"]
     closed = [t for t in trades if t.get("status") == "closed"]
     total_pnl = sum(t.get("pnl_pct", 0) or 0 for t in closed)
@@ -1381,294 +405,17 @@ def main() -> list[dict]:
     for t in open_p:
         pnl = t.get("pnl_pct", 0)
         cur = t.get("current_price") or t.get("live_price") or "?"
-        log(f"  {t['symbol']} {t['side']} | entry ${t['entry_price']} | cur ${cur} | {pnl:+.2f}%")
+        log(f"  💼 {t['symbol']} {t['side']} | entry ${t['entry_price']} | cur ${cur} | {pnl:+.2f}%")
 
-    # 6. Diff against last published state — only return events that are NEW
-    # or represent a material change. Cron uses this list to decide whether
-    # to push a Discord reminder.
-    diff_msgs = compute_diff(trades, prev_state)
-    if diff_msgs:
-        log("NOTIFY (diff):")
-        for m in diff_msgs:
-            log(f"  {m}")
-    else:
-        log("No material change since last run — silent.")
-
-    # 7. Persist new state snapshot (covers both new opens and big swings so
-    # the next run's diff returns empty until something actually happens)
-    closed_all = [t.get("id") for t in trades if t.get("status") == "closed"]
-    new_state = {
-        "open_ids": [t.get("id") for t in open_p],
-        "open_pnl": {t.get("id"): float(t.get("pnl_pct") or 0) for t in open_p},
-        "closed_ids": closed_all,
-        "last_published_at": hkt_now().isoformat(),
-    }
-    save_state(new_state)
-
-    # 8. Retention sweep — purge high-frequency rows older than 30 days.
-    # Runs at end so any rows just-written this pass are kept.
-    try:
-        deleted = run_cleanup()
-        if any(v > 0 for v in deleted.values()):
-            log(f"Retention sweep: {deleted}")
-    except Exception as e:
-        log(f"Retention sweep failed: {e}")
-
-    # 9. Proactive scan — when no AI4Trade signals produced actionable trades,
-    # fall back to our own technical analysis on the watchlist universe.
-    if bool(diff_msgs) and len(open_symbols) < MAX_POSITIONS:
-        try:
-            proactive_notes = proactive_scan(open_symbols=open_symbols)
-            for note in proactive_notes:
-                diff_msgs.append(note)
-        except Exception as e:
-            log(f"Proactive scan failed: {e}")
+    # 6. Report important events
+    if events:
+        log("EVENTS:")
+        for e in events:
+            log(f"  [{e['type']}] {e['symbol']}: {e['details']}")
 
     log("AI4Trade Poller END")
     log("-" * 55)
-    return [{"type": "DIFF", "details": m} for m in diff_msgs]
-
-
-# ── Proactive Scan Engine ────────────────────────────────────────────────────
-# When AI4Trade signals are absent (e.g. raftapart switched to crypto),
-# the poller must still do trader work — scan our 30-stock universe with
-# technicals and emit ≤2 SUGGEST notifications per day. NEVER auto-execute.
-PROACTIVE_WATCHLIST: tuple[str, ...] = (
-    # AI / Semis
-    "NVDA", "AMD", "MU", "TSM", "AVGO", "QCOM", "INTC", "ARM", "SMCI",
-    "MRVL", "CRDO",
-    # Software / Cloud
-    "SNOW", "PLTR", "APP",
-    # Mega-caps
-    "META", "MSFT", "GOOGL", "AMZN", "AAPL", "TSLA", "NFLX",
-    # Financials
-    "JPM", "GS", "BAC",
-    # Energy / Industrial / Other
-    "XOM", "CVX", "BA", "CAT", "DIS", "IBM",
-)
-
-MAX_PROACTIVE_PER_DAY = 2
-SCAN_COOLDOWN_HOURS = 4    # min gap between suggestions per symbol
-RSI_OVERSOLD = 30.0
-RSI_OVERBOUGHT = 70.0
-
-
-def _compute_indicators(prices: list[float]) -> dict[str, float]:
-    """Compute SMA20/50/200, RSI(14), MACD line, ATR(14), BBands(20,2).
-    Returns dict of float; missing values surface as NaN-safe fallbacks."""
-    import math
-    out: dict[str, float] = {}
-    if not prices or len(prices) < 30:
-        return {"ready": False, "last": prices[-1] if prices else 0.0}
-
-    n = len(prices)
-    out["last"] = prices[-1]
-    out["sma20"] = sum(prices[-20:]) / min(20, n)
-    out["sma50"] = sum(prices[-50:]) / min(50, n)
-    if n >= 200:
-        out["sma200"] = sum(prices[-200:]) / 200
-    else:
-        out["sma200"] = sum(prices) / n
-
-    # RSI(14)
-    gains, losses = [], []
-    for i in range(1, min(15, n)):
-        d = prices[-i] - prices[-i - 1]
-        if d >= 0:
-            gains.append(d)
-        else:
-            losses.append(-d)
-    avg_g = sum(gains) / 14 if gains else 0.0
-    avg_l = sum(losses) / 14 if losses else 1e-9
-    rs = avg_g / max(avg_l, 1e-9)
-    out["rsi14"] = 100 - (100 / (1 + rs))
-
-    # ATR(14) — simple moving avg of true range over closes-as-range proxy
-    trs = [abs(prices[-i] - prices[-i - 1]) for i in range(1, min(15, n))]
-    out["atr14"] = sum(trs) / max(len(trs), 1)
-
-    # MACD(12,26,9) line — EMA difference
-    def ema(series: list[float], period: int) -> float:
-        if not series:
-            return 0.0
-        k = 2 / (period + 1)
-        e = series[0]
-        for v in series[1:]:
-            e = v * k + e * (1 - k)
-        return e
-    ema12 = ema(prices[-60:], 12)
-    ema26 = ema(prices[-100:], 26)
-    out["macd"] = ema12 - ema26
-
-    # Bollinger Bands(20,2)
-    if n >= 20:
-        window = prices[-20:]
-        mean = sum(window) / 20
-        var = sum((x - mean) ** 2 for x in window) / 20
-        sd = math.sqrt(var)
-        out["bb_mid"] = mean
-        out["bb_upper"] = mean + 2 * sd
-        out["bb_lower"] = mean - 2 * sd
-        out["bb_pct"] = (prices[-1] - out["bb_lower"]) / max(out["bb_upper"] - out["bb_lower"], 1e-9)
-    else:
-        out["bb_pct"] = 0.5
-
-    out["ready"] = True
-    return out
-
-
-def _fetch_prices(symbol: str, period_days: int = 220) -> list[float]:
-    """Fetch ~6 months of daily closes via yfinance. Empty list on failure."""
-    try:
-        import yfinance as yf
-        t = yf.Ticker(symbol)
-        hist = t.history(period="6mo", auto_adjust=True, raise_errors=False)
-        if hist is None or hist.empty:
-            return []
-        closes = hist["Close"].tolist()
-        return [float(x) for x in closes if x is not None]
-    except Exception as e:
-        log(f"  price fetch failed for {symbol}: {e}")
-        return []
-
-
-def proactive_scan(open_symbols: set[str]) -> list[dict]:
-    """Scan PROACTIVE_WATCHLIST for setups. Returns list of SUGGEST notifications.
-
-    Strategy (simple, transparent):
-        LONG setup:  RSI(14) ≤ 35 (oversold) AND price > SMA200 (uptrend)
-                    AND MACD > 0 OR turning up (momentum shift)
-        SHORT setup: RSI(14) ≥ 70 (overbought) AND price < SMA200 (downtrend)
-                    AND MACD < 0 OR turning down
-        Always: stop = ±2×ATR14; target = ±5% with ATR-based sizing.
-
-    Output ONE candidate per pass max, capped by MAX_PROACTIVE_PER_DAY via
-    SQLite counter (`proactive_suggestions` table).
-
-    This is SUGGEST-ONLY — never auto-executes. Timmy must approve.
-    """
-    today = hkt_now().strftime("%Y-%m-%d")
-
-    # Count today's proactive suggestions to enforce daily cap.
-    # Match via agent_name='proactive_scan' (most reliable).
-    conn = db.get_conn()
-    n_today = conn.execute(
-        "SELECT COUNT(*) FROM signal_log WHERE agent_name='proactive_scan' "
-        "AND received_at LIKE ?",
-        (today + "%",)
-    ).fetchone()[0]
-    if n_today >= MAX_PROACTIVE_PER_DAY:
-        log(f"Proactive: daily cap reached ({n_today}/{MAX_PROACTIVE_PER_DAY})")
-        return []
-
-    notes: list[dict] = []
-    for sym in PROACTIVE_WATCHLIST:
-        if sym in BLACKLIST_SYMBOLS or sym in open_symbols:
-            continue
-        # Cooldown: skip if we suggested this symbol recently
-        cooldown_cutoff = (hkt_now() - pd.Timedelta(hours=SCAN_COOLDOWN_HOURS)).isoformat() \
-            if False else (hkt_now() - timedelta(hours=SCAN_COOLDOWN_HOURS)).isoformat()
-        recent = conn.execute(
-            "SELECT COUNT(*) FROM signal_log WHERE symbol=? AND skip_reasons LIKE '%proactive%' "
-            "AND received_at >= ?",
-            (sym, cooldown_cutoff)
-        ).fetchone()[0]
-        if recent > 0:
-            continue
-
-        prices = _fetch_prices(sym)
-        if len(prices) < 60:
-            continue
-        ind = _compute_indicators(prices)
-        if not ind.get("ready"):
-            continue
-
-        last = ind["last"]
-        rsi = ind["rsi14"]
-        sma200 = ind["sma200"]
-        macd = ind["macd"]
-        atr = ind["atr14"]
-
-        side = None
-        rationale = None
-
-        # LONG: oversold + above 200d + positive MACD
-        if rsi <= 35 and last > sma200 and macd > 0:
-            side = "LONG"
-            rationale = (
-                f"RSI(14)={rsi:.1f} (oversold), price ${last:.2f} > SMA200 ${sma200:.2f} "
-                f"(uptrend), MACD={macd:+.3f} (positive momentum)"
-            )
-        # SHORT: overbought + below 200d + negative MACD
-        elif rsi >= 70 and last < sma200 and macd < 0:
-            side = "SHORT"
-            rationale = (
-                f"RSI(14)={rsi:.1f} (overbought), price ${last:.2f} < SMA200 ${sma200:.2f} "
-                f"(downtrend), MACD={macd:+.3f} (negative momentum)"
-            )
-        else:
-            continue
-
-        # Compute entry, stop, target
-        stop_distance = 2 * atr
-        target_distance = max(5.0 * last / 100, 3 * atr)  # 5% of last OR 3×ATR, whichever larger
-        if side == "LONG":
-            stop = round(last - stop_distance, 2)
-            target = round(last + target_distance, 2)
-            entry_zone = (round(last * 0.99, 2), round(last * 1.01, 2))
-        else:
-            stop = round(last + stop_distance, 2)
-            target = round(last - target_distance, 2)
-            entry_zone = (round(last * 0.99, 2), round(last * 1.01, 2))
-
-        # Sizing: paper_portfolio ~ $100K, 10% risk cap = $10K, position = 50 shares
-        shares = 50
-        risk_per_share = abs(last - stop)
-        risk_dollars = risk_per_share * shares
-        thesis = (
-            f"[PROACTIVE] {sym} {side}\n"
-            f"Setup: {rationale}\n"
-            f"ATR(14)={atr:.2f}, BB%={ind.get('bb_pct',0.5):.2f}\n"
-            f"Entry zone: ${entry_zone[0]:.2f}–${entry_zone[1]:.2f}\n"
-            f"Stop ${stop}, target ${target}\n"
-            f"Size: {shares} shares (risk ${risk_dollars:.0f}, "
-            f"{risk_dollars/100000*100:.1f}% of $100K)\n"
-            f"Source: proactive_scan (no external signal)"
-        )
-        risks = [
-            f"{sym} in BLACKLIST" if sym in BLACKLIST_SYMBOLS else None,
-            "Trend may reverse on macro news",
-            "Proactive is SUGGEST-ONLY — must approve manually",
-        ]
-        risks = [r for r in risks if r]
-
-        # Persist to signal_log (so proactive suggestions audit like external signals)
-        try:
-            log_signal(
-                received_at=hkt_now().isoformat(),
-                agent_name="proactive_scan",
-                symbol=sym, side=side,
-                agent_score=0.0, market="us-stock",
-                raw_content=f"proactive_scan: {sym} {side}",
-                parsed_action="FOLLOW",
-                score=4,
-                entry_price=last, live_price=last,
-                skip_reasons=[],  # empty means FOLLOW path
-                enrich_notes={"indicators": ind, "rationale": rationale},
-                thesis=thesis,
-            )
-            log(f"Proactive: SUGGESTED {sym} {side} @ ${last:.2f} (RSI={rsi:.1f}, stop=${stop})")
-            notes.append({"type": "PROACTIVE_SUGGEST", "symbol": sym,
-                          "side": side, "entry_zone": entry_zone,
-                          "stop": stop, "target": target,
-                          "thesis": thesis, "risks": risks})
-            if len(notes) >= MAX_PROACTIVE_PER_DAY:
-                break
-        except Exception as e:
-            log(f"  proactive log failed for {sym}: {e}")
-            continue
-
-    return notes
+    return events
 
 
 if __name__ == "__main__":

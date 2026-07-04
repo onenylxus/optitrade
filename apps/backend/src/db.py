@@ -49,9 +49,7 @@ CREATE TABLE IF NOT EXISTS paper_trades (
     market        TEXT,
     created_at    TEXT NOT NULL,
     updated_at    TEXT NOT NULL,
-    closed_at     TEXT,
-    signal_log_id INTEGER,
-    partial_tp_taken INTEGER DEFAULT 0
+    closed_at     TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_paper_trades_symbol ON paper_trades(symbol);
 CREATE INDEX IF NOT EXISTS ix_paper_trades_status ON paper_trades(status);
@@ -97,41 +95,6 @@ CREATE TABLE IF NOT EXISTS price_cache (
     expires_at    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_price_cache_expires ON price_cache(expires_at);
-
-CREATE TABLE IF NOT EXISTS follow_list_cache (
-    id            INTEGER PRIMARY KEY CHECK(id = 1),
-    list_json     TEXT NOT NULL,         -- JSON array of agent names
-    refreshed_at  TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS signal_log (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    received_at   TEXT NOT NULL,
-    agent_name    TEXT NOT NULL,
-    symbol        TEXT,
-    side          TEXT,
-    agent_score   REAL,
-    market        TEXT,
-    raw_content   TEXT,
-    parsed_action TEXT,             -- FOLLOW / WATCH / SKIP / (null if parse failed)
-    score         REAL,             -- numeric score after enrichment
-    entry_price   REAL,
-    live_price    REAL,
-    skip_reasons  TEXT,             -- JSON array of strings
-    enrich_notes  TEXT,             -- JSON object with trend + history + regime analysis
-    thesis        TEXT,             -- human-readable why-we-followed-or-not
-    created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS ix_signal_log_received_at ON signal_log(received_at);
-CREATE INDEX IF NOT EXISTS ix_signal_log_agent      ON signal_log(agent_name);
-CREATE INDEX IF NOT EXISTS ix_signal_log_symbol     ON signal_log(symbol);
-
--- Dedup: ai4trade feed may return the same signal twice across polls within
--- the freshness window. UNIQUE on (agent, symbol, created_at, side) prevents
--- duplicate audit rows when content text varies slightly.
-CREATE UNIQUE INDEX IF NOT EXISTS uq_signal_log_dedup
-    ON signal_log(agent_name, symbol, created_at, COALESCE(side, ''));
 """
 
 
@@ -193,23 +156,9 @@ def transaction() -> Iterator[sqlite3.Connection]:
 
 
 def init_schema() -> None:
-    """Create tables/indexes if they don't exist. Also runs idempotent
-    column-level migrations for changes that can't be expressed in
-    CREATE TABLE IF NOT EXISTS (adding columns to existing tables)."""
+    """Create tables/indexes if they don't exist."""
     conn = get_conn()
     conn.executescript(SCHEMA)
-    _run_migrations(conn)
-
-
-def _run_migrations(conn) -> None:
-    """Idempotent ALTER TABLE migrations for additive columns.
-    SQLite supports `ALTER TABLE ... ADD COLUMN` but not drop/rename, so
-    we list each addition explicitly here. Safe to run on every startup."""
-    existing = {row["name"] for row in conn.execute("PRAGMA table_info(paper_trades)")}
-    if "signal_log_id" not in existing:
-        conn.execute("ALTER TABLE paper_trades ADD COLUMN signal_log_id INTEGER")
-    if "partial_tp_taken" not in existing:
-        conn.execute("ALTER TABLE paper_trades ADD COLUMN partial_tp_taken INTEGER DEFAULT 0")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -235,7 +184,6 @@ def upsert_paper_trade(conn: sqlite3.Connection, row: dict[str, Any]) -> None:
         "pnl_pct", "pnl_abs", "strategy", "sector", "notes",
         "close_reason", "agent", "agent_score", "market",
         "created_at", "updated_at", "closed_at",
-        "signal_log_id", "partial_tp_taken",
     )
     values = tuple(row.get(c) for c in cols)
     placeholders = ",".join("?" for _ in cols)
@@ -253,141 +201,6 @@ def list_paper_trades(conn: sqlite3.Connection) -> list[dict[str, Any]]:
         "SELECT * FROM paper_trades ORDER BY created_at ASC"
     ).fetchall()
     return [dict(r) for r in rows]
-
-
-# ── News accessors ────────────────────────────────────────────────────────────
-def upsert_news_article(
-    conn: sqlite3.Connection,
-    article: dict[str, Any],
-    analysis: dict[str, Any] | None = None,
-) -> None:
-    """Insert or replace a news article + its analysis (if provided)."""
-    conn.execute(
-        "INSERT OR REPLACE INTO news_articles "
-        "(id, source, published_at, url, headline, summary, tickers, raw) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (
-            article["id"],
-            article.get("source"),
-            article.get("published_at"),
-            article.get("url") or article.get("link"),
-            article.get("headline") or article.get("title") or "",
-            article.get("summary"),
-            json_dumps(article.get("tickers") or article.get("related_symbols") or []),
-            json_dumps(article),
-        ),
-    )
-    if analysis is not None:
-        # Skip empty analyses (all fields None) so we don't pollute the table
-        # with NULL rows that came from the raw article migration.
-        meaningful = any(
-            analysis.get(k) not in (None, "", [], {})
-            for k in ("sentiment", "impact", "highlights", "reasoning",
-                      "related_symbols", "readiness_score")
-        )
-        if meaningful:
-            conn.execute(
-                "INSERT OR REPLACE INTO news_analyses "
-                "(article_id, sentiment, impact, highlights, reasoning, "
-                " related_symbols, readiness_score, analyzed_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    article["id"],
-                    analysis.get("sentiment"),
-                    analysis.get("impact") or analysis.get("risk_tag"),
-                    json_dumps(analysis.get("highlights") or []),
-                    analysis.get("reasoning"),
-                    json_dumps(analysis.get("related_symbols") or []),
-                    analysis.get("readiness_score"),
-                    analysis.get("analyzed_at") or now_iso(),
-                ),
-            )
-
-
-def list_news_with_analyses(
-    conn: sqlite3.Connection,
-    *,
-    limit: int = 100,
-    symbols: list[str] | None = None,
-) -> list[dict[str, Any]]:
-    """Return news articles joined with their analyses.
-
-    Shape matches what /api/news used to return out of the JSON file, so the
-    frontend widget can consume it unchanged.
-
-    COALESCE fills in safe defaults for articles that haven't been analyzed
-    yet (LEFT JOIN on news_analyses returns NULL fields). Without this the
-    NewsWidget crashes on `news.sentiment.toFixed(2)` for raw articles.
-    """
-    base_sql = (
-        "SELECT a.id, a.source, a.published_at, a.url, a.headline, a.summary, "
-        "       a.tickers, a.raw, "
-        "       COALESCE(n.sentiment, 0.0) AS sentiment, "
-        "       COALESCE(n.impact, 'Low Risk') AS impact, "
-        "       COALESCE(n.highlights, '[]') AS highlights, "
-        "       COALESCE(n.reasoning, '') AS reasoning, "
-        "       COALESCE(n.related_symbols, '[]') AS related_symbols, "
-        "       COALESCE(n.readiness_score, 0) AS readiness_score, "
-        "       COALESCE(n.analyzed_at, a.created_at) AS analyzed_at "
-        "FROM news_articles a "
-        "LEFT JOIN news_analyses n ON n.article_id = a.id "
-        "ORDER BY a.published_at DESC "
-        "LIMIT ?"
-    )
-    rows = conn.execute(base_sql, (limit,)).fetchall()
-
-    out: list[dict[str, Any]] = []
-    for r in rows:
-        item = dict(r)
-        # Restore the JSON arrays / objects
-        item["tickers"] = json_loads(item.get("tickers"), default=[])
-        item["highlights"] = json_loads(item.get("highlights"), default=[])
-        item["related_symbols"] = json_loads(item.get("related_symbols"), default=[])
-        # The frontend expects the `link` field, not `url`
-        item["link"] = item.get("url")
-        # The frontend widget reads `risk_tag`, not `impact`
-        item["risk_tag"] = item.get("impact") or "Low Risk"
-        # Ensure sentiment is a real number, not None
-        if item.get("sentiment") is None:
-            item["sentiment"] = 0.0
-        out.append(item)
-
-    if symbols:
-        syms = {s.upper() for s in symbols if s}
-        if syms:
-            def matches(it: dict[str, Any]) -> bool:
-                if any((s.upper() in syms) for s in it.get("related_symbols", []) or []):
-                    return True
-                if any((s.upper() in syms) for s in it.get("tickers", []) or []):
-                    return True
-                haystack = f"{it.get('headline', '')} {it.get('summary', '')}".upper()
-                return any(s.upper() in haystack for s in syms)
-
-            out = [it for it in out if matches(it)]
-
-    return out
-
-
-def get_news_metadata(conn: sqlite3.Connection) -> dict[str, Any]:
-    """Top-of-payload metadata for the news response."""
-    total = conn.execute("SELECT COUNT(*) FROM news_articles").fetchone()[0]
-    yahoo = conn.execute(
-        "SELECT COUNT(*) FROM news_articles WHERE source = 'yahoo'"
-    ).fetchone()[0]
-    et = conn.execute(
-        "SELECT COUNT(*) FROM news_articles WHERE source = 'economic_times'"
-    ).fetchone()[0]
-    last_analyzed = conn.execute(
-        "SELECT MAX(analyzed_at) FROM news_analyses"
-    ).fetchone()[0]
-    return {
-        "total_news": total,
-        "yahoo_count": yahoo,
-        "et_count": et,
-        "analyzed_at": last_analyzed,
-        "model": "openrouter/free",
-        "source": "news_articles + news_analyses (sqlite)",
-    }
 
 
 # ── Self-test ─────────────────────────────────────────────────────────────────

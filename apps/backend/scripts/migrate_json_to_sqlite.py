@@ -26,7 +26,6 @@ sys.path.insert(0, str(ROOT))
 from src import db  # noqa: E402
 
 DATA = ROOT / "data"
-FRONTEND_PUBLIC = ROOT.parent / "frontend" / "public"
 
 
 def iso(value: str | None) -> str | None:
@@ -64,20 +63,6 @@ def migrate_paper_trades(conn) -> int:
         status = (r.get("status") or "open").lower()
         if status not in ("open", "closed"):
             continue
-        # Closed trades in paper_portfolios.json use `currentPrice` (camelCase)
-        # as the exit price (the poller never set an explicit `exit_price`).
-        # We promote that to exit_price so downstream routes don't have to
-        # guess.
-        if status == "closed":
-            exit_price = (
-                r.get("exit_price")
-                or r.get("currentPrice")
-                or r.get("current_price")
-                or r.get("live_price")
-            )
-        else:
-            exit_price = r.get("exit_price")
-
         db.upsert_paper_trade(conn, {
             "id": r["id"],
             "symbol": r["symbol"].upper(),
@@ -85,7 +70,7 @@ def migrate_paper_trades(conn) -> int:
             "side": side,
             "status": status,
             "entry_price": float(r["entry_price"]),
-            "exit_price": exit_price,
+            "exit_price": r.get("exit_price"),
             "target_price": r.get("target_price"),
             "stop_loss": r.get("stop_loss"),
             "quantity": float(r.get("quantity", 0) or 0),
@@ -152,63 +137,43 @@ def migrate_news(conn) -> int:
     Articles and analyses are kept in separate tables. We prefer news_analysis
     rows (the AI-analyzed output) and fall back to raw news_data rows for the
     headline/source/published_at, deduping by id.
-
-    news_data.json actually lives at apps/frontend/public/news_data.json (the
-    pipeline wrote it there for the frontend to serve). news_analysis_result.json
-    is at apps/backend/data/. We try both locations for each file.
     """
     by_id: dict[str, dict] = {}
     analyses: dict[str, dict] = {}
 
-    news_data_candidates = [
-        FRONTEND_PUBLIC / "news_data.json",
-        DATA / "news_data.json",
-    ]
-    for news_data_path in news_data_candidates:
-        if news_data_path.exists():
-            try:
-                data = json.loads(news_data_path.read_text())
-            except json.JSONDecodeError:
-                continue
-            for art in data.get("news", []) or []:
-                meta = _news_meta_for(art)
-                if meta["id"]:
-                    by_id[meta["id"]] = meta
-            print(f"  read {news_data_path.relative_to(ROOT.parent)} for news_data")
-            break
-    else:
-        print("  skip news_data.json (not found in either location)")
+    news_data_path = DATA / "news_data.json"
+    if news_data_path.exists():
+        try:
+            data = json.loads(news_data_path.read_text())
+        except json.JSONDecodeError:
+            data = {}
+        for art in data.get("news", []) or []:
+            meta = _news_meta_for(art)
+            if meta["id"]:
+                by_id[meta["id"]] = meta
 
-    analysis_candidates = [
-        DATA / "news_analysis_result.json",
-        FRONTEND_PUBLIC / "news_analysis_result.json",
-    ]
-    for analysis_path in analysis_candidates:
-        if analysis_path.exists():
-            try:
-                data = json.loads(analysis_path.read_text())
-            except json.JSONDecodeError:
+    analysis_path = DATA / "news_analysis_result.json"
+    if analysis_path.exists():
+        try:
+            data = json.loads(analysis_path.read_text())
+        except json.JSONDecodeError:
+            data = {}
+        for art in data.get("news", []) or []:
+            meta = _news_meta_for(art)
+            if not meta["id"]:
                 continue
-            for art in data.get("news", []) or []:
-                meta = _news_meta_for(art)
-                if not meta["id"]:
-                    continue
-                # Prefer the analyzed article's metadata for headline/summary
-                existing = by_id.get(meta["id"], {})
-                by_id[meta["id"]] = {**existing, **meta}
-                analyses[meta["id"]] = {
-                    "sentiment": art.get("sentiment"),
-                    "impact": art.get("risk_tag") or art.get("impact"),
-                    "highlights": art.get("highlights") or [],
-                    "reasoning": art.get("reasoning"),
-                    "related_symbols": art.get("related_symbols") or [],
-                    "readiness_score": art.get("readiness_score"),
-                    "analyzed_at": iso(art.get("analyzed_at")) or db.now_iso(),
-                }
-            print(f"  read {analysis_path.relative_to(ROOT.parent)} for news_analysis_result")
-            break
-    else:
-        print("  skip news_analysis_result.json (not found in either location)")
+            # Prefer the analyzed article's metadata for headline/summary
+            existing = by_id.get(meta["id"], {})
+            by_id[meta["id"]] = {**existing, **meta}
+            analyses[meta["id"]] = {
+                "sentiment": art.get("sentiment"),
+                "impact": art.get("risk_tag") or art.get("impact"),
+                "highlights": art.get("highlights") or [],
+                "reasoning": art.get("reasoning"),
+                "related_symbols": art.get("related_symbols") or [],
+                "readiness_score": art.get("readiness_score"),
+                "analyzed_at": iso(art.get("analyzed_at")) or db.now_iso(),
+            }
 
     if not by_id:
         print("  skip news_* (no articles found)")
@@ -237,13 +202,7 @@ def migrate_news(conn) -> int:
         inserted_articles += 1
 
         ana = analyses.get(art_id)
-        # Only insert the analysis row when the source JSON actually had AI
-        # analysis fields — otherwise we'd end up with rows of NULLs.
-        if ana and any(
-            ana.get(k) not in (None, "", [], {})
-            for k in ("sentiment", "impact", "highlights", "reasoning",
-                      "related_symbols", "readiness_score")
-        ):
+        if ana:
             conn.execute(
                 "INSERT OR REPLACE INTO news_analyses "
                 "(article_id, sentiment, impact, highlights, reasoning, "
