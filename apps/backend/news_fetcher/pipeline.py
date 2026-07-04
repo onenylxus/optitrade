@@ -8,15 +8,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
 
-from .fetcher import YahooNewsFetcher, EconomicTimesFetcher, NewsItem
-from .analyzer import CloudAnalyzer
-from .config import OUTPUT_FILE, CONFIDENCE_FACTOR_FILE
 # Make `src` importable when this module is run from anywhere (the news_fetcher
 # package sits at apps/backend/news_fetcher/, two levels under apps/backend/).
 _PIPELINE_HERE = Path(__file__).resolve()
 _BACKEND_ROOT = _PIPELINE_HERE.parents[1]  # apps/backend
 sys.path.insert(0, str(_BACKEND_ROOT))
 
+from .fetcher import YahooNewsFetcher, EconomicTimesFetcher, NewsItem  # noqa: E402
+from .analyzer import CloudAnalyzer  # noqa: E402
 from src import db as app_db  # noqa: E402
 
 # Kept for back-compat with any external caller that imports OUTPUT_FILE; the
@@ -84,13 +83,9 @@ class NewsAnalysisPipeline:
         self.confidence_factor = self._load_confidence_factor()
 
     def _load_confidence_factor(self) -> float:
-        if os.path.exists(CONFIDENCE_FACTOR_FILE):
-            try:
-                with open(CONFIDENCE_FACTOR_FILE, 'r') as f:
-                    data = json.load(f)
-                    return data.get("hit_rate", 0.5)
-            except:
-                return 0.5
+        # CONFIDENCE_FACTOR_FILE was retired when news moved to SQLite; the
+        # hit-rate feedback loop now lives in optitrade.db. Keep this method
+        # for back-compat with any caller that still expects the attribute.
         return 0.5
 
     def _load_existing_history(self) -> tuple[set, set]:
@@ -316,7 +311,7 @@ class NewsAnalysisPipeline:
                 "risk_tag": analysis.get("risk_tag", "Low Risk"),
                 "reasoning": analysis.get("reasoning", ""),
                 "related_symbols": extracted_symbols,
-                # "readiness_score": analysis.get("readiness_score", 0),
+                "readiness_score": analysis.get("readiness_score", 0),
                 "analyzed_at": datetime.now().isoformat()
             }
 
@@ -377,9 +372,8 @@ class NewsAnalysisPipeline:
                         "impact": item.get("risk_tag") or item.get("impact"),
                         "highlights": item.get("highlights") or [],
                         "reasoning": item.get("reasoning"),
-                        # "model_used": item.get("model_used"),
                         "related_symbols": item.get("related_symbols") or [],
-                        # "readiness_score": item.get("readiness_score"),
+                        "readiness_score": item.get("readiness_score"),
                         "analyzed_at": item.get("analyzed_at") or datetime.now().isoformat(),
                     }
                     if not article["id"] or not article["headline"]:
