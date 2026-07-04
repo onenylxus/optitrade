@@ -7,67 +7,33 @@ import {
   ArrowRight,
   ArrowUp,
   Brain,
-  Bot,
   Calendar,
   Eye,
+  RefreshCw,
   Star,
   TrendingUp,
   Zap,
 } from 'lucide-react';
 import { BaseWidget } from './base-widget';
-import { BACKEND_URL } from '@/lib/api/client';
-
-type Outlook = 'BULLISH' | 'BEARISH' | 'NEUTRAL' | 'VOLATILE';
-
-interface Prediction {
-  date: string;
-  outlook: Outlook;
-  outlookLabel: string;
-  vix: number;
-  fearGreed: number;
-  marketSummary: string;
-  keyLevels: {
-    spy_upper: number;
-    spy_lower: number;
-    qqq_upper: number;
-    qqq_lower: number;
-  };
-  topSignals: {
-    symbol: string;
-    direction: 'LONG' | 'SHORT';
-    reason: string;
-    confidence: number; // 1-5
-  }[];
-  sectorPicks: {
-    sector: string;
-    stance: 'OVERWEIGHT' | 'UNDERWEIGHT' | 'NEUTRAL';
-    reason: string;
-  }[];
-  risks: string[];
-  catalystCalendar: {
-    event: string;
-    date: string;
-    impact: 'HIGH' | 'MEDIUM' | 'LOW';
-  }[];
-}
+import type { Prediction, Outlook, Impact } from '@/lib/prediction';
 
 const outlookConfig: Record<Outlook, { color: string; bg: string; Icon: React.ElementType; label: string }> = {
-  BULLISH: { color: 'text-green-500', bg: 'bg-green-500/10 border-green-500/30', Icon: ArrowUp, label: 'Bullish' },
-  BEARISH: { color: 'text-red-500', bg: 'bg-red-500/10 border-red-500/30', Icon: ArrowDown, label: 'Bearish' },
-  NEUTRAL: { color: 'text-yellow-500', bg: 'bg-yellow-500/10 border-yellow-500/30', Icon: ArrowRight, label: 'Neutral' },
-  VOLATILE: { color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30', Icon: AlertTriangle, label: 'Volatile' },
+  BULLISH: { color: 'text-green-500',  bg: 'bg-green-500/10  border-green-500/30',  Icon: ArrowUp,        label: 'Bullish' },
+  BEARISH: { color: 'text-red-500',    bg: 'bg-red-500/10    border-red-500/30',    Icon: ArrowDown,      label: 'Bearish' },
+  NEUTRAL: { color: 'text-yellow-500', bg: 'bg-yellow-500/10 border-yellow-500/30', Icon: ArrowRight,     label: 'Neutral' },
+  VOLATILE:{ color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30', Icon: AlertTriangle, label: 'Volatile' },
 };
 
 const stanceConfig = {
-  OVERWEIGHT: { color: 'text-green-500', label: 'Overweight' },
-  UNDERWEIGHT: { color: 'text-red-500', label: 'Underweight' },
-  NEUTRAL: { color: 'text-yellow-500', label: 'Neutral' },
-};
+  OVERWEIGHT:  { color: 'text-green-500',  label: 'Overweight' },
+  UNDERWEIGHT: { color: 'text-red-500',    label: 'Underweight' },
+  NEUTRAL:     { color: 'text-yellow-500', label: 'Neutral' },
+} as const;
 
-const impactConfig = {
-  HIGH: 'bg-red-500/20 text-red-400',
+const impactConfig: Record<Impact, string> = {
+  HIGH:   'bg-red-500/20 text-red-400',
   MEDIUM: 'bg-yellow-500/20 text-yellow-400',
-  LOW: 'bg-gray-500/20 text-gray-400',
+  LOW:    'bg-gray-500/20 text-gray-400',
 };
 
 function FearGreedBar({ value }: { value: number }) {
@@ -84,53 +50,78 @@ function FearGreedBar({ value }: { value: number }) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Fear & Greed</span>
+        <span className="text-muted-foreground">Fear &amp; Greed</span>
         <span className={`font-mono font-bold ${value >= 55 ? 'text-green-500' : value >= 45 ? 'text-yellow-500' : 'text-red-500'}`}>
           {value} — {label}
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${value}%` }} />
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
       </div>
     </div>
   );
 }
 
 function ConfidenceDots({ level }: { level: number }) {
+  const safe = Math.max(0, Math.min(5, level));
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`size-2 ${i <= level ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`}
+          className={`size-2 ${i <= safe ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`}
         />
       ))}
     </div>
   );
 }
 
+function fmtRelative(iso: string | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function fetchPrediction(): Promise<Prediction | null> {
+  return fetch('/api/prediction/daily', { cache: 'no-store' })
+    .then(async (r) => {
+      if (!r.ok) return null;
+      return (await r.json()) as Prediction;
+    })
+    .catch(() => null);
+}
+
 export function DailyPredictionWidget() {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/api/prediction/daily`)
-      .then((r) => r.ok ? r.json() : null)
+  const load = () => {
+    setLoading(true);
+    setError(null);
+    fetchPrediction()
       .then((data) => {
-        if (data) setPrediction(data);
-        else {
-          // fallback: try direct
-          return fetch('/api/prediction/daily').then(r => r.ok ? r.json() : null);
+        if (!data) {
+          setError('Backend unreachable');
+          setPrediction(null);
+        } else {
+          setPrediction(data);
         }
       })
-      .then((d) => { if (d) setPrediction(d); })
-      .catch(() => {})
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
-  const outlook = prediction?.outlook
-    ? outlookConfig[prediction.outlook]
-    : outlookConfig.NEUTRAL;
+  const outlook = prediction?.outlook ? outlookConfig[prediction.outlook] : outlookConfig.NEUTRAL;
   const OutlookIcon = outlook.Icon;
 
   return (
@@ -138,20 +129,34 @@ export function DailyPredictionWidget() {
       title="Daily Market Prediction"
       summary={
         prediction
-          ? `${prediction.date} · ${outlook.label}`
+          ? `${prediction.date} · ${outlook.label} · VIX ${prediction.vix.toFixed(2)}`
           : 'AI-generated daily outlook'
       }
+      contextData={{
+        label: 'Daily Prediction',
+        text: prediction
+          ? `${outlook.label} outlook. VIX ${prediction.vix.toFixed(2)} (Fear & Greed ${prediction.fearGreed}). ${prediction.marketSummary}`
+          : 'Daily prediction not available',
+      }}
       createdByNanobot
     >
       {loading ? (
         <div className="flex items-center justify-center py-8 text-muted-foreground">
           <Brain className="size-5 animate-pulse" />
         </div>
-      ) : !prediction ? (
+      ) : error || !prediction ? (
         <div className="flex flex-col items-center justify-center gap-3 py-8 text-muted-foreground">
           <Brain className="size-8 opacity-30" />
           <p className="text-sm">No prediction available</p>
-          <p className="text-xs">Check back after market open</p>
+          <p className="text-xs">{error ?? 'Check back after market open'}</p>
+          <button
+            type="button"
+            onClick={load}
+            className="mt-1 flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20"
+          >
+            <RefreshCw className="size-3" />
+            Retry
+          </button>
         </div>
       ) : (
         <div className="flex flex-col gap-4 overflow-y-auto pr-1">
@@ -189,14 +194,15 @@ export function DailyPredictionWidget() {
               <div className="mb-2 flex items-center gap-2">
                 <Eye className="size-3 text-muted-foreground" />
                 <span className="text-xs font-semibold text-muted-foreground">KEY LEVELS</span>
+                <span className="ml-auto text-[10px] text-muted-foreground">±1.5% from current</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {[
-                  { label: 'SPY Upper', val: prediction.keyLevels.spy_upper },
-                  { label: 'SPY Lower', val: prediction.keyLevels.spy_lower },
-                  { label: 'QQQ Upper', val: prediction.keyLevels.qqq_upper },
-                  { label: 'QQQ Lower', val: prediction.keyLevels.qqq_lower },
-                ].map(({ label, val }) => (
+                  { label: 'SPY Upper', val: prediction.keyLevels.spy_upper, src: prediction.priceSource?.spy },
+                  { label: 'SPY Lower', val: prediction.keyLevels.spy_lower, src: prediction.priceSource?.spy },
+                  { label: 'QQQ Upper', val: prediction.keyLevels.qqq_upper, src: prediction.priceSource?.qqq },
+                  { label: 'QQQ Lower', val: prediction.keyLevels.qqq_lower, src: prediction.priceSource?.qqq },
+                ].map(({ label, val, src }) => (
                   <div key={label} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1">
                     <span className="text-muted-foreground">{label}</span>
                     <span className="font-mono font-semibold">${val.toFixed(2)}</span>
@@ -215,7 +221,7 @@ export function DailyPredictionWidget() {
               </div>
               <div className="flex flex-col gap-1.5">
                 {prediction.topSignals.map((sig, i) => (
-                  <div key={i} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1.5">
+                  <div key={`${sig.symbol}-${i}`} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1.5">
                     <div className="flex items-center gap-2">
                       <span className={`rounded px-1 py-0.5 text-[10px] font-bold ${
                         sig.direction === 'LONG'
@@ -225,6 +231,7 @@ export function DailyPredictionWidget() {
                         {sig.direction}
                       </span>
                       <span className="font-mono text-xs font-bold">{sig.symbol}</span>
+                      <span className="hidden text-[10px] text-muted-foreground sm:inline">{sig.reason}</span>
                     </div>
                     <ConfidenceDots level={sig.confidence} />
                   </div>
@@ -244,13 +251,11 @@ export function DailyPredictionWidget() {
                 {prediction.sectorPicks.map((s, i) => {
                   const sc = stanceConfig[s.stance];
                   return (
-                    <div key={i} className="flex items-center justify-between rounded bg-card px-2 py-1.5">
+                    <div key={`${s.sector}-${i}`} className="flex items-center justify-between rounded bg-card px-2 py-1.5">
                       <span className="text-xs font-medium">{s.sector}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${sc.color}`}>
-                          {sc.label}
-                        </span>
-                      </div>
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${sc.color}`}>
+                        {sc.label}
+                      </span>
                     </div>
                   );
                 })}
@@ -267,7 +272,7 @@ export function DailyPredictionWidget() {
               </div>
               <div className="flex flex-col gap-1">
                 {prediction.catalystCalendar.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1.5">
+                  <div key={`${c.event}-${i}`} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1.5">
                     <span className="text-xs">{c.event}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-muted-foreground">{c.date}</span>
@@ -295,6 +300,27 @@ export function DailyPredictionWidget() {
               </ul>
             </div>
           )}
+
+          {/* Footer: data provenance + refresh */}
+          <div className="flex items-center justify-between border-t border-border/30 pt-2 text-[10px] text-muted-foreground">
+            <span>
+              prices: SPY {prediction.priceSource?.spy ?? '—'} ·
+              QQQ {prediction.priceSource?.qqq ?? '—'} ·
+              VIX {prediction.priceSource?.vix ?? '—'}
+            </span>
+            <div className="flex items-center gap-2">
+              <span>{fmtRelative(prediction.asOf)}</span>
+              <button
+                type="button"
+                onClick={load}
+                className="rounded p-0.5 hover:bg-muted/50"
+                title="Refresh"
+                aria-label="Refresh prediction"
+              >
+                <RefreshCw className="size-3" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </BaseWidget>

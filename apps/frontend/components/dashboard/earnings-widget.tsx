@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { AlertCircle, Bot, RefreshCw } from 'lucide-react';
 import { BaseWidget } from './base-widget';
 import type { ComponentProps } from 'react';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
@@ -13,111 +14,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-
-interface EarningItem {
-  ticker: string;
-  companyName: string;
-  date: string;
-  time: 'BMO' | 'AMC';
-  epsEstimate: number | null;
-  epsActual: number | null;
-  surprise: number | null;
-  fiscalPeriod: string;
-}
-
-// Demo data — fetched from yfinance 2026-05-23; real data via /api/earnings (Phase 2)
-const DEMO_EARNINGS: EarningItem[] = [
-  {
-    ticker: 'NVDA',
-    companyName: 'NVIDIA Corp',
-    date: '2026-05-21',
-    time: 'AMC',
-    epsEstimate: 2.09,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q2 FY26',
-  },
-  {
-    ticker: 'JPM',
-    companyName: 'JPMorgan Chase',
-    date: '2026-07-14',
-    time: 'BMO',
-    epsEstimate: 5.39,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q2 FY26',
-  },
-  {
-    ticker: 'NFLX',
-    companyName: 'Netflix Inc',
-    date: '2026-07-17',
-    time: 'AMC',
-    epsEstimate: 0.79,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q2 FY26',
-  },
-  {
-    ticker: 'GOOGL',
-    companyName: 'Alphabet Inc',
-    date: '2026-07-24',
-    time: 'BMO',
-    epsEstimate: 2.88,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q2 FY26',
-  },
-  {
-    ticker: 'META',
-    companyName: 'Meta Platforms',
-    date: '2026-07-30',
-    time: 'AMC',
-    epsEstimate: 7.53,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q2 FY26',
-  },
-  {
-    ticker: 'MSFT',
-    companyName: 'Microsoft Corp',
-    date: '2026-07-30',
-    time: 'BMO',
-    epsEstimate: 4.24,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q4 FY26',
-  },
-  {
-    ticker: 'AAPL',
-    companyName: 'Apple Inc',
-    date: '2026-07-31',
-    time: 'AMC',
-    epsEstimate: 1.9,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q3 FY26',
-  },
-  {
-    ticker: 'AMZN',
-    companyName: 'Amazon.com Inc',
-    date: '2026-07-31',
-    time: 'AMC',
-    epsEstimate: 1.81,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q2 FY26',
-  },
-  {
-    ticker: 'FIG',
-    companyName: 'Figma Inc',
-    date: '2026-08-15',
-    time: 'AMC',
-    epsEstimate: 0.04,
-    epsActual: null,
-    surprise: null,
-    fiscalPeriod: 'Q2 FY26',
-  },
-];
+import type { EarningItem, EarningsResponse, EarningsSource } from '@/lib/earnings';
 
 interface EarningsWidgetProps extends Omit<ComponentProps<typeof BaseWidget>, 'title' | 'children'> {
   title?: string;
@@ -126,12 +23,14 @@ interface EarningsWidgetProps extends Omit<ComponentProps<typeof BaseWidget>, 't
 
 function formatDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function daysUntil(iso: string): number {
   const now = new Date();
   const target = new Date(iso + 'T00:00:00');
+  if (Number.isNaN(target.getTime())) return Number.NaN;
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
@@ -141,6 +40,22 @@ function urgencyClass(days: number): string {
   return 'bg-muted text-muted-foreground';
 }
 
+function fmtRelative(iso: string | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+const SOURCE_BADGE: Record<EarningsSource, { label: string; className: string }> = {
+  fmp:  { label: 'FMP',  className: 'bg-green-500/15 text-green-400' },
+  demo: { label: 'DEMO', className: 'bg-yellow-500/15 text-yellow-400' },
+};
+
 export function EarningsWidget({
   title = 'Earnings Calendar',
   summary = 'Upcoming earnings & results',
@@ -148,20 +63,36 @@ export function EarningsWidget({
 }: EarningsWidgetProps) {
   const { portfolio } = usePortfolioContext();
   const [filter, setFilter] = useState<'all' | 'portfolio'>('all');
-  const [earningsData, setEarningsData] = useState<EarningItem[]>(DEMO_EARNINGS);
+  const [earningsData, setEarningsData] = useState<EarningItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [source, setSource] = useState<EarningsSource>('fmp');
+  const [asOf, setAsOf] = useState<string>('');
+  const [warning, setWarning] = useState<string | undefined>(undefined);
 
-  // Phase 2: load from /api/earnings (populated by Python backend cron)
-  useEffect(() => {
-    fetch('/api/earnings')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.earnings?.length) setEarningsData(d.earnings);
+  const load = () => {
+    setLoading(true);
+    setError(null);
+    fetch('/api/earnings', { cache: 'no-store' })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return (await r.json()) as EarningsResponse;
       })
-      .catch(() => {
-        /* fallback to demo */
+      .then((d) => {
+        setEarningsData(Array.isArray(d?.earnings) ? d.earnings : []);
+        setSource(d?.source ?? 'demo');
+        setAsOf(d?.asOf ?? new Date().toISOString());
+        setWarning(d?.warning);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to load');
+        setEarningsData([]);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   const portfolioSymbols = useMemo(
@@ -185,6 +116,7 @@ export function EarningsWidget({
   }, [filtered]);
 
   const upcomingCount = sorted.filter((e) => e.epsActual === null && daysUntil(e.date) >= 0).length;
+  const portfolioHitCount = sorted.filter((e) => portfolioSymbols.includes(e.ticker)).length;
 
   const contextItems = sorted
     .filter((e) => e.epsActual === null && daysUntil(e.date) >= 0)
@@ -199,34 +131,81 @@ export function EarningsWidget({
       ? `Earnings Calendar: ${contextItems.join(' | ')}`
       : 'Earnings Calendar: No upcoming earnings in range';
 
+  const sourceBadge = SOURCE_BADGE[source];
+
   return (
-    <BaseWidget title={title} summary={summary} contextData={{ label: title, text: contextText }} createdByNanobot {...props}>
+    <BaseWidget
+      title={title}
+      summary={summary}
+      contextData={{ label: title, text: contextText }}
+      createdByNanobot
+      {...props}
+    >
       {/* Filter bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <div className="flex gap-1">
-          {(['all', 'portfolio'] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={cn(
-                'px-3 py-1 rounded text-xs font-medium transition-colors capitalize',
-                filter === f
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
-              )}
-            >
-              {f === 'all' ? 'All Stocks' : 'Portfolio Only'}
-            </button>
-          ))}
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {(['all', 'portfolio'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={cn(
+                  'px-3 py-1 rounded text-xs font-medium transition-colors capitalize',
+                  filter === f
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                )}
+              >
+                {f === 'all' ? `All (${sorted.length})` : `Portfolio (${portfolioHitCount})`}
+              </button>
+            ))}
+          </div>
+          <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${sourceBadge.className}`}>
+            {sourceBadge.label}
+          </span>
         </div>
-        <span className="text-xs text-muted-foreground">{upcomingCount} upcoming</span>
+        <div className="flex items-center gap-2">
+          {asOf && <span className="text-[10px] text-muted-foreground">{fmtRelative(asOf)}</span>}
+          <button
+            type="button"
+            onClick={load}
+            className="rounded p-0.5 text-muted-foreground hover:bg-muted/50"
+            title="Refresh"
+            aria-label="Refresh earnings"
+          >
+            <RefreshCw className="size-3" />
+          </button>
+          <span className="text-xs text-muted-foreground">{upcomingCount} upcoming</span>
+        </div>
       </div>
+
+      {warning && (
+        <div className="flex items-center gap-2 border-b border-border bg-yellow-500/10 px-4 py-2 text-xs text-yellow-400">
+          <AlertCircle className="size-3" />
+          {warning}
+        </div>
+      )}
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center h-28">
-            <span className="text-sm text-muted-foreground">Loading…</span>
+            <Bot className="size-5 animate-pulse text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center gap-2 h-28 text-muted-foreground">
+            <AlertCircle className="size-5 text-red-500" />
+            <p className="text-sm">Could not load earnings</p>
+            <p className="text-xs">{error}</p>
+            <button
+              type="button"
+              onClick={load}
+              className="mt-1 flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20"
+            >
+              <RefreshCw className="size-3" />
+              Retry
+            </button>
           </div>
         ) : sorted.length === 0 ? (
           <div className="flex items-center justify-center h-28">
@@ -250,15 +229,20 @@ export function EarningsWidget({
                 const days = daysUntil(item.date);
                 const isUpcoming = item.epsActual === null;
                 const isUrgent = isUpcoming && days >= 0 && days <= 5;
+                const inPortfolio = portfolioSymbols.includes(item.ticker);
                 return (
                   <TableRow
                     key={item.ticker + item.date}
-                    className={cn('group', isUrgent && 'bg-red-50/50 dark:bg-red-950/20')}
+                    className={cn(
+                      'group',
+                      isUrgent && 'bg-red-50/50 dark:bg-red-950/20',
+                      inPortfolio && 'border-l-2 border-l-primary/40',
+                    )}
                   >
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-xs font-medium">{formatDate(item.date)}</span>
-                        {isUpcoming && (
+                        {isUpcoming && Number.isFinite(days) && (
                           <span
                             className={cn(
                               'inline-block w-fit px-1.5 py-0.5 rounded text-[10px] font-medium',
