@@ -139,7 +139,7 @@ interface BrokerOptionConfig {
   description: string;
 }
 
-type SignalLens = 'technical' | 'day-trade' | 'hft' | 'buy-and-hold';
+type SignalLens = 'technical' | 'day-trade' | 'buy-and-hold';
 type SignalBias =
   | 'strong bullish'
   | 'strong bearish'
@@ -163,7 +163,6 @@ const SIGNAL_LENS_STORAGE_KEY = 'optitrade-portfolio-signal-lens';
 const SIGNAL_LENS_OPTIONS: SignalLensOption[] = [
   { value: 'technical', label: 'Technical' },
   { value: 'day-trade', label: 'Day Trade' },
-  { value: 'hft', label: 'HFT' },
   { value: 'buy-and-hold', label: 'Buy & Hold' },
 ];
 
@@ -205,17 +204,32 @@ function normalizeSignalBias(bias: string): SignalBias {
   return 'neutral';
 }
 
-function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens) {
-  const bias = normalizeSignalBias(signal.bias);
-  const patternContext =
+function signalPatternContext(signal: PortfolioPositionSignal): string {
+  return (
     signal.explanation ??
     (signal.pattern
       ? `${signal.pattern}${signal.status ? ` • ${signal.status}` : ''}${signal.confidence ? ` • ${signal.confidence}%` : ''}`
-      : signal.bias);
+      : signal.bias)
+  );
+}
+
+function signalLensPayload(signal: PortfolioPositionSignal, lens: SignalLens) {
+  return signal.lenses?.[lens] ?? null;
+}
+
+function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens) {
+  const lensPayload = signalLensPayload(signal, lens);
+  const rawBias =
+    lensPayload?.bias ??
+    (lens === 'technical' ? signal.bias : signal.lenses?.technical?.bias ?? signal.bias);
+  const bias = normalizeSignalBias(rawBias);
+  const lensExplanation = lensPayload?.explanation?.trim();
+  const patternContext = lensExplanation || signalPatternContext(signal);
 
   if (lens === 'technical') {
     return {
-      label: signal.bias,
+      bias,
+      label: rawBias,
       title: patternContext,
     };
   }
@@ -229,10 +243,6 @@ function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens
         label: 'Momentum Long',
         helper: 'Intraday momentum favors long setups if price confirms.',
       },
-      hft: {
-        label: 'Aggressive Long',
-        helper: 'Short-horizon order flow would lean long while strength persists.',
-      },
       'buy-and-hold': {
         label: 'Accumulate',
         helper: 'Longer-horizon posture supports building or keeping exposure.',
@@ -242,10 +252,6 @@ function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens
       'day-trade': {
         label: 'Long Setup',
         helper: 'Watch for a cleaner trigger before leaning long intraday.',
-      },
-      hft: {
-        label: 'Probe Long',
-        helper: 'Only a light long bias is justified until conviction improves.',
       },
       'buy-and-hold': {
         label: 'Watch to Add',
@@ -257,10 +263,6 @@ function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens
         label: 'Momentum Short',
         helper: 'Intraday pressure favors short setups if weakness continues.',
       },
-      hft: {
-        label: 'Aggressive Short',
-        helper: 'Short-horizon flow would likely stay defensive or short-biased.',
-      },
       'buy-and-hold': {
         label: 'Trim / Review',
         helper: 'Longer-term holders may want to review position size and thesis.',
@@ -270,10 +272,6 @@ function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens
       'day-trade': {
         label: 'Short Setup',
         helper: 'A developing short setup is forming, but confirmation still matters.',
-      },
-      hft: {
-        label: 'Probe Short',
-        helper: 'Only a light short bias is justified until weakness firms up.',
       },
       'buy-and-hold': {
         label: 'Monitor Risk',
@@ -285,10 +283,6 @@ function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens
         label: 'Wait',
         helper: 'No strong intraday edge stands out right now.',
       },
-      hft: {
-        label: 'No Edge',
-        helper: 'Signal quality is too balanced for an HFT-style directional lean.',
-      },
       'buy-and-hold': {
         label: 'Hold',
         helper: 'Nothing here argues strongly for adding or cutting exposure.',
@@ -298,8 +292,9 @@ function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens
 
   const resolved = lensCopy[bias][lens];
   return {
+    bias,
     label: resolved.label,
-    title: `${resolved.helper} ${patternContext}`.trim(),
+    title: lensExplanation || `${resolved.helper} ${patternContext}`.trim(),
   };
 }
 
@@ -476,7 +471,8 @@ function PositionSignalTag({
   signal: PortfolioPositionSignal;
   lens: SignalLens;
 }) {
-  const bias = normalizeSignalBias(signal.bias);
+  const display = describeSignalForLens(signal, lens);
+  const bias = display.bias;
   const toneClasses =
     bias === 'strong bullish'
       ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -489,8 +485,6 @@ function PositionSignalTag({
             : bias === 'neutral'
               ? 'border-slate-200 bg-slate-100 text-slate-500'
             : 'border-slate-200 bg-slate-100 text-slate-500';
-
-  const display = describeSignalForLens(signal, lens);
 
   return (
     <span className="group/label relative inline-flex">
@@ -1644,10 +1638,11 @@ const PortfolioWidgetRoot = ({
     if (
       storedLens === 'technical' ||
       storedLens === 'day-trade' ||
-      storedLens === 'hft' ||
       storedLens === 'buy-and-hold'
     ) {
       setSignalLens(storedLens);
+    } else if (storedLens === 'hft') {
+      setSignalLens('day-trade');
     }
   }, []);
 
