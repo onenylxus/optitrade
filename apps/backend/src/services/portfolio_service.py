@@ -299,9 +299,13 @@ class PortfolioService:
         positions = self._normalize_positions_payload(payload.get("positions", []))
         total_value = sum(position.market_value for position in positions)
         existing = self._read_editable_portfolio()
-        history = self._normalize_history_payload(
-            payload.get("history") or existing.get("history"),
-            default_total_value=total_value,
+        history = (
+            self._normalize_history_payload(
+                payload.get("history") or existing.get("history"),
+                default_total_value=total_value,
+            )
+            if positions
+            else self._build_history(0)
         )
         record = {
             "name": name,
@@ -316,7 +320,7 @@ class PortfolioService:
         editable_record = self._read_editable_portfolio()
         positions = self._normalize_positions_payload(
             editable_record.get("positions", [])
-        ) or self.positions
+        )
         positions = self._refresh_paper_prices(positions)
         total_value = sum(position.market_value for position in positions)
         total_cost = sum(position.cost_basis for position in positions)
@@ -452,8 +456,12 @@ class PortfolioService:
                 "positions": [
                     self._position_payload(position) for position in positions
                 ],
-                "history": self._normalize_history_payload(
-                    history_raw, default_total_value=total_value
+                "history": (
+                    self._normalize_history_payload(
+                        history_raw, default_total_value=total_value
+                    )
+                    if positions
+                    else self._build_history(0)
                 ),
                 "updatedAt": str(row["updated_at"] or datetime.now(UTC).isoformat()),
             }
@@ -476,7 +484,7 @@ class PortfolioService:
         else:
             seeded_payload = {}
 
-        if not seeded_payload or not seeded_payload.get("positions"):
+        if not seeded_payload or "positions" not in seeded_payload:
             seeded_payload = {
                 "name": "Portfolio Widget Portfolio",
                 "positions": [
@@ -487,8 +495,12 @@ class PortfolioService:
 
         positions = self._normalize_positions_payload(seeded_payload.get("positions", []))
         total_value = sum(position.market_value for position in positions)
-        history = self._normalize_history_payload(
-            seeded_payload.get("history"), default_total_value=total_value
+        history = (
+            self._normalize_history_payload(
+                seeded_payload.get("history"), default_total_value=total_value
+            )
+            if positions
+            else self._build_history(0)
         )
         updated_at = datetime.now(UTC).isoformat()
 

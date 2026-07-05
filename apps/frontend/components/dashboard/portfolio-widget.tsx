@@ -1229,7 +1229,11 @@ function PortfolioWidgetLarge({
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="w-3/5 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-slate-100">
+        <div
+          className={`overflow-y-auto scrollbar-thin scrollbar-thumb-slate-100 ${
+            topHoldings.length > 0 ? 'w-3/5 pr-3' : 'w-full'
+          }`}
+        >
           {stocks.length === 0 ? (
             <div className="py-6 text-center text-xs text-slate-400">
               No positions yet. Open the editor to build your paper portfolio.
