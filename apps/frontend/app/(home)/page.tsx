@@ -13,7 +13,6 @@ import { loadBackendAuthProfile } from '@/lib/api/auth';
 import type { AuthenticatedUserResponse } from '@/lib/api/types';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { isFirebaseConfigReady } from '@/lib/firebase/config';
-import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -77,26 +76,9 @@ export default function HomePage() {
               onSignOut={handleSignOut}
             />
             <main className="relative flex-1 overflow-hidden">
-              <div
-                className={cn(
-                  'h-full min-h-0 transition-[padding-left,padding-right] duration-300 ease-out',
-                  isEditMode ? 'lg:pl-90 lg:pr-0' : '',
-                )}
-              >
-                <WidgetCanvas isEditMode={isEditMode} />
-              </div>
+              <WidgetCanvas isEditMode={isEditMode} />
 
-              <div
-                className={cn(
-                  'pointer-events-none absolute inset-y-0 left-0 hidden w-90 transition-all duration-300 ease-out lg:block',
-                  isEditMode ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0',
-                )}
-                aria-hidden={!isEditMode}
-              >
-                <EditWidgetDrawer open={isEditMode} mode="inline" className="h-full" />
-              </div>
-
-              <EditWidgetDrawer open={isEditMode} className="lg:hidden" />
+              <EditWidgetDrawer open={isEditMode} />
             </main>
 
             {!isEditMode && <FloatingChat />}
