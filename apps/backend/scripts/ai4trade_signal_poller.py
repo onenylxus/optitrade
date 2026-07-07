@@ -28,12 +28,22 @@ HKT = timezone(timedelta(hours=8))
 LOG_FILE = Path("/root/.nanobot/workspace/logs/ai4trade_poll.log")
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-# Max open paper positions
-MAX_POSITIONS = 3
+# Max open paper positions (5 slots per USER.md aggressive mode)
+MAX_POSITIONS = 4
 # Minimum score to auto-follow
 MIN_SCORE_FOLLOW = 3
 # Only report if score >= this
 MIN_SCORE_REPORT = 2
+# ── Aggressive rotation defaults (was -8% stop / +15% target) ───────────────
+DEFAULT_STOP_PCT = 5.0          # -5% stop-loss
+DEFAULT_TARGET_PCT = 10.0       # +10% target
+# Stagnation exit: a position flat for STAGNATION_DAYS trading days
+# with PnL in [STAGNATION_LOW, STAGNATION_HIGH]% is force-closed to free slot
+STAGNATION_DAYS = 3
+STAGNATION_LOW = -2.0
+STAGNATION_HIGH = 3.0
+# Earlier partial take-profit signal at +PARTIAL_TP_PCT% — trim half & move stop
+PARTIAL_TP_PCT = 5.0
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -88,15 +98,39 @@ def fetch_heartbeat() -> dict:
 
 
 def get_live_price(symbol: str) -> float | None:
+    """Live price — yfinance first, fallback to FMP stable/quote-v1."""
     try:
-        import yfinance  # local import — keeps the poller usable when yfinance is missing
-
+        import yfinance
         ticker = yfinance.Ticker(symbol)
         info = ticker.fast_info
-        price = getattr(info, "last_price", None) or getattr(info, "previous_close", None)
-        return float(price) if price else None
+        price = (
+            getattr(info, "last_price", None)
+            or getattr(info, "last_close", None)
+            or getattr(info, "previous_close", None)
+        )
+        if price:
+            return float(price)
     except Exception:
-        return None
+        pass
+
+    # FMP fallback (stable endpoint v1 — survives legacy deprecation)
+    try:
+        import os, requests
+        api_key = os.environ.get("FMP_API_KEY")
+        if not api_key:
+            return None
+        url = f"https://financialmodelingprep.com/stable/quote-v1?symbol={symbol}&apikey={api_key}"
+        r = requests.get(url, timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            if isinstance(data, list) and data:
+                return float(data[0].get("price"))
+            if isinstance(data, dict) and "price" in data:
+                return float(data["price"])
+    except Exception:
+        pass
+
+    return None
 
 
 # ── Strategy parser ───────────────────────────────────────────────────────────
@@ -190,11 +224,11 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         reasons.append(f"AI/tech theme match ({sym})")
 
     if side == "LONG":
-        stop_loss = round(price * 0.92, 2)
-        target = round(price * 1.15, 2)
+        stop_loss = round(price * (1 - DEFAULT_STOP_PCT / 100), 2)
+        target = round(price * (1 + DEFAULT_TARGET_PCT / 100), 2)
     else:
-        stop_loss = round(price * 1.08, 2)
-        target = round(price * 0.85, 2)
+        stop_loss = round(price * (1 + DEFAULT_STOP_PCT / 100), 2)
+        target = round(price * (1 - DEFAULT_TARGET_PCT / 100), 2)
 
     action = "SKIP"
     if score >= MIN_SCORE_FOLLOW:
@@ -284,11 +318,50 @@ def check_positions(trades: list[dict]) -> tuple[list[dict], list[dict]]:
             updated[i]["current_price"] = round(price, 4)
             updated[i]["updated_at"] = now_iso
             updated[i]["pnl_pct"] = round(pct, 2)
+            updated[i]["_dirty"] = True  # mark for SQLite flush
             if pct <= -8:
                 events.append({
                     "type": "WARNING",
                     "symbol": sym,
                     "details": f"Down {pct:.2f}% — review stop-loss (currently ${sp:.2f})",
+                })
+
+            # ── Stagnation exit (rotate out of dead money) ──────────────
+            created = pos.get("created_at")
+            if created and STAGNATION_LOW < pct < STAGNATION_HIGH:
+                try:
+                    opened = datetime.fromisoformat(created)
+                    days_held = (hkt_now() - opened).total_seconds() / 86400
+                except Exception:
+                    days_held = 0
+                if days_held >= STAGNATION_DAYS:
+                    updated[i]["status"] = "closed"
+                    updated[i]["closed_at"] = now_iso
+                    updated[i]["updated_at"] = now_iso
+                    updated[i]["close_reason"] = "STAGNATION_EXIT"
+                    updated[i]["pnl_pct"] = round(pct, 2)
+                    updated[i]["exit_price"] = round(price, 4)
+                    events.append({
+                        "type": "STAGNATION_EXIT",
+                        "symbol": sym,
+                        "details": (
+                            f"Stagnation exit — {days_held:.1f}d flat @ {pct:+.2f}% "
+                            f"(range [{STAGNATION_LOW}, {STAGNATION_HIGH}]%). Free slot."
+                        ),
+                    })
+                    continue
+
+            # ── Partial TP signal at +PARTIAL_TP_PCT% ────────────────────
+            if pct >= PARTIAL_TP_PCT and not pos.get("partial_tp_taken"):
+                updated[i]["partial_tp_taken"] = True
+                updated[i]["_dirty"] = True
+                events.append({
+                    "type": "PARTIAL_TP",
+                    "symbol": sym,
+                    "details": (
+                        f"Partial TP level hit @ +{pct:.2f}% — consider trimming half. "
+                        f"Move stop to breakeven ${ep:.2f}."
+                    ),
                 })
 
     return updated, events
@@ -320,7 +393,9 @@ def build_trade_row(ev: dict) -> dict:
         "notes": (
             f"{ev['agent']} entry on "
             f"{hkt_now().strftime('%b %d')} (score {ev.get('score')}/5). "
-            f"{ev['side']} @ ${entry:.2f} → target +15.0% / stop -8.0%."
+            f"{ev['side']} @ ${entry:.2f} → target +{DEFAULT_TARGET_PCT}% / stop -{DEFAULT_STOP_PCT}%. "
+            f"Aggressive mode — stagnation exit after {STAGNATION_DAYS}d in "
+            f"[{STAGNATION_LOW}%, {STAGNATION_HIGH}%], partial TP at +{PARTIAL_TP_PCT}%."
         ),
         "close_reason": None,
         "agent": ev["agent"],
@@ -392,9 +467,11 @@ def main() -> list[dict]:
         })
         log(f"  ✅ AUTO-FOLLOW: {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f}")
 
-    # 4. Persist any position-state changes (closed_at, current_price, pnl)
+    # 4. Persist every dirty row (closed trades AND live-price updates for
+    # open trades). Without this, current_price / pnl_pct / updated_at for open
+    # positions stay frozen at entry values in SQLite.
     for t in trades:
-        if t.get("status") == "closed" and t.get("close_reason"):
+        if t.get("_dirty"):
             upsert_trade(t)
 
     # 5. Portfolio summary
