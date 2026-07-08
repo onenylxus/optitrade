@@ -7,6 +7,7 @@ to follow them, and persists paper trades into the SQLite `paper_trades` table
 file instead of git.
 """
 
+import json
 import re
 import sys
 from datetime import datetime, timezone, timedelta
@@ -28,10 +29,19 @@ HKT = timezone(timedelta(hours=8))
 LOG_FILE = Path("/root/.nanobot/workspace/logs/ai4trade_poll.log")
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
+# ── Notification deduplication (only ping Discord when something happened) ──────
+# Persist a state snapshot after every run. Next run diffs against it; if nothing
+# material changed, poller logs silently and never publishes a reminder. This is
+# what stops the 30-min "Flat, no triggers" spam during flat / closed-market hours.
+STATE_FILE = Path("/root/.nanobot/workspace/logs/ai4trade_poller_state.json")
+STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+PNL_ALERT_PCT = 3.0  # re-notify if any open position moves >= ±3% since last alert
+
 # Max open paper positions (5 slots per USER.md aggressive mode)
 MAX_POSITIONS = 4
-# Minimum score to auto-follow
-MIN_SCORE_FOLLOW = 3
+# Minimum score to auto-follow (Tier 1: raised from 3 → 4; 3.5★ signals
+# averaged -4.41% across 4 trades vs 4.5★ +0.84% across 9 trades)
+MIN_SCORE_FOLLOW = 4
 # Only report if score >= this
 MIN_SCORE_REPORT = 2
 # ── Aggressive rotation defaults (was -8% stop / +15% target) ───────────────
@@ -44,6 +54,15 @@ STAGNATION_LOW = -2.0
 STAGNATION_HIGH = 3.0
 # Earlier partial take-profit signal at +PARTIAL_TP_PCT% — trim half & move stop
 PARTIAL_TP_PCT = 5.0
+# ── Tier 1 follow-filters (added 2026-07-08) ────────────────────────────────
+# Don't re-enter the same symbol within this many hours of a prior close —
+# prevents same-day whipsaw churn (4 prior MU re-entries all closed at loss).
+SAME_SYMBOL_COOLDOWN_HOURS = 48
+# Maximum open positions allowed in the same symbol at any one time
+MAX_POSITIONS_PER_SYMBOL = 1
+# Hard blacklist: symbols where historical win-rate is too poor to keep
+# re-entering. MU has 1 win / 7 losses-or-flat across 8 attempts (12.5%).
+BLACKLIST_SYMBOLS = {"MU"}
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -69,6 +88,78 @@ def load_open_trades() -> list[dict]:
 def upsert_trade(row: dict) -> None:
     with db.transaction() as conn:
         db.upsert_paper_trade(conn, row)
+
+
+# ── State snapshot helpers (used to silence non-actionable runs) ──────────────
+def load_state() -> dict:
+    """Return last published state or empty defaults."""
+    if not STATE_FILE.exists():
+        return {"open_ids": [], "open_pnl": {}, "closed_ids": [], "last_published_at": None}
+    try:
+        return json.loads(STATE_FILE.read_text())
+    except Exception:
+        return {"open_ids": [], "open_pnl": {}, "closed_ids": [], "last_published_at": None}
+
+
+def save_state(state: dict) -> None:
+    """Atomic write so a crashed run never leaves a half-written file."""
+    tmp = STATE_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(state, indent=2))
+    tmp.replace(STATE_FILE)
+
+
+def compute_diff(trades: list[dict], prev: dict) -> list[str]:
+    """Return a list of human-readable messages worth notifying about.
+    Empty list = nothing material changed → poller runs silently.
+
+    State tracks (a) currently-open trade ids, (b) pnl per open id, and
+    (c) the set of closed trade ids already notified. New in this run =
+    open_ids - prev_open_ids, or closed_ids - prev_closed_ids. Big swings
+    on existing opens also fire when |Δpnl| >= PNL_ALERT_PCT.
+    """
+    msgs: list[str] = []
+    open_now = [t for t in trades if t.get("status") == "open"]
+    closed_now = [t for t in trades if t.get("status") == "closed" and t.get("close_reason")]
+
+    open_ids_now = {t.get("id") for t in open_now}
+    open_ids_prev = set(prev.get("open_ids") or [])
+    closed_ids_now = {t.get("id") for t in closed_now}
+    closed_ids_prev = set(prev.get("closed_ids") or [])
+    prev_pnl = prev.get("open_pnl") or {}
+
+    # 1. Newly opened positions (id not seen before)
+    new_open_ids = open_ids_now - open_ids_prev
+    for t in open_now:
+        if t.get("id") in new_open_ids:
+            msgs.append(
+                f"🟢 **OPENED** {t['symbol']} {t['side']} @ ${float(t['entry_price']):.2f} | "
+                f"SL ${float(t['stop_loss']):.2f} → TP ${float(t['target_price']):.2f} | "
+                f"score {t.get('agent_score')}/5 · {t.get('agent')}"
+            )
+
+    # 2. Newly closed positions (id not seen in prev closed_ids)
+    new_closed_ids = closed_ids_now - closed_ids_prev
+    for t in closed_now:
+        if t.get("id") in new_closed_ids:
+            msgs.append(
+                f"🔒 **{t['close_reason']}** {t['symbol']} {t['side']} | "
+                f"entry ${float(t['entry_price']):.2f} → exit ${float(t.get('exit_price') or 0):.2f} | "
+                f"**PnL {float(t.get('pnl_pct') or 0):+.2f}%**"
+            )
+
+    # 3. Big PnL swing on still-open positions (±3% since last snapshot)
+    for t in open_now:
+        pid = t.get("id")
+        cur_pnl = float(t.get("pnl_pct") or 0)
+        old_pnl = float(prev_pnl.get(pid) or 0.0)
+        if abs(cur_pnl - old_pnl) >= PNL_ALERT_PCT:
+            direction = "📈" if cur_pnl > old_pnl else "📉"
+            msgs.append(
+                f"{direction} **{t['symbol']}** PnL moved {old_pnl:+.2f}% → {cur_pnl:+.2f}% "
+                f"(entry ${float(t['entry_price']):.2f})"
+            )
+
+    return msgs
 
 
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
@@ -171,7 +262,7 @@ def parse_strategy_content(content: str) -> list[dict]:
 
 
 # ── Evaluate one recommendation ───────────────────────────────────────────────
-def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market: str) -> dict | None:
+def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market: str, recent_closed: list[dict] | None = None) -> dict | None:
     sym = rec["symbol"]
     side = rec["side"]
     agent_score = rec["score"]
@@ -179,6 +270,44 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
 
     if not side or not price:
         return None
+
+    # ── Tier 1: Hard blacklist (MU historically 1 win / 7 losses-or-flat) ──
+    if sym in BLACKLIST_SYMBOLS:
+        return {
+            "skip": True,
+            "action": "SKIP",
+            "symbol": sym,
+            "score": 0,
+            "reasons": [f"Symbol {sym} is blacklisted (poor historical win-rate)"],
+        }
+
+    # ── Tier 1: Same-symbol cooldown (avoid same-day whipsaw re-entries) ──
+    if recent_closed:
+        now = hkt_now()
+        for c in recent_closed:
+            if c.get("symbol") != sym:
+                continue
+            closed_at = c.get("closed_at")
+            if not closed_at:
+                continue
+            try:
+                closed_dt = datetime.fromisoformat(closed_at.replace("Z", "+00:00").replace("+00:00", ""))
+                if closed_dt.tzinfo is None:
+                    closed_dt = closed_dt.replace(tzinfo=HKT)
+                hours_since = (now - closed_dt).total_seconds() / 3600
+                if hours_since < SAME_SYMBOL_COOLDOWN_HOURS:
+                    return {
+                        "skip": True,
+                        "action": "SKIP",
+                        "symbol": sym,
+                        "score": 0,
+                        "reasons": [
+                            f"Same-symbol cooldown: {sym} closed {hours_since:.1f}h ago "
+                            f"(< {SAME_SYMBOL_COOLDOWN_HOURS}h)"
+                        ],
+                    }
+            except Exception:
+                pass
 
     # Time decay: only act on fresh strategies (<6h old)
     age_hours = 999
@@ -416,18 +545,24 @@ def main() -> list[dict]:
     log("=" * 55)
 
     trades = load_open_trades()
-    events: list[dict] = []
+    prev_state = load_state()
+    new_events: list[dict] = []
 
     # 1. Check existing positions
     open_count = sum(1 for t in trades if t.get("status") == "open")
     log(f"Checking {open_count} open positions...")
     trades, pos_events = check_positions(trades)
-    events.extend(pos_events)
+    new_events.extend(pos_events)
 
     # 2. Parse strategy signals and evaluate recommendations
     signals = fetch_signals(limit=15)
     new_follows: list[dict] = []
     open_symbols = {t.get("symbol") for t in trades if t.get("status") == "open"}
+    # Pass recent closed positions (within last 7 days) so cooldown logic has data
+    recent_closed = [
+        t for t in trades
+        if t.get("status") == "closed" and t.get("closed_at")
+    ]
 
     for sig in signals:
         msg_type = sig.get("message_type", "")
@@ -440,8 +575,19 @@ def main() -> list[dict]:
             recs = parse_strategy_content(content)
             log(f"  [{agent}] {mkt} — {len(recs)} recommendations parsed")
             for rec in recs:
-                ev = evaluate_recommendation(rec, agent, created, mkt)
-                if ev and not ev.get("skip") and ev["action"] == "FOLLOW":
+                ev = evaluate_recommendation(rec, agent, created, mkt, recent_closed=recent_closed)
+                if ev is None:
+                    continue
+                # Log every skip reason so we can audit blacklist / cooldown hits
+                if ev.get("skip"):
+                    log(f"    SKIP {rec['symbol']}: {' | '.join(ev.get('reasons', []))}")
+                    continue
+                if ev["action"] == "FOLLOW":
+                    # Enforce single-position-per-symbol cap
+                    sym_count = sum(1 for s in open_symbols if s == ev["symbol"])
+                    if sym_count >= MAX_POSITIONS_PER_SYMBOL:
+                        log(f"    SKIP {ev['symbol']}: already {sym_count} open position(s) (max {MAX_POSITIONS_PER_SYMBOL})")
+                        continue
                     if ev["symbol"] not in open_symbols:
                         new_follows.append(ev)
                         open_symbols.add(ev["symbol"])
@@ -456,16 +602,16 @@ def main() -> list[dict]:
         upsert_trade(row)
         trades.append(row)
         open_count += 1
-        events.append({
+        new_events.append({
             "type": "NEW_POSITION",
             "symbol": ev["symbol"],
             "details": (
-                f"🤖 FOLLOWED {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f} "
+                f"FOLLOWED {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f} "
                 f"(live ${ev['live_price']:.2f}) | SL: ${ev['stop_loss']:.2f} | "
-                f"Target: ${ev['target_price']:.2f} | Score: {ev['score']}★ | by {ev['agent']}"
+                f"Target: ${ev['target_price']:.2f} | Score: {ev['score']}* | by {ev['agent']}"
             ),
         })
-        log(f"  ✅ AUTO-FOLLOW: {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f}")
+        log(f"  AUTO-FOLLOW: {ev['symbol']} {ev['side']} @ ${ev['entry_price']:.2f}")
 
     # 4. Persist every dirty row (closed trades AND live-price updates for
     # open trades). Without this, current_price / pnl_pct / updated_at for open
@@ -474,7 +620,7 @@ def main() -> list[dict]:
         if t.get("_dirty"):
             upsert_trade(t)
 
-    # 5. Portfolio summary
+    # 5. Portfolio summary (log-only)
     open_p = [t for t in trades if t.get("status") == "open"]
     closed = [t for t in trades if t.get("status") == "closed"]
     total_pnl = sum(t.get("pnl_pct", 0) or 0 for t in closed)
@@ -482,17 +628,33 @@ def main() -> list[dict]:
     for t in open_p:
         pnl = t.get("pnl_pct", 0)
         cur = t.get("current_price") or t.get("live_price") or "?"
-        log(f"  💼 {t['symbol']} {t['side']} | entry ${t['entry_price']} | cur ${cur} | {pnl:+.2f}%")
+        log(f"  {t['symbol']} {t['side']} | entry ${t['entry_price']} | cur ${cur} | {pnl:+.2f}%")
 
-    # 6. Report important events
-    if events:
-        log("EVENTS:")
-        for e in events:
-            log(f"  [{e['type']}] {e['symbol']}: {e['details']}")
+    # 6. Diff against last published state — only return events that are NEW
+    # or represent a material change. Cron uses this list to decide whether
+    # to push a Discord reminder.
+    diff_msgs = compute_diff(trades, prev_state)
+    if diff_msgs:
+        log("NOTIFY (diff):")
+        for m in diff_msgs:
+            log(f"  {m}")
+    else:
+        log("No material change since last run — silent.")
+
+    # 7. Persist new state snapshot (covers both new opens and big swings so
+    # the next run's diff returns empty until something actually happens)
+    closed_all = [t for t in trades if t.get("status") == "closed"]
+    new_state = {
+        "open_ids": [t.get("id") for t in open_p],
+        "open_pnl": {t.get("id"): float(t.get("pnl_pct") or 0) for t in open_p},
+        "closed_ids": [t.get("id") for t in closed_all],
+        "last_published_at": hkt_now().isoformat(),
+    }
+    save_state(new_state)
 
     log("AI4Trade Poller END")
     log("-" * 55)
-    return events
+    return [{"type": "DIFF", "details": m} for m in diff_msgs]
 
 
 if __name__ == "__main__":
