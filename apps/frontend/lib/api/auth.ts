@@ -60,7 +60,20 @@ export async function loadBackendAuthProfile(
 export async function syncBackendAuthSession(
   firebaseIdToken: string,
 ): Promise<AuthenticatedUserResponse> {
-  return requestWithAuth<AuthenticatedUserResponse>('/api/v1/auth/session', firebaseIdToken, {
+  const response = await fetch('/api/auth/session', {
     method: 'POST',
+    headers: {
+      Authorization: `Bearer ${firebaseIdToken}`,
+    },
   });
+
+  if (!response.ok) {
+    const errorData = (await response.json().catch(() => ({}))) as { detail?: unknown };
+    throw {
+      code: `HTTP_${response.status}`,
+      message: errorData.detail != null ? detailMessage(errorData.detail) : response.statusText,
+    } as ApiError;
+  }
+
+  return (await response.json()) as AuthenticatedUserResponse;
 }

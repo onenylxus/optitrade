@@ -1,12 +1,11 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  signOut,
   updateProfile,
   type User,
 } from 'firebase/auth';
@@ -14,8 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { loadBackendAuthProfile, syncBackendAuthSession } from '@/lib/api/auth';
-import type { AuthenticatedUserResponse } from '@/lib/api/types';
+import { syncBackendAuthSession } from '@/lib/api/auth';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { isFirebaseConfigReady } from '@/lib/firebase/config';
 
@@ -23,6 +21,7 @@ type AuthMode = 'signin' | 'register';
 
 export function AuthPortal() {
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
+  const router = useRouter();
   const [firebaseAuth] = useState<ReturnType<typeof getFirebaseAuth> | null>(() => {
     if (!isFirebaseConfigReady()) return null;
     try {
@@ -32,7 +31,7 @@ export function AuthPortal() {
     }
   });
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
-  const [backendProfile, setBackendProfile] = useState<AuthenticatedUserResponse | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,31 +57,26 @@ export function AuthPortal() {
 
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
       setFirebaseUser(user);
+      setIsAuthReady(true);
 
       if (!user) {
-        setBackendProfile(null);
         setErrorMessage(null);
         return;
       }
 
       try {
         const idToken = await user.getIdToken(true);
-        const profile = await loadBackendAuthProfile(idToken);
-        setBackendProfile(profile);
+        await syncBackendAuthSession(idToken);
         setErrorMessage(null);
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Unable to load profile.');
+        setErrorMessage(error instanceof Error ? error.message : 'Unable to sync profile.');
+      } finally {
+        router.replace('/');
       }
     });
 
     return unsubscribe;
-  }, [firebaseAuth]);
-
-  async function syncSession(userToken: string) {
-    const profile = await syncBackendAuthSession(userToken);
-    setBackendProfile(profile);
-    setErrorMessage(null);
-  }
+  }, [firebaseAuth, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -101,39 +95,11 @@ export function AuthPortal() {
         if (displayName.trim()) {
           await updateProfile(credential.user, { displayName: displayName.trim() });
         }
-
-        const idToken = await credential.user.getIdToken(true);
-        void syncSession(idToken).catch((error) => {
-          setErrorMessage(error instanceof Error ? error.message : 'Unable to sync profile.');
-        });
       } else {
-        const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
-        const idToken = await credential.user.getIdToken(true);
-        void syncSession(idToken).catch((error) => {
-          setErrorMessage(error instanceof Error ? error.message : 'Unable to sync profile.');
-        });
+        await signInWithEmailAndPassword(firebaseAuth, email, password);
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Authentication failed.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleSignOut() {
-    if (!firebaseAuth) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await signOut(firebaseAuth);
-      setFirebaseUser(null);
-      setBackendProfile(null);
-      setErrorMessage(null);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign out.');
     } finally {
       setIsSubmitting(false);
     }
@@ -152,6 +118,12 @@ export function AuthPortal() {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {!isAuthReady ? (
+            <div className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+              Checking your session...
+            </div>
+          ) : null}
+
           {errorMessage ? (
             <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {errorMessage}
@@ -160,28 +132,8 @@ export function AuthPortal() {
 
           {isAuthenticated ? (
             <div className="space-y-4">
-              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-sm">
-                <div className="font-medium text-foreground">
-                  {backendProfile?.display_name ?? backendProfile?.email ?? 'Signed in'}
-                </div>
-                {backendProfile?.email && (
-                  <div className="text-xs text-muted-foreground">{backendProfile.email}</div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Button asChild className="w-full">
-                  <Link href="/">Open Dashboard</Link>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleSignOut}
-                  disabled={isSubmitting}
-                >
-                  Sign Out
-                </Button>
+              <div className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                Redirecting you to the dashboard...
               </div>
             </div>
           ) : (

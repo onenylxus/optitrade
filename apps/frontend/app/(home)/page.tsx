@@ -61,6 +61,7 @@ export default function HomePage() {
     }
 
     await signOut(firebaseAuth);
+    location.reload();
   }
 
   return (
