@@ -49,7 +49,9 @@ CREATE TABLE IF NOT EXISTS paper_trades (
     market        TEXT,
     created_at    TEXT NOT NULL,
     updated_at    TEXT NOT NULL,
-    closed_at     TEXT
+    closed_at     TEXT,
+    signal_log_id INTEGER,
+    partial_tp_taken INTEGER DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS ix_paper_trades_symbol ON paper_trades(symbol);
 CREATE INDEX IF NOT EXISTS ix_paper_trades_status ON paper_trades(status);
@@ -95,6 +97,41 @@ CREATE TABLE IF NOT EXISTS price_cache (
     expires_at    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_price_cache_expires ON price_cache(expires_at);
+
+CREATE TABLE IF NOT EXISTS follow_list_cache (
+    id            INTEGER PRIMARY KEY CHECK(id = 1),
+    list_json     TEXT NOT NULL,         -- JSON array of agent names
+    refreshed_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS signal_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    received_at   TEXT NOT NULL,
+    agent_name    TEXT NOT NULL,
+    symbol        TEXT,
+    side          TEXT,
+    agent_score   REAL,
+    market        TEXT,
+    raw_content   TEXT,
+    parsed_action TEXT,             -- FOLLOW / WATCH / SKIP / (null if parse failed)
+    score         REAL,             -- numeric score after enrichment
+    entry_price   REAL,
+    live_price    REAL,
+    skip_reasons  TEXT,             -- JSON array of strings
+    enrich_notes  TEXT,             -- JSON object with trend + history + regime analysis
+    thesis        TEXT,             -- human-readable why-we-followed-or-not
+    created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS ix_signal_log_received_at ON signal_log(received_at);
+CREATE INDEX IF NOT EXISTS ix_signal_log_agent      ON signal_log(agent_name);
+CREATE INDEX IF NOT EXISTS ix_signal_log_symbol     ON signal_log(symbol);
+
+-- Dedup: ai4trade feed may return the same signal twice across polls within
+-- the freshness window. UNIQUE on (agent, symbol, created_at, side) prevents
+-- duplicate audit rows when content text varies slightly.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_signal_log_dedup
+    ON signal_log(agent_name, symbol, created_at, COALESCE(side, ''));
 """
 
 
@@ -156,9 +193,23 @@ def transaction() -> Iterator[sqlite3.Connection]:
 
 
 def init_schema() -> None:
-    """Create tables/indexes if they don't exist."""
+    """Create tables/indexes if they don't exist. Also runs idempotent
+    column-level migrations for changes that can't be expressed in
+    CREATE TABLE IF NOT EXISTS (adding columns to existing tables)."""
     conn = get_conn()
     conn.executescript(SCHEMA)
+    _run_migrations(conn)
+
+
+def _run_migrations(conn) -> None:
+    """Idempotent ALTER TABLE migrations for additive columns.
+    SQLite supports `ALTER TABLE ... ADD COLUMN` but not drop/rename, so
+    we list each addition explicitly here. Safe to run on every startup."""
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(paper_trades)")}
+    if "signal_log_id" not in existing:
+        conn.execute("ALTER TABLE paper_trades ADD COLUMN signal_log_id INTEGER")
+    if "partial_tp_taken" not in existing:
+        conn.execute("ALTER TABLE paper_trades ADD COLUMN partial_tp_taken INTEGER DEFAULT 0")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
