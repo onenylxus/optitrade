@@ -233,6 +233,30 @@ def get_live_price(symbol: str) -> float | None:
     return None
 
 
+def get_intraday_volatility(symbol: str) -> float | None:
+    """Return today's intraday range as % of opening price.
+    Used to widen stops for volatile / speculative names where a 5% tight
+    stop would routinely get wicked out before the move plays out.
+
+    Returns None on failure (caller falls back to default 5% stop).
+    """
+    try:
+        import yfinance
+        ticker = yfinance.Ticker(symbol)
+        hist = ticker.history(period="5d", interval="1d")
+        if hist is None or len(hist) < 1:
+            return None
+        last = hist.iloc[-1]
+        high = float(last.get("High") or 0)
+        low = float(last.get("Low") or 0)
+        open_ = float(last.get("Open") or 0)
+        if open_ <= 0 or high <= low:
+            return None
+        return (high - low) / open_ * 100
+    except Exception:
+        return None
+
+
 # ── Strategy parser ───────────────────────────────────────────────────────────
 def parse_strategy_content(content: str) -> list[dict]:
     """Parse markdown blocks like `### AMD: **BUY** (Score: 7.9)` into recs."""
@@ -402,10 +426,20 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         score += 1
         reasons.append(f"US stock ({market})")
 
-    ai_stocks = {"NVDA", "AMD", "AVGO", "MSFT", "MU", "QCOM", "TSLA", "LIN", "AXP", "BA"}
-    if sym in ai_stocks:
+    # Theme-aware bonus: any signal with a named catalyst — earnings surprise,
+    # FDA approval, M&A rumor, product launch, activist, short squeeze, etc —
+    # gets +1. Was previously restricted to AI/tech whitelist; expanded 2026-07-09
+    # so speculative / momentum names (GME, DJT, SMCI, emerging biotech) score
+    # equally when the signal carries a real catalyst.
+    THEMED_CATALYST_KEYWORDS = (
+        "earnings", "guidance", "beat", "miss", "fda", "approval", "merger",
+        "acquisition", "buyback", "dividend", "split", "squeeze", "activist",
+        "lawsuit", "contract", "partnership", "launch", "product",
+    )
+    sig_text = (rec.get("raw_content") or "").lower()
+    if any(k in sig_text for k in THEMED_CATALYST_KEYWORDS):
         score += 1
-        reasons.append(f"AI/tech theme match ({sym})")
+        reasons.append(f"Catalyst-driven signal (theme/keyword match)")
 
     if side == "LONG":
         stop_loss = round(price * (1 - DEFAULT_STOP_PCT / 100), 2)
@@ -413,6 +447,21 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
     else:
         stop_loss = round(price * (1 + DEFAULT_STOP_PCT / 100), 2)
         target = round(price * (1 - DEFAULT_TARGET_PCT / 100), 2)
+
+    # Wider stops for high-vol / speculative names — the 5%/-5% default assumes
+    # an S&P 500 member. GME / DJT / small-cap biotech routinely gap 10-15%
+    # on catalyst days; a 5% stop would routinely get wicked out before the
+    # setup played out.
+    vol = get_intraday_volatility(sym)
+    if vol is not None and vol >= 8.0:
+        # 8%+ intraday range = volatile name. Widen stop/target to 1.5x.
+        widened_stop = round(price * (1 - (DEFAULT_STOP_PCT * 1.5) / 100), 2) if side == "LONG" \
+            else round(price * (1 + (DEFAULT_STOP_PCT * 1.5) / 100), 2)
+        widened_target = round(price * (1 + (DEFAULT_TARGET_PCT * 1.5) / 100), 2) if side == "LONG" \
+            else round(price * (1 - (DEFAULT_TARGET_PCT * 1.5) / 100), 2)
+        reasons.append(f"Wide intraday range ({vol:.1f}%) → stop/target widened to {DEFAULT_STOP_PCT*1.5:.1f}%/{DEFAULT_TARGET_PCT*1.5:.1f}%")
+        stop_loss = widened_stop
+        target = widened_target
 
     action = "SKIP"
     if score >= MIN_SCORE_FOLLOW:
