@@ -25,6 +25,7 @@ import type {
   PortfolioChatContextValue,
 } from '@/contexts/portfolio-context';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
+import { requestStockChartSymbolSelection } from '@/lib/stock-chart-bridge';
 
 export interface Stock {
   id: string;
@@ -66,6 +67,8 @@ interface PortfolioVariantProps {
   sourceLabel: string;
   aiSignals: PortfolioAiSignals;
   isAiLoading?: boolean;
+  signalLens: SignalLens;
+  onSignalLensChange: (lens: SignalLens) => void;
   onOpenSettings: () => void;
   onOpenEditor: () => void;
 }
@@ -136,10 +139,32 @@ interface BrokerOptionConfig {
   description: string;
 }
 
-const PORTFOLIO_API_BASE_URL =
-  process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ?? BACKEND_URL;
+type SignalLens = 'technical' | 'day-trade' | 'buy-and-hold';
+type SignalBias =
+  | 'strong bullish'
+  | 'strong bearish'
+  | 'possible bullish'
+  | 'possible bearish'
+  | 'neutral';
+
+interface SignalLensOption {
+  value: SignalLens;
+  label: string;
+}
+
+const portfolioApiBaseUrl = process.env.NEXT_PUBLIC_PORTFOLIO_API_BASE_URL ?? BACKEND_URL;
+
+if (!portfolioApiBaseUrl) {
+  throw new Error('Environment variable NEXT_PUBLIC_PORTFOLIO_API_BASE_URL is not defined');
+}
 
 const HOLDING_CHART_COLORS = ['#0f172a', '#334155', '#64748b', '#94a3b8', '#cbd5e1'];
+const SIGNAL_LENS_STORAGE_KEY = 'optitrade-portfolio-signal-lens';
+const SIGNAL_LENS_OPTIONS: SignalLensOption[] = [
+  { value: 'technical', label: 'Technical' },
+  { value: 'day-trade', label: 'Day Trade' },
+  { value: 'buy-and-hold', label: 'Buy & Hold' },
+];
 
 const BROKER_OPTIONS: BrokerOptionConfig[] = [
   { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
@@ -162,10 +187,121 @@ const formatCurrency = (value: number, maxDigits = 0) =>
 
 const percentClass = (value: number) => (value >= 0 ? 'text-emerald-600' : 'text-rose-600');
 
+const stockLinkButtonClass =
+  'flex w-full items-start gap-1.5 rounded-sm text-left transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300';
+
+function normalizeSignalBias(bias: string): SignalBias {
+  const normalized = bias.trim().toLowerCase();
+  if (
+    normalized === 'strong bullish' ||
+    normalized === 'strong bearish' ||
+    normalized === 'possible bullish' ||
+    normalized === 'possible bearish' ||
+    normalized === 'neutral'
+  ) {
+    return normalized;
+  }
+  return 'neutral';
+}
+
+function signalPatternContext(signal: PortfolioPositionSignal): string {
+  return (
+    signal.explanation ??
+    (signal.pattern
+      ? `${signal.pattern}${signal.status ? ` • ${signal.status}` : ''}${signal.confidence ? ` • ${signal.confidence}%` : ''}`
+      : signal.bias)
+  );
+}
+
+function signalLensPayload(signal: PortfolioPositionSignal, lens: SignalLens) {
+  return signal.lenses?.[lens] ?? null;
+}
+
+function describeSignalForLens(signal: PortfolioPositionSignal, lens: SignalLens) {
+  const lensPayload = signalLensPayload(signal, lens);
+  const rawBias =
+    lensPayload?.bias ??
+    (lens === 'technical' ? signal.bias : signal.lenses?.technical?.bias ?? signal.bias);
+  const bias = normalizeSignalBias(rawBias);
+  const lensExplanation = lensPayload?.explanation?.trim();
+  const patternContext = lensExplanation || signalPatternContext(signal);
+
+  if (lens === 'technical') {
+    return {
+      bias,
+      label: rawBias,
+      title: patternContext,
+    };
+  }
+
+  const lensCopy: Record<
+    SignalBias,
+    Record<Exclude<SignalLens, 'technical'>, { label: string; helper: string }>
+  > = {
+    'strong bullish': {
+      'day-trade': {
+        label: 'Momentum Long',
+        helper: 'Intraday momentum favors long setups if price confirms.',
+      },
+      'buy-and-hold': {
+        label: 'Accumulate',
+        helper: 'Longer-horizon posture supports building or keeping exposure.',
+      },
+    },
+    'possible bullish': {
+      'day-trade': {
+        label: 'Long Setup',
+        helper: 'Watch for a cleaner trigger before leaning long intraday.',
+      },
+      'buy-and-hold': {
+        label: 'Watch to Add',
+        helper: 'Constructive enough to monitor for adding on confirmation.',
+      },
+    },
+    'strong bearish': {
+      'day-trade': {
+        label: 'Momentum Short',
+        helper: 'Intraday pressure favors short setups if weakness continues.',
+      },
+      'buy-and-hold': {
+        label: 'Trim / Review',
+        helper: 'Longer-term holders may want to review position size and thesis.',
+      },
+    },
+    'possible bearish': {
+      'day-trade': {
+        label: 'Short Setup',
+        helper: 'A developing short setup is forming, but confirmation still matters.',
+      },
+      'buy-and-hold': {
+        label: 'Monitor Risk',
+        helper: 'Not a forced exit, but risk should be watched closely.',
+      },
+    },
+    neutral: {
+      'day-trade': {
+        label: 'Wait',
+        helper: 'No strong intraday edge stands out right now.',
+      },
+      'buy-and-hold': {
+        label: 'Hold',
+        helper: 'Nothing here argues strongly for adding or cutting exposure.',
+      },
+    },
+  };
+
+  const resolved = lensCopy[bias][lens];
+  return {
+    bias,
+    label: resolved.label,
+    title: lensExplanation || `${resolved.helper} ${patternContext}`.trim(),
+  };
+}
+
 const portfolioApiUrl = (path: string) => {
-  const baseUrl = PORTFOLIO_API_BASE_URL.endsWith('/')
-    ? PORTFOLIO_API_BASE_URL.slice(0, -1)
-    : PORTFOLIO_API_BASE_URL;
+  const baseUrl = portfolioApiBaseUrl.endsWith('/')
+    ? portfolioApiBaseUrl.slice(0, -1)
+    : portfolioApiBaseUrl;
   return `${baseUrl}${path}`;
 };
 
@@ -302,8 +438,41 @@ function buildPortfolioAiSignals(stocks: Stock[], data: PortfolioDerivedData): P
   };
 }
 
-function PositionSignalTag({ signal }: { signal: PortfolioPositionSignal }) {
-  const bias = signal.bias.toLowerCase();
+function SignalLensPicker({
+  value,
+  onChange,
+}: {
+  value: SignalLens;
+  onChange: (lens: SignalLens) => void;
+}) {
+  return (
+    <label className="flex items-center gap-1.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+      <span>Signal Lens</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value as SignalLens)}
+        className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-600 outline-none transition focus:border-slate-300"
+        aria-label="Signal lens"
+      >
+        {SIGNAL_LENS_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function PositionSignalTag({
+  signal,
+  lens,
+}: {
+  signal: PortfolioPositionSignal;
+  lens: SignalLens;
+}) {
+  const display = describeSignalForLens(signal, lens);
+  const bias = display.bias;
   const toneClasses =
     bias === 'strong bullish'
       ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -317,21 +486,15 @@ function PositionSignalTag({ signal }: { signal: PortfolioPositionSignal }) {
               ? 'border-slate-200 bg-slate-100 text-slate-500'
             : 'border-slate-200 bg-slate-100 text-slate-500';
 
-  const title =
-    signal.explanation ??
-    (signal.pattern
-      ? `${signal.pattern}${signal.status ? ` • ${signal.status}` : ''}${signal.confidence ? ` • ${signal.confidence}%` : ''}`
-      : signal.bias);
-
   return (
     <span className="group/label relative inline-flex">
       <span
         className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.14em] ${toneClasses}`}
       >
-        {signal.bias}
+        {display.label}
       </span>
       <span className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-44 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[9px] font-medium normal-case tracking-normal text-slate-600 opacity-0 shadow-lg transition duration-100 ease-out group-hover/label:translate-y-0 group-hover/label:opacity-100">
-        {title}
+        {display.title}
       </span>
     </span>
   );
@@ -377,7 +540,7 @@ function PortfolioInsightCard({
         </div>
       ) : (
         <>
-          <div className="text-[10px] leading-4 text-slate-700">{insight}</div>
+          <div className="text-justify text-[10px] leading-4 text-slate-700">{insight}</div>
         </>
       )}
     </div>
@@ -1028,17 +1191,23 @@ function PortfolioWidgetMedium({
   source,
   sourceLabel,
   aiSignals,
+  signalLens,
+  onSignalLensChange,
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
   const signalBySymbol = new Map(
     aiSignals.signals.map((signal) => [signal.symbol.toUpperCase(), signal] as const),
   );
+  const handleSelectStock = useCallback((symbol: string) => {
+    requestStockChartSymbolSelection(symbol);
+  }, []);
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <div className="flex items-center justify-between py-2.5">
         <PortfolioSourceBadge source={source} label={sourceLabel} />
         <div className="flex items-center gap-2">
+          <SignalLensPicker value={signalLens} onChange={onSignalLensChange} />
           <button
             onClick={onOpenEditor}
             className="text-slate-300 transition-colors hover:text-slate-500"
@@ -1089,19 +1258,29 @@ function PortfolioWidgetMedium({
                 return (
                   <tr key={stock.id} className="transition-colors hover:bg-slate-50/50">
                     <td className="py-1.5 first:pl-0">
-                      <div className="flex items-center gap-1.5">
-                        <div className="text-[11px] font-bold leading-tight text-slate-900">
-                          {stock.symbol}
+                      <button
+                        type="button"
+                        className={stockLinkButtonClass}
+                        onClick={() => handleSelectStock(stock.symbol)}
+                        title={`Show ${stock.symbol} in stock chart`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="text-[11px] font-bold leading-tight text-slate-900">
+                              {stock.symbol}
+                            </div>
+                            {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
+                              <PositionSignalTag
+                                signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
+                                lens={signalLens}
+                              />
+                            ) : null}
+                          </div>
+                          <div className="font-mono text-[7px] tracking-tight text-slate-400">
+                            {stock.quantity} <span className="opacity-70">shs</span>
+                          </div>
                         </div>
-                        {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
-                          <PositionSignalTag
-                            signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
-                          />
-                        ) : null}
-                      </div>
-                      <div className="font-mono text-[7px] tracking-tight text-slate-400">
-                        {stock.quantity} <span className="opacity-70">shs</span>
-                      </div>
+                      </button>
                     </td>
                     <td className="py-1.5 text-right font-mono text-[8px] text-slate-400">
                       {formatCurrency(stock.avgPrice, 0)}
@@ -1133,6 +1312,8 @@ function PortfolioWidgetLarge({
   sourceLabel,
   aiSignals,
   isAiLoading,
+  signalLens,
+  onSignalLensChange,
   onOpenSettings,
   onOpenEditor,
 }: PortfolioVariantProps) {
@@ -1140,6 +1321,9 @@ function PortfolioWidgetLarge({
   const signalBySymbol = new Map(
     aiSignals.signals.map((signal) => [signal.symbol.toUpperCase(), signal] as const),
   );
+  const handleSelectStock = useCallback((symbol: string) => {
+    requestStockChartSymbolSelection(symbol);
+  }, []);
   const chartConfig = Object.fromEntries(
     topHoldings.map((holding, index) => [
       holding.symbol,
@@ -1154,6 +1338,7 @@ function PortfolioWidgetLarge({
       <div className="flex items-center justify-between border-b border-slate-50 py-3">
         <PortfolioSourceBadge source={source} label={sourceLabel} />
         <div className="flex items-center gap-2">
+          <SignalLensPicker value={signalLens} onChange={onSignalLensChange} />
           <button
             onClick={onOpenEditor}
             className="text-slate-300 transition-colors hover:text-slate-600"
@@ -1210,7 +1395,11 @@ function PortfolioWidgetLarge({
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="w-3/5 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-slate-100">
+        <div
+          className={`overflow-y-auto scrollbar-thin scrollbar-thumb-slate-100 ${
+            topHoldings.length > 0 ? 'w-3/5 pr-3' : 'w-full'
+          }`}
+        >
           {stocks.length === 0 ? (
             <div className="py-6 text-center text-xs text-slate-400">
               No positions yet. Open the editor to build your paper portfolio.
@@ -1232,19 +1421,29 @@ function PortfolioWidgetLarge({
                   return (
                     <tr key={stock.id} className="group transition-colors hover:bg-slate-50/50">
                       <td className="py-2 first:pl-0">
-                        <div className="flex items-center gap-1.5">
-                          <div className="font-bold leading-tight text-slate-900">
-                            {stock.symbol}
+                        <button
+                          type="button"
+                          className={stockLinkButtonClass}
+                          onClick={() => handleSelectStock(stock.symbol)}
+                          title={`Show ${stock.symbol} in stock chart`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="font-bold leading-tight text-slate-900">
+                                {stock.symbol}
+                              </div>
+                              {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
+                                <PositionSignalTag
+                                  signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
+                                  lens={signalLens}
+                                />
+                              ) : null}
+                            </div>
+                            <div className="font-mono text-[8px] tracking-tighter text-slate-400">
+                              {stock.quantity} <span className="text-[7px] opacity-70">shs</span>
+                            </div>
                           </div>
-                          {signalBySymbol.get(stock.symbol.toUpperCase()) ? (
-                            <PositionSignalTag
-                              signal={signalBySymbol.get(stock.symbol.toUpperCase())!}
-                            />
-                          ) : null}
-                        </div>
-                        <div className="font-mono text-[8px] tracking-tighter text-slate-400">
-                          {stock.quantity} <span className="text-[7px] opacity-70">shs</span>
-                        </div>
+                        </button>
                       </td>
                       <td className="py-2 text-right font-mono text-[9px] text-slate-400">
                         {formatCurrency(stock.avgPrice, 0)}
@@ -1353,6 +1552,7 @@ const PortfolioWidgetRoot = ({
     name: 'Paper Portfolio',
   });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [signalLens, setSignalLens] = useState<SignalLens>('technical');
   const { setPortfolio } = usePortfolioContext();
 
   const resolvedVariant = variant ?? size ?? 'medium';
@@ -1431,6 +1631,25 @@ const PortfolioWidgetRoot = ({
       void loadPortfolio();
     });
   }, [loadPortfolio]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedLens = window.localStorage.getItem(SIGNAL_LENS_STORAGE_KEY);
+    if (
+      storedLens === 'technical' ||
+      storedLens === 'day-trade' ||
+      storedLens === 'buy-and-hold'
+    ) {
+      setSignalLens(storedLens);
+    } else if (storedLens === 'hft') {
+      setSignalLens('day-trade');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(SIGNAL_LENS_STORAGE_KEY, signalLens);
+  }, [signalLens]);
 
   const activatePaperPortfolio = async () => {
     const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
@@ -1530,6 +1749,8 @@ const PortfolioWidgetRoot = ({
     sourceLabel,
     aiSignals,
     isAiLoading,
+    signalLens,
+    onSignalLensChange: setSignalLens,
     onOpenSettings: () => setPanelMode('broker'),
     onOpenEditor: () => setPanelMode('editor'),
   };

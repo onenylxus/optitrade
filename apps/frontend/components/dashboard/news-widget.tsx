@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { BaseWidget } from './base-widget';
 import { usePortfolioContext } from '@/contexts/portfolio-context';
-import { BACKEND_URL } from '@/lib/api/client';
 
 interface NewsItem {
   // id: string;
@@ -103,11 +102,11 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     const fetchNews = async () => {
       setLoading(true);
       try {
-        let url = `${BACKEND_URL}/api/news`;
+        let url = '/api/news';
 
         if (allInterestedSymbols.length > 0) {
           const symbolsParam = allInterestedSymbols.join(',');
-          url = `${BACKEND_URL}/api/news?symbols=${symbolsParam}`;
+          url = `/api/news?symbols=${symbolsParam}`;
         }
 
         console.log(`[API Request] Fetching news using all stock symbols, URL: ${url}`);
@@ -220,7 +219,7 @@ const matchesPortfolio = useCallback(
   const contextHeadlineList = newsData
     .map(
       (item) =>
-        `• [${item.sentiment >= 0 ? '+' : ''}${item.sentiment.toFixed(2)}] ${item.headline} (${item.source})`,
+        `• [${(item.sentiment ?? 0) >= 0 ? '+' : ''}${(item.sentiment ?? 0).toFixed(2)}] ${item.headline} (${item.source})`,
     )
     .join('\n');
   const contextAvgSentiment =
@@ -480,7 +479,7 @@ const matchesPortfolio = useCallback(
                   {/* Card View 詳細內容 */}
                   {currentView === 'card' && (
                     <>
-                      <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
+                    <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
                         {news.summary}
                       </div>
                       {news.highlights && news.highlights.length > 0 && (
@@ -493,19 +492,19 @@ const matchesPortfolio = useCallback(
 
                       {/* Sentiment 分數 + AI Reason + Risk Tag */}
                       <div className="mt-2 flex items-center gap-2 flex-wrap">
-                        {/* Sentiment 分數 */}
+                    {/* Sentiment 分數 */}
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            news.sentiment > 0.2
+                            (news.sentiment ?? 0) > 0.2
                               ? 'bg-emerald-50 text-emerald-700'
-                              : news.sentiment < -0.2
+                              : (news.sentiment ?? 0) < -0.2
                                 ? 'bg-red-50 text-red-700'
                                 : 'bg-gray-100 text-gray-600'
                           }`}
                         >
-                          {news.sentiment > 0 ? '📈' : news.sentiment < 0 ? '📉' : '⚖️'}
-                          {news.sentiment > 0 ? '+' : ''}
-                          {news.sentiment.toFixed(2)}
+                          {(news.sentiment ?? 0) > 0 ? '📈' : (news.sentiment ?? 0) < 0 ? '📉' : '⚖️'}
+                          {(news.sentiment ?? 0) > 0 ? '+' : ''}
+                          {(news.sentiment ?? 0).toFixed(2)}
                         </span>
 
                         {/* AI Reason（hover 顯示） */}
@@ -552,16 +551,16 @@ const matchesPortfolio = useCallback(
                     <div className="mt-1 flex items-center gap-2 flex-wrap">
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                          news.sentiment > 0.2
+                          (news.sentiment ?? 0) > 0.2
                             ? 'bg-emerald-50 text-emerald-700'
-                            : news.sentiment < -0.2
+                            : (news.sentiment ?? 0) < -0.2
                               ? 'bg-red-50 text-red-700'
                               : 'bg-gray-100 text-gray-600'
                         }`}
                       >
-                        {news.sentiment > 0 ? '📈' : news.sentiment < 0 ? '📉' : '⚖️'}
-                        {news.sentiment > 0 ? '+' : ''}
-                        {news.sentiment.toFixed(2)}
+                        {(news.sentiment ?? 0) > 0 ? '📈' : (news.sentiment ?? 0) < 0 ? '📉' : '⚖️'}
+                        {(news.sentiment ?? 0) > 0 ? '+' : ''}
+                        {(news.sentiment ?? 0).toFixed(2)}
                       </span>
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded-full ${

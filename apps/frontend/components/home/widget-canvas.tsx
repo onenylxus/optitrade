@@ -633,9 +633,9 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
           ) : null}
 
           <ScrollArea className="h-full rounded-xl">
-            <div ref={canvasWidthRef} className="w-full p-3 pr-6">
+            <div ref={canvasWidthRef} className="w-full p-3 pr-6 pb-6 isolate">
               <div
-                className="relative grid"
+                className="relative z-0 grid"
                 style={{
                   gridTemplateColumns: `repeat(${gridColumns}, ${GRID_CELL_WIDTH_REM}rem)`,
                   gridAutoRows: `${GRID_CELL_HEIGHT_REM}rem`,

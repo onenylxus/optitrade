@@ -1,0 +1,788 @@
+<!doctype html>
+<!--
+COMP7705 Capstone Project (2025-26) — OptiTrade Copilot
+Final-report QA evaluation plan. Companion to docs/qa-evaluation-plan.md.
+Generated 2026-06-24. Open this file in any browser for a printable
+summary of the eval harness, the metric targets, the timeline, and the
+expected-result envelope.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OptiTrade Copilot — QA Evaluation Plan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #06080f;
+        --surface: #0b0e1a;
+        --card: #0f1220;
+        --card-hover: #141828;
+        --border: #1c2038;
+        --border-hi: #2a3050;
+        --gold: #e8a020;
+        --gold-dim: #a06810;
+        --gold-glow: rgba(232, 160, 32, 0.15);
+        --blue: #3d7cf4;
+        --blue-dim: rgba(61, 124, 255, 0.12);
+        --green: #22c97a;
+        --green-dim: rgba(34, 201, 122, 0.12);
+        --amber: #f59e0b;
+        --red: #f43d5e;
+        --red-dim: rgba(244, 61, 94, 0.12);
+        --text: #dde1ef;
+        --text-muted: #5a6282;
+        --text-dim: #8892b0;
+        --font-display: 'Cormorant Garamond', serif;
+        --font-mono: 'Space Mono', monospace;
+        --font-body: 'Outfit', sans-serif;
+      }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      body {
+        background: var(--bg); color: var(--text); font-family: var(--font-body);
+        font-weight: 300; line-height: 1.7; overflow-x: hidden;
+      }
+      body::before {
+        content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+        background-image:
+          linear-gradient(rgba(61, 124, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(61, 124, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+      nav {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 2.5rem; height: 60px;
+        background: rgba(6, 8, 15, 0.85); backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-logo { font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; }
+      .nav-logo span { color: var(--text-muted); }
+      .nav-links { display: flex; gap: 2rem; list-style: none; }
+      .nav-links a { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+      .nav-links a:hover { color: var(--gold); }
+      .nav-badge { font-family: var(--font-mono); font-size: 0.65rem; padding: 0.25rem 0.7rem; border: 1px solid var(--gold-dim); color: var(--gold); border-radius: 2px; letter-spacing: 0.08em; }
+
+      .hero {
+        position: relative; min-height: 90vh; display: flex; flex-direction: column;
+        justify-content: center; align-items: flex-start;
+        padding: 8rem 2.5rem 6rem; overflow: hidden;
+      }
+      .hero-glow {
+        position: absolute; width: 900px; height: 900px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(232, 160, 32, 0.06) 0%, transparent 70%);
+        top: -200px; right: -200px; pointer-events: none;
+      }
+      .hero-tag {
+        font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em;
+        text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 0.75rem;
+      }
+      .hero-tag::before { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); }
+      .hero-title { font-family: var(--font-display); font-size: clamp(3rem, 7vw, 6rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
+      .hero-title em { font-style: italic; color: var(--gold); }
+      .hero-subtitle { font-family: var(--font-display); font-size: clamp(1.1rem, 2.2vw, 1.6rem); font-weight: 300; font-style: italic; color: var(--text-dim); margin-bottom: 2.5rem; max-width: 760px; }
+      .hero-meta { display: flex; gap: 2.5rem; flex-wrap: wrap; margin-bottom: 3rem; }
+      .hero-meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+      .hero-meta-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); }
+      .hero-meta-value { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text); }
+
+      section { position: relative; padding: 5rem 2.5rem; max-width: 1280px; margin: 0 auto; }
+      .section-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.75rem; }
+      .section-label::before { content: ''; display: block; width: 24px; height: 1px; background: var(--gold); }
+      .section-title { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); font-weight: 600; line-height: 1.1; margin-bottom: 1rem; }
+      .section-title em { font-style: italic; color: var(--gold); }
+      .section-desc { color: var(--text-dim); font-size: 0.95rem; max-width: 760px; margin-bottom: 2.5rem; line-height: 1.75; }
+      .divider { width: 100%; height: 1px; background: var(--border); margin: 0; }
+
+      /* KPI strip */
+      .kpi-strip {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        border: 1px solid var(--border); background: var(--border); gap: 1px;
+        margin-bottom: 2rem;
+      }
+      .kpi { background: var(--card); padding: 1.5rem; }
+      .kpi-value { font-family: var(--font-display); font-size: 2.4rem; font-weight: 600; line-height: 1; margin-bottom: 0.4rem; }
+      .kpi-value.gold { color: var(--gold); }
+      .kpi-value.green { color: var(--green); }
+      .kpi-value.blue { color: var(--blue); }
+      .kpi-value.red { color: var(--red); }
+      .kpi-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+
+      /* Metrics table */
+      .table-wrap {
+        border: 1px solid var(--border); overflow: auto;
+      }
+      table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 720px; }
+      thead { background: var(--surface); }
+      th {
+        text-align: left; padding: 0.85rem 1rem; font-family: var(--font-mono);
+        font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--text-muted); border-bottom: 1px solid var(--border);
+      }
+      td {
+        padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); color: var(--text);
+        vertical-align: top;
+      }
+      tr:last-child td { border-bottom: none; }
+      tbody tr:hover { background: var(--card-hover); }
+      .axis { color: var(--gold); font-weight: 500; }
+      .metric { color: var(--text-dim); font-family: var(--font-mono); font-size: 0.78rem; }
+      .num { font-family: var(--font-mono); color: var(--text); }
+      .num.green { color: var(--green); }
+      .num.red { color: var(--red); }
+      .badge {
+        display: inline-block; padding: 0.18rem 0.5rem; border-radius: 2px;
+        font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em;
+        text-transform: uppercase; border: 1px solid;
+      }
+      .badge.gold { background: var(--gold-glow); color: var(--gold); border-color: var(--gold-dim); }
+      .badge.green { background: var(--green-dim); color: var(--green); border-color: rgba(34, 201, 122, 0.3); }
+      .badge.blue { background: var(--blue-dim); color: var(--blue); border-color: rgba(61, 124, 255, 0.3); }
+      .badge.red { background: var(--red-dim); color: var(--red); border-color: rgba(244, 61, 94, 0.3); }
+
+      /* AI surface cards */
+      .surfaces { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
+      .surface { background: var(--card); border: 1px solid var(--border); padding: 1.75rem; position: relative; transition: border-color 0.25s; }
+      .surface:hover { border-color: var(--border-hi); }
+      .surface .num { font-family: var(--font-mono); font-size: 0.62rem; color: var(--gold-dim); letter-spacing: 0.15em; margin-bottom: 1rem; }
+      .surface h3 { font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; margin-bottom: 0.5rem; }
+      .surface p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.65; margin-bottom: 0.85rem; }
+      .surface dl { font-size: 0.78rem; color: var(--text-dim); line-height: 1.55; }
+      .surface dt { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.5rem; }
+      .surface dd { color: var(--text); margin-top: 0.2rem; }
+      .surface .pills { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 1rem; }
+      .pill { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.06em; padding: 0.18rem 0.55rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-hi); color: var(--text-dim); border-radius: 2px; }
+      .pill.hi { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
+
+      /* Timeline */
+      .timeline { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; border: 1px solid var(--border); }
+      .timeline::after {
+        content: ''; position: absolute; top: 60px; left: 0; right: 0; height: 2px;
+        background: var(--border); pointer-events: none; z-index: 0;
+      }
+      .phase { position: relative; z-index: 1; padding: 0; border-right: 1px solid var(--border); }
+      .phase:last-child { border-right: none; }
+      .phase-header { padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--border); position: relative; }
+      .phase-dot { position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--bg); }
+      .dot-done { background: var(--green); box-shadow: 0 0 10px var(--green); }
+      .dot-active { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+      .dot-future { background: var(--border-hi); }
+      .phase-num { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem; }
+      .phase-name { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; line-height: 1.25; margin-bottom: 0.35rem; }
+      .phase-period { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); }
+      .phase-body { padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; }
+
+      /* Risk list */
+      .risks { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+      .risk { background: var(--card); border: 1px solid var(--border); padding: 1.5rem; }
+      .risk-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+      .risk-head .badge { white-space: nowrap; }
+      .risk h4 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; }
+      .risk p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
+
+      /* Pipeline ASCII-ish boxes */
+      .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; }
+      .pipe { background: var(--card); border: 1px solid var(--border); padding: 1.25rem 1.4rem; position: relative; }
+      .pipe .step { font-family: var(--font-mono); font-size: 0.6rem; color: var(--gold); letter-spacing: 0.18em; margin-bottom: 0.5rem; }
+      .pipe h4 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
+      .pipe p { font-size: 0.8rem; color: var(--text-dim); line-height: 1.55; }
+      .pipe::after {
+        content: '→'; position: absolute; right: -0.85rem; top: 50%; transform: translateY(-50%);
+        color: var(--gold-dim); font-family: var(--font-mono); font-size: 1.1rem; z-index: 2;
+      }
+      .pipe:last-child::after { content: ''; }
+
+      /* Checklist */
+      .checklist { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.5rem; }
+      .check { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; background: var(--card); border: 1px solid var(--border); font-size: 0.85rem; color: var(--text); }
+      .check .box { width: 16px; height: 16px; border: 1px solid var(--border-hi); flex-shrink: 0; margin-top: 0.18rem; }
+      .check .meta { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); margin-top: 0.2rem; letter-spacing: 0.05em; }
+
+      footer { border-top: 1px solid var(--border); padding: 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+      .footer-l { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+      .footer-r { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); }
+      .footer-r span { color: var(--gold); }
+
+      @media (max-width: 800px) {
+        .timeline { grid-template-columns: 1fr 1fr; }
+        .phase { border-right: none; border-top: 1px solid var(--border); }
+        .phase:nth-child(odd) { border-right: 1px solid var(--border); }
+        .phase:first-child, .phase:nth-child(2) { border-top: none; }
+      }
+      @media (max-width: 520px) {
+        .timeline { grid-template-columns: 1fr; }
+        .phase { border-right: none !important; border-top: 1px solid var(--border); }
+        .phase:first-child { border-top: none; }
+        .pipe::after { content: ''; }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-logo">OptiTrade / QA-Eval</div>
+      <ul class="nav-links">
+        <li><a href="#architecture">AI Surfaces</a></li>
+        <li><a href="#pipeline">Pipeline</a></li>
+        <li><a href="#metrics">Metrics</a></li>
+        <li><a href="#timeline">Timeline</a></li>
+        <li><a href="#risks">Risks</a></li>
+        <li><a href="#checklist">Checklist</a></li>
+      </ul>
+      <div class="nav-badge">Final Report · Jul 17 2026</div>
+    </nav>
+
+    <div class="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-tag">COMP7705 Capstone Project</div>
+      <h1 class="hero-title">QA Evaluation<br /><em>Plan &amp; Expected Results</em></h1>
+      <p class="hero-subtitle">
+        A 175-prompt harness over the six AI surfaces in OptiTrade Copilot,
+        scored with DeepEval + RAGAS and a two-judge Cohen-κ protocol,
+        targeting the proposal's <em>"reduce hallucination rate"</em>
+        objective.
+      </p>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Owner</span>
+          <span class="hero-meta-value">Cheung Ching Nam (M4)</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Today</span>
+          <span class="hero-meta-value">2026-06-24</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Final Report</span>
+          <span class="hero-meta-value">2026-07-17</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Eval benchmark</span>
+          <span class="hero-meta-value" style="color: var(--gold)">2026-07-08 (M4)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <section style="padding-top: 4rem; padding-bottom: 2rem;">
+      <div class="section-label">At a glance</div>
+      <h2 class="section-title">Key <em>numbers</em></h2>
+      <div class="kpi-strip">
+        <div class="kpi">
+          <div class="kpi-value gold">175</div>
+          <div class="kpi-label">Curated eval prompts</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-value green">6</div>
+          <div class="kpi-label">AI surfaces covered</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-value blue">11</div>
+          <div class="kpi-label">Measured axes</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-value gold">2</div>
+          <div class="kpi-label">LLM judges (κ reported)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-value red">≤ 20%</div>
+          <div class="kpi-label">Hallucination target</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-value green">≥ 0.85</div>
+          <div class="kpi-label">Faithfulness target</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-value blue">≤ 1.5s</div>
+          <div class="kpi-label">TTFT p50 target</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="section-label">01 — AI Surfaces</div>
+      <h2 class="section-title">Six AI surfaces, <em>two gateways</em></h2>
+      <p class="section-desc">
+        Two distinct LLM gateways feed OptiTrade Copilot. The backend routes
+        three widget insights through <em>OpenRouter + LangChain</em>; the
+        frontend talks to the chat panel over a <em>Nanobot WebSocket</em>.
+        Each surface has a deterministic substrate, a fallback path, and
+        a measurable contract.
+      </p>
+      <div class="surfaces">
+        <div class="surface">
+          <div class="num">2.1 — BACKEND</div>
+          <h3>Portfolio Insight</h3>
+          <p>LLM-backed <code>insight</code> + <code>strategy[]</code> from a
+            portfolio snapshot; deterministic concentration fallback.</p>
+          <dl>
+            <dt>Route</dt><dd><code>GET /api/ai/widget/portfolio</code></dd>
+            <dt>Model</dt><dd>OpenRouter · temp 0.25 · 220 tok</dd>
+            <dt>Substrate</dt><dd>Portfolio JSON + per-holding chart pattern</dd>
+            <dt>Fallback</dt><dd><code>_fallback_analysis</code> (no LLM)</dd>
+          </dl>
+          <div class="pills">
+            <span class="pill hi">Strict JSON</span><span class="pill">LCEL</span>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="num">2.2 — BACKEND</div>
+          <h3>Stock-Chart Recommendation</h3>
+          <p>Four-section Markdown commentary on momentum + indicators + levels.</p>
+          <dl>
+            <dt>Route</dt><dd><code>GET /api/ai/widget/stock-chart</code></dd>
+            <dt>Model</dt><dd>OpenRouter · temp 0.35 · 400 tok</dd>
+            <dt>Substrate</dt><dd>RSI-14, SMA-20/50, 1/5/20-bar returns</dd>
+            <dt>Fallback</dt><dd>None — 502 if LLM unavailable</dd>
+          </dl>
+          <div class="pills">
+            <span class="pill hi">Required</span><span class="pill">Profiled</span>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="num">2.3 — BACKEND</div>
+          <h3>Chart-Pattern Explanation</h3>
+          <p>Deterministic pivot-geometry detector + optional LLM explanation.</p>
+          <dl>
+            <dt>Route</dt><dd><code>GET /api/ai/widget/stock-chart/patterns</code></dd>
+            <dt>Detector</dt><dd>6 patterns · pivot_geometry</dd>
+            <dt>LLM</dt><dd>Optional; if key unset → <code>deterministic-pattern-summary</code></dd>
+            <dt>Fallback</dt><dd>Template over <code>displayName</code>, <code>breakout_level</code>, <code>invalidation_level</code></dd>
+          </dl>
+          <div class="pills">
+            <span class="pill hi">Optional LLM</span><span class="pill">6 patterns</span>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="num">2.4 — BACKEND</div>
+          <h3>Support / Resistance Overlay</h3>
+          <p>Pivot-cluster S/R for chart overlay. <strong>No LLM.</strong></p>
+          <dl>
+            <dt>Route</dt><dd><code>GET /api/ai/widget/stock-chart/support-resistance</code></dd>
+            <dt>Method</dt><dd><code>pivot_clusters</code> (deterministic)</dd>
+            <dt>Role</dt><dd>Baseline comparator for §2.3 in the eval harness</dd>
+          </dl>
+          <div class="pills">
+            <span class="pill">Deterministic</span>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="num">2.5 — BACKEND</div>
+          <h3>News Sentiment (batch)</h3>
+          <p>15-min cron → RSS filter → OpenRouter sentiment + risk_tag + highlights.</p>
+          <dl>
+            <dt>Model</dt><dd>OpenRouter raw HTTP · <code>openrouter/free</code> default</dd>
+            <dt>Guardrails</dt><dd>Post-processing physical guardrails (sentiment↔risk consistency)</dd>
+            <dt>Fallback</dt><dd><code>_mock_analysis</code> (keyword-driven)</dd>
+            <dt>Score</dt><dd>Internal <code>readiness_score</code> 0–100</dd>
+          </dl>
+          <div class="pills">
+            <span class="pill hi">Phase 3 RAG</span><span class="pill">Strict prompt</span>
+          </div>
+        </div>
+        <div class="surface">
+          <div class="num">2.6 — FRONTEND</div>
+          <h3>AI Chat Panel</h3>
+          <p>Nanobot WebSocket streaming <code>delta</code>, <code>reasoning_delta</code>,
+            OpenUI Lang rendering, slash-commands, multi-widget context.</p>
+          <dl>
+            <dt>Endpoint</dt><dd><code>ws://178.128.213.162:8765</code></dd>
+            <dt>Parser</dt><dd><code>StreamingThinkParser</code> (chunked-tag safe)</dd>
+            <dt>Renderer</dt><dd><code>SmartRenderer</code> (Markdown + OpenUI)</dd>
+            <dt>Context</dt><dd><code>[Widget Context]</code> prefix · auto-clear</dd>
+          </dl>
+          <div class="pills">
+            <span class="pill hi">Streaming</span><span class="pill">Reasoning visible</span><span class="pill">Slash-cmds</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section id="pipeline">
+      <div class="section-label">02 — Harness Pipeline</div>
+      <h2 class="section-title">From <em>prompts</em> to <em>graded results</em></h2>
+      <p class="section-desc">
+        One nightly job. 175 prompts → live OptiTrade chat/AI widgets → two
+        LLM judges → DeepEval + RAGAS metrics → Cohen's κ → CSV + junit.xml.
+      </p>
+      <div class="pipeline">
+        <div class="pipe">
+          <div class="step">STEP 01</div>
+          <h4>Reference sets</h4>
+          <p>50 grounded · 30 bait · 20 OpenUI · 25 portfolio · 25 chart-rec · 25 pattern.</p>
+        </div>
+        <div class="pipe">
+          <div class="step">STEP 02</div>
+          <h4>Run under test</h4>
+          <p>Live OpenRouter + local fake-nanobot WebSocket stand-in.</p>
+        </div>
+        <div class="pipe">
+          <div class="step">STEP 03</div>
+          <h4>Two judges</h4>
+          <p>Judge A = project model. Judge B = different-family via OpenRouter.</p>
+        </div>
+        <div class="pipe">
+          <div class="step">STEP 04</div>
+          <h4>Metrics</h4>
+          <p>Faithfulness · Answer-relevance · Coverage · κ · TTFT · inter-delta.</p>
+        </div>
+        <div class="pipe">
+          <div class="step">STEP 05</div>
+          <h4>Report</h4>
+          <p>junit.xml + DeepEval cloud dashboard + CSV → <code>docs/eval-results-2026-07.md</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section id="metrics">
+      <div class="section-label">03 — Metric Targets</div>
+      <h2 class="section-title">Targets the QA panel will <em>see</em></h2>
+      <p class="section-desc">
+        Eleven measurable axes. Each row is reproducible from
+        <code>apps/backend/eval/run_eval.py</code> and the reference sets in
+        <code>apps/backend/eval/datasets/</code>. "Expected" comes from the
+        prompt contracts, the deterministic substrate, and the published
+        DeepEval / RAGAS defaults over comparable tasks.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Axis</th>
+              <th style="width: 22%">Metric</th>
+              <th style="width: 13%">Baseline</th>
+              <th style="width: 13%">Expected</th>
+              <th style="width: 13%">Target</th>
+              <th>Method</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="axis">Hallucination (chatbot)</td>
+              <td class="metric">Rate on bait set ↓</td>
+              <td class="num red">~60–70%</td>
+              <td class="num green">10–20%</td>
+              <td class="num">≤ 20%</td>
+              <td>DeepEval HallucinationMetric</td>
+            </tr>
+            <tr>
+              <td class="axis">Faithfulness (chatbot)</td>
+              <td class="metric">DeepEval score ↑</td>
+              <td class="num red">~0.55</td>
+              <td class="num green">0.85–0.95</td>
+              <td class="num">≥ 0.85</td>
+              <td>DeepEval FaithfulnessMetric + RAGAS</td>
+            </tr>
+            <tr>
+              <td class="axis">Answer-relevance</td>
+              <td class="metric">DeepEval score ↑</td>
+              <td class="num">n/a</td>
+              <td class="num green">0.80–0.88</td>
+              <td class="num">≥ 0.80</td>
+              <td>DeepEval AnswerRelevancyMetric</td>
+            </tr>
+            <tr>
+              <td class="axis">Multi-widget coverage</td>
+              <td class="metric">|referenced| / |pinned| ↑</td>
+              <td class="num red">0% (no ctx)</td>
+              <td class="num green">0.90–1.00</td>
+              <td class="num">≥ 0.90</td>
+              <td>Custom label-substring match</td>
+            </tr>
+            <tr>
+              <td class="axis">Disclaimer presence</td>
+              <td class="metric">"not investment advice" ∈ answer</td>
+              <td class="num">n/a</td>
+              <td class="num green">1.00</td>
+              <td class="num green">= 1.00 (hard)</td>
+              <td>Substring over 125 answers</td>
+            </tr>
+            <tr>
+              <td class="axis">TTFT (chatbot)</td>
+              <td class="metric">median first delta latency ↓</td>
+              <td class="num">n/a</td>
+              <td class="num green">0.6–1.5s</td>
+              <td class="num">≤ 1.5s</td>
+              <td><code>performance.now()</code> instrumentation</td>
+            </tr>
+            <tr>
+              <td class="axis">Inter-delta p95</td>
+              <td class="metric">95th-percentile gap ↓</td>
+              <td class="num">n/a</td>
+              <td class="num green">100–250ms</td>
+              <td class="num">≤ 250ms</td>
+              <td><code>performance.now()</code> instrumentation</td>
+            </tr>
+            <tr>
+              <td class="axis">Section adherence</td>
+              <td class="metric">4 **Overview/Momentum/Indicators/Levels** ↑</td>
+              <td class="num">n/a</td>
+              <td class="num green">0.90–0.98</td>
+              <td class="num">≥ 0.90</td>
+              <td>Markdown parse on chart-rec set</td>
+            </tr>
+            <tr>
+              <td class="axis">Pattern grounding</td>
+              <td class="metric">displayName + breakout + invalidation quoted ↑</td>
+              <td class="num">n/a</td>
+              <td class="num green">0.80–0.95</td>
+              <td class="num">≥ 0.80</td>
+              <td>Substring over pattern set</td>
+            </tr>
+            <tr>
+              <td class="axis">Inter-judge κ</td>
+              <td class="metric">Cohen's κ on supported/unsupported ↑</td>
+              <td class="num">n/a</td>
+              <td class="num green">0.55–0.75</td>
+              <td class="num">≥ 0.60</td>
+              <td>Two judges over same answers</td>
+            </tr>
+            <tr>
+              <td class="axis">OpenUI render</td>
+              <td class="metric">splitOpenUiResponse succeeds ↑</td>
+              <td class="num">n/a</td>
+              <td class="num green">0.85–0.95</td>
+              <td class="num">≥ 0.85</td>
+              <td>SmartRenderer parse test</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.82rem; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.04em;">
+        ↑ higher is better · ↓ lower is better. Baseline = no pinned context (ablation, optional).
+      </p>
+    </section>
+
+    <div class="divider"></div>
+
+    <section id="timeline">
+      <div class="section-label">04 — Timeline to Jul 17</div>
+      <h2 class="section-title">Five weeks, <em>one window</em></h2>
+      <p class="section-desc">
+        Today is 24 Jun. The eval benchmark must score by 8 Jul (M4). Nine
+        days of slack for hardening the harness, writing up the report, and
+        one dry run of the QA session.
+      </p>
+      <div class="timeline">
+        <div class="phase">
+          <div class="phase-header">
+            <div class="phase-dot dot-done"></div>
+            <div class="phase-num">Now</div>
+            <div class="phase-name">Inventory &amp; plan</div>
+            <div class="phase-period">24 Jun 2026</div>
+          </div>
+          <div class="phase-body">
+            <div><span class="badge green">done</span></div>
+            <div>docs/ai-usage-analysis.md, evaluation-research.md, qa-evaluation-plan.md, this page.</div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-header">
+            <div class="phase-dot dot-active"></div>
+            <div class="phase-num">W+1</div>
+            <div class="phase-name">Datasets + harness skeleton</div>
+            <div class="phase-period">25 Jun – 1 Jul</div>
+          </div>
+          <div class="phase-body">
+            <div><span class="badge gold">in flight</span></div>
+            <div>Curate 175 prompts; pytest + DeepEval scaffold; fake-nanobot WebSocket stand-in.</div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-header">
+            <div class="phase-dot dot-active"></div>
+            <div class="phase-num">W+2</div>
+            <div class="phase-name">Two-judge wiring + nightly run</div>
+            <div class="phase-period">2 – 8 Jul</div>
+          </div>
+          <div class="phase-body">
+            <div><span class="badge gold">upcoming</span></div>
+            <div>Judge B chosen; nightly job green; Cohen's κ reported.</div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-header">
+            <div class="phase-dot dot-future"></div>
+            <div class="phase-num">W+3</div>
+            <div class="phase-name">Hardening + dry run</div>
+            <div class="phase-period">9 – 15 Jul</div>
+          </div>
+          <div class="phase-body">
+            <div><span class="badge blue">plan</span></div>
+            <div>Flaky-test fixes, length-bias sanity check, one internal dry run of the QA session.</div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-header">
+            <div class="phase-dot dot-future"></div>
+            <div class="phase-num">W+4</div>
+            <div class="phase-name">Final report + oral</div>
+            <div class="phase-period">16 Jul – late Jul</div>
+          </div>
+          <div class="phase-body">
+            <div><span class="badge blue">plan</span></div>
+            <div>Submit by 17 Jul; oral exam late Jul.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section id="risks">
+      <div class="section-label">05 — Risks the panel will probe</div>
+      <h2 class="section-title">Five <em>named</em> risks, all mitigated</h2>
+      <p class="section-desc">
+        These are the most likely QA questions and the project's standing
+        answers. Each is referenced from <code>docs/ai-usage-analysis.md</code>.
+      </p>
+      <div class="risks">
+        <div class="risk">
+          <div class="risk-head">
+            <span class="badge red">High</span>
+            <h4>Single-judge bias ≈ 30%</h4>
+          </div>
+          <p>KRAFTON AI (2025) measured ~30% LLM-as-Judge bias on Chatbot Arena.
+            Project uses two judges and reports Cohen's κ — never quotes a
+            single-judge number as ground truth.</p>
+        </div>
+        <div class="risk">
+          <div class="risk-head">
+            <span class="badge gold">Med</span>
+            <h4>Length bias on judge</h4>
+          </div>
+          <p>Dubois et al. (2024) show judges prefer longer answers. Project
+            reports median answer length per set and flags if judge preference
+            correlates with length.</p>
+        </div>
+        <div class="risk">
+          <div class="risk-head">
+            <span class="badge gold">Med</span>
+            <h4>Eval-bait contamination</h4>
+          </div>
+          <p>The 30 bait prompts must not appear in any system-prompt dev log
+            or doc. Held out by the team; CI grep rule enforces it.</p>
+        </div>
+        <div class="risk">
+          <div class="risk-head">
+            <span class="badge blue">Low</span>
+            <h4>Nanobot WS unavailable</h4>
+          </div>
+          <p>Local <code>fake_nanobot.py</code> test backend decouples the
+            harness from the digital-ocean droplet. Eval never depends on it.</p>
+        </div>
+        <div class="risk">
+          <div class="risk-head">
+            <span class="badge blue">Low</span>
+            <h4>OpenRouter flakiness</h4>
+          </div>
+          <p>Per-prompt <code>max_retries=1</code>; nightly job is retryable;
+            429s counted separately. No live OpenRouter in CI.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section id="checklist">
+      <div class="section-label">06 — Demo-day checklist</div>
+      <h2 class="section-title">Ten items for <em>demo day</em></h2>
+      <p class="section-desc">
+        Each line is one click of the demo, one row of the result table, or
+        one bullet in the closing risks slide.
+      </p>
+      <div class="checklist">
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>apps/backend/eval/ in the repo, README explains the harness.</div>
+            <div class="meta">SETUP</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>Datasets present (50 + 30 + 20 + 25 + 25 + 25 prompts).</div>
+            <div class="meta">SETUP</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div><code>pytest apps/backend/eval -v</code> runs green on the mock LLM.</div>
+            <div class="meta">CI</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>Live run on the project model — results captured to
+              <code>docs/eval-results-2026-07.md</code>.</div>
+            <div class="meta">EVIDENCE</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>Two judges configured; Cohen's κ reported.</div>
+            <div class="meta">EVIDENCE</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>TTFT / inter-delta log present in the chat panel instrumentation.</div>
+            <div class="meta">EVIDENCE</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>One-page result slide ready (the metrics table from this page).</div>
+            <div class="meta">SLIDE</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>Ablation (no-context baseline) ready as backup.</div>
+            <div class="meta">DEMO</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>Three bullets on risks &amp; known limits
+              (two-judge, no live OR in CI, length bias).</div>
+            <div class="meta">CLOSE</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box"></div>
+          <div>
+            <div>Final report references the three companion docs (analysis,
+              research, plan) and this page.</div>
+            <div class="meta">REPORT</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <footer>
+      <div class="footer-l">COMP7705 CAPSTONE PROJECT &nbsp;·&nbsp; THE UNIVERSITY OF HONG KONG &nbsp;·&nbsp; 2025–2026</div>
+      <div class="footer-r">LAST UPDATED <span>24 JUN 2026</span> &nbsp;·&nbsp; SEE <span>docs/qa-evaluation-plan.md</span></div>
+    </footer>
+  </body>
+</html>

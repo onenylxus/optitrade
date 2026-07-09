@@ -14,6 +14,32 @@ class PortfolioStrategyAction(BaseModel):
     reason: str = Field(description="Short explanation grounded in the portfolio data.")
 
 
+class PortfolioSignalLens(BaseModel):
+    """Per-lens interpretation of a portfolio position signal."""
+
+    bias: str = Field(description="Bias label such as bullish, bearish, or neutral.")
+    explanation: str | None = Field(
+        default=None,
+        description="Short explanation for why this lens leans in that direction.",
+    )
+
+
+class PortfolioSignalLenses(BaseModel):
+    """Lens-specific signals shown in the portfolio widget."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    technical: PortfolioSignalLens = Field(description="Default technical read.")
+    day_trade: PortfolioSignalLens = Field(
+        serialization_alias="day-trade",
+        description="Short-horizon day-trading interpretation.",
+    )
+    buy_and_hold: PortfolioSignalLens = Field(
+        serialization_alias="buy-and-hold",
+        description="Longer-horizon buy-and-hold interpretation.",
+    )
+
+
 class PortfolioPositionSignal(BaseModel):
     """Compact technical sentiment badge for a portfolio symbol."""
 
@@ -34,6 +60,10 @@ class PortfolioPositionSignal(BaseModel):
     explanation: str | None = Field(
         default=None,
         description="Short hover explanation for the technical sentiment badge.",
+    )
+    lenses: PortfolioSignalLenses | None = Field(
+        default=None,
+        description="Lens-specific interpretations for the same position.",
     )
 
 

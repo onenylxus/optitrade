@@ -221,3 +221,41 @@ export function normalizeSymbolList(symbols: string[], max = 3): string[] {
   }
   return out;
 }
+
+const STOCK_CHART_SYMBOL_SELECTED_EVENT = 'optitrade:stock-chart-symbol-selected';
+
+export function requestStockChartSymbolSelection(rawSymbol: string): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const symbol = normalizeTicker(rawSymbol);
+  if (!symbol) {
+    return false;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent<string>(STOCK_CHART_SYMBOL_SELECTED_EVENT, {
+      detail: symbol,
+    }),
+  );
+  return true;
+}
+
+export function subscribeToStockChartSymbolSelection(
+  listener: (symbol: string) => void,
+): () => void {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const handleSelection = (event: Event) => {
+    const symbol = normalizeTicker((event as CustomEvent<string>).detail ?? '');
+    if (symbol) {
+      listener(symbol);
+    }
+  };
+
+  window.addEventListener(STOCK_CHART_SYMBOL_SELECTED_EVENT, handleSelection);
+  return () => window.removeEventListener(STOCK_CHART_SYMBOL_SELECTED_EVENT, handleSelection);
+}

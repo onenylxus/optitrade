@@ -222,6 +222,17 @@ export interface PortfolioStrategyAction {
   reason: string;
 }
 
+export interface PortfolioSignalLensView {
+  bias: string;
+  explanation?: string | null;
+}
+
+export interface PortfolioPositionSignalLenses {
+  technical?: PortfolioSignalLensView | null;
+  'day-trade'?: PortfolioSignalLensView | null;
+  'buy-and-hold'?: PortfolioSignalLensView | null;
+}
+
 export interface PortfolioPositionSignal {
   symbol: string;
   bias: string;
@@ -229,6 +240,7 @@ export interface PortfolioPositionSignal {
   pattern?: string | null;
   status?: string | null;
   explanation?: string | null;
+  lenses?: PortfolioPositionSignalLenses | null;
 }
 
 /**

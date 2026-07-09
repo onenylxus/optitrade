@@ -125,6 +125,39 @@ class PortfolioTests(unittest.TestCase):
         self.assertEqual(snapshot["history"][-1]["value"], 3900)
         self.assertEqual(snapshot["summary"]["dailyPnl"], 300.0)
 
+    def test_empty_editable_portfolio_drives_empty_snapshot(self):
+        save_response = self.client.put(
+            "/api/portfolio/editable",
+            json={
+                "name": "Empty Widget Portfolio",
+                "positions": [],
+                "history": [
+                    {"time": "09:30", "value": 100000},
+                    {"time": "15:30", "value": 125000},
+                ],
+            },
+        )
+
+        self.assertEqual(save_response.status_code, 200)
+        editable_payload = save_response.json()
+        self.assertEqual(editable_payload["name"], "Empty Widget Portfolio")
+        self.assertEqual(editable_payload["positions"], [])
+        self.assertTrue(
+            all(point["value"] == 0 for point in editable_payload["history"])
+        )
+
+        reload_response = self.client.get("/api/portfolio")
+        snapshot = reload_response.json()
+
+        self.assertEqual(reload_response.status_code, 200)
+        self.assertEqual(snapshot["source"], "paper")
+        self.assertEqual(snapshot["positions"], [])
+        self.assertEqual(snapshot["sectorValues"], [])
+        self.assertEqual(snapshot["summary"]["totalValue"], 0.0)
+        self.assertEqual(snapshot["summary"]["pnl"], 0.0)
+        self.assertEqual(snapshot["summary"]["pnlPercent"], 0.0)
+        self.assertTrue(all(point["value"] == 0 for point in snapshot["history"]))
+
     def test_connection_endpoint_validates_and_returns_status(self):
         with patch(
             "src.portfolio.validate_ibkr_connection",

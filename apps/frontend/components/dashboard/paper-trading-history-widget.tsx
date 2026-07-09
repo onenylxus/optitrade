@@ -1,61 +1,22 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Bot, ChevronDown, ChevronUp, Info, TrendingDown, TrendingUp, X } from 'lucide-react';
+import {
+  Activity,
+  AlertCircle,
+  Bot,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp,
+  X,
+} from 'lucide-react';
 import { BaseWidget } from './base-widget';
-import { BACKEND_URL } from '@/lib/api/client';
+import type { PaperHistoryResponse, PaperStats, PaperTrade } from '@/lib/paper-trading';
 
-type TradeStatus = 'open' | 'closed';
-type CloseReason = 'STOP_LOSS' | 'TARGET_HIT' | 'TRAILING_STOP' | 'CLOSE' | null;
-
-interface Trade {
-  id: string;
-  symbol: string;
-  strategy: string;
-  side: string;
-  status: TradeStatus;
-  avgPrice: number;
-  entry_price: number;
-  currentPrice: number;
-  live_price?: number;
-  quantity: number;
-  target_price: number;
-  stop_loss: number;
-  pnl_pct: number;
-  close_reason: CloseReason;
-  closed_at: string | null;
-  sector: string;
-  notes: string;
-  created_at: string;
-}
-
-interface HistoryStats {
-  totalTrades: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-  avgWinPct: number;
-  avgLossPct: number;
-  totalPnlPct: number;
-}
-
-function computeStats(trades: Trade[]): HistoryStats | null {
-  const closed = trades.filter((t) => t.status === 'closed' || t.close_reason);
-  if (closed.length === 0) return null;
-  const wins = closed.filter((t) => t.pnl_pct >= 0);
-  const losses = closed.filter((t) => t.pnl_pct < 0);
-  const winRates = wins.map((t) => t.pnl_pct);
-  const lossRates = losses.map((t) => t.pnl_pct);
-  return {
-    totalTrades: closed.length,
-    wins: wins.length,
-    losses: losses.length,
-    winRate: (wins.length / closed.length) * 100,
-    avgWinPct: winRates.length > 0 ? winRates.reduce((a, b) => a + b, 0) / winRates.length : 0,
-    avgLossPct: lossRates.length > 0 ? lossRates.reduce((a, b) => a + b, 0) / lossRates.length : 0,
-    totalPnlPct: closed.reduce((sum, t) => sum + (t.pnl_pct || 0), 0),
-  };
-}
+type Tab = 'ALL' | 'OPEN' | 'CLOSED';
 
 const REASON_BADGE: Record<string, string> = {
   STOP_LOSS: 'bg-red-500/20 text-red-400',
@@ -64,20 +25,59 @@ const REASON_BADGE: Record<string, string> = {
   CLOSE: 'bg-gray-500/20 text-gray-400',
 };
 
-function TradeCard({ trade }: { trade: Trade }) {
+function fmtMoney(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '—';
+  const sign = n < 0 ? '-' : '';
+  const abs = Math.abs(n);
+  return `${sign}$${abs.toFixed(2)}`;
+}
+
+function fmtPct(n: number | null | undefined, digits = 2): string {
+  if (n == null || !Number.isFinite(n)) return '—';
+  return `${n >= 0 ? '+' : ''}${n.toFixed(digits)}%`;
+}
+
+function fmtAbs(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '—';
+  const sign = n >= 0 ? '+' : '-';
+  return `${sign}$${Math.abs(n).toFixed(2)}`;
+}
+
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function fmtRelativeTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function TradeCard({ trade }: { trade: PaperTrade }) {
   const [expanded, setExpanded] = useState(false);
-  const isWin = trade.pnl_pct >= 0;
+  const pnlPct = trade.pnl_pct ?? 0;
+  const isWin = pnlPct >= 0;
   const pnlColor = isWin ? 'text-green-500' : 'text-red-500';
   const bgColor = isWin ? 'bg-green-500/5' : 'bg-red-500/5';
   const borderColor = isWin ? 'border-green-500/20' : 'border-red-500/20';
   const Icon = isWin ? TrendingUp : TrendingDown;
   const isClosed = trade.status === 'closed' || trade.close_reason != null;
+  const displayPrice = isClosed ? trade.exit_price ?? trade.current_price : trade.live_price;
+  const isStale = trade.status === 'open' && trade.price_stale;
 
   return (
     <div className={`flex flex-col gap-2 rounded-lg border ${borderColor} ${bgColor} p-3 transition-all`}>
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="font-mono text-sm font-bold">{trade.symbol}</span>
           <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
             trade.side === 'LONG' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
@@ -87,12 +87,11 @@ function TradeCard({ trade }: { trade: Trade }) {
           <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary/70">
             {trade.strategy}
           </span>
-          {isClosed && trade.close_reason && (
+          {isClosed && trade.close_reason ? (
             <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${REASON_BADGE[trade.close_reason] || 'bg-gray-500/20 text-gray-400'}`}>
-              {trade.close_reason?.replace('_', ' ')}
+              {trade.close_reason.replace('_', ' ')}
             </span>
-          )}
-          {!isClosed && (
+          ) : (
             <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-bold text-blue-400">
               OPEN
             </span>
@@ -101,13 +100,13 @@ function TradeCard({ trade }: { trade: Trade }) {
         <div className="flex items-center gap-2">
           <span className={`flex items-center gap-0.5 ${pnlColor}`}>
             <Icon className="size-3" />
-            <span className="font-mono text-sm font-bold">
-              {isWin ? '+' : ''}{trade.pnl_pct.toFixed(2)}%
-            </span>
+            <span className="font-mono text-sm font-bold">{fmtPct(pnlPct)}</span>
           </span>
           <button
-            onClick={() => setExpanded(!expanded)}
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
             className="flex items-center justify-center rounded p-0.5 text-muted-foreground hover:bg-muted/50"
+            aria-label={expanded ? 'Collapse' : 'Expand'}
           >
             {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
           </button>
@@ -123,22 +122,22 @@ function TradeCard({ trade }: { trade: Trade }) {
       {/* Quick stats */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span>
-          Entry: <span className="font-mono font-semibold text-foreground">${trade.entry_price.toFixed(2)}</span>
-        </span>
-        {isClosed ? (
-          <span>
-            Exit: <span className="font-mono font-semibold text-foreground">${trade.currentPrice.toFixed(2)}</span>
-          </span>
-        ) : (
-          <span>
-            Live: <span className={`font-mono font-semibold ${pnlColor}`}>${(trade.live_price || trade.currentPrice).toFixed(2)}</span>
-          </span>
-        )}
-        <span>
-          Target: <span className="font-mono font-semibold text-green-500">${trade.target_price.toFixed(2)}</span>
+          Entry: <span className="font-mono font-semibold text-foreground">{fmtMoney(trade.entry_price)}</span>
         </span>
         <span>
-          Stop: <span className="font-mono font-semibold text-red-500">${trade.stop_loss.toFixed(2)}</span>
+          {isClosed ? 'Exit' : 'Live'}:{' '}
+          <span className={`font-mono font-semibold ${isClosed ? 'text-foreground' : pnlColor}`}>
+            {fmtMoney(displayPrice)}
+          </span>
+          {!isClosed && isStale && (
+            <span className="ml-1 text-[9px] text-yellow-500">(stale)</span>
+          )}
+        </span>
+        <span>
+          Target: <span className="font-mono font-semibold text-green-500">{fmtMoney(trade.target_price)}</span>
+        </span>
+        <span>
+          Stop: <span className="font-mono font-semibold text-red-500">{fmtMoney(trade.stop_loss)}</span>
         </span>
         <span>
           Qty: <span className="font-mono font-semibold text-foreground">{trade.quantity}</span>
@@ -155,29 +154,33 @@ function TradeCard({ trade }: { trade: Trade }) {
             <div className="flex items-center justify-between rounded bg-muted/30 px-2 py-1">
               <span className="text-muted-foreground">Max Loss</span>
               <span className="font-mono font-semibold text-red-400">
-                {((trade.stop_loss / trade.entry_price - 1) * 100).toFixed(1)}%
+                {fmtPct((trade.stop_loss / trade.entry_price - 1) * 100, 1)}
               </span>
             </div>
             <div className="flex items-center justify-between rounded bg-muted/30 px-2 py-1">
               <span className="text-muted-foreground">Upside</span>
               <span className="font-mono font-semibold text-green-400">
-                +{((trade.target_price / trade.entry_price - 1) * 100).toFixed(1)}%
+                +{(((trade.target_price / trade.entry_price) - 1) * 100).toFixed(1)}%
               </span>
             </div>
             <div className="flex items-center justify-between rounded bg-muted/30 px-2 py-1">
+              <span className="text-muted-foreground">$ P&amp;L</span>
+              <span className={`font-mono font-semibold ${pnlColor}`}>{fmtAbs(trade.pnl_abs)}</span>
+            </div>
+            <div className="flex items-center justify-between rounded bg-muted/30 px-2 py-1">
               <span className="text-muted-foreground">Opened</span>
-              <span className="font-mono text-foreground">
-                {trade.created_at ? new Date(trade.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
-              </span>
+              <span className="font-mono text-foreground">{fmtDate(trade.created_at)}</span>
             </div>
             {isClosed && (
               <div className="flex items-center justify-between rounded bg-muted/30 px-2 py-1">
                 <span className="text-muted-foreground">Closed</span>
-                <span className="font-mono text-foreground">
-                  {trade.closed_at ? new Date(trade.closed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
-                </span>
+                <span className="font-mono text-foreground">{fmtDate(trade.closed_at)}</span>
               </div>
             )}
+            <div className="flex items-center justify-between rounded bg-muted/30 px-2 py-1">
+              <span className="text-muted-foreground">Source</span>
+              <span className="font-mono text-foreground">{trade.price_source}</span>
+            </div>
           </div>
         </div>
       )}
@@ -185,7 +188,7 @@ function TradeCard({ trade }: { trade: Trade }) {
   );
 }
 
-function StatsBar({ stats }: { stats: HistoryStats | null }) {
+function StatsBar({ stats }: { stats: PaperStats | null }) {
   if (!stats) return null;
   return (
     <div className="mb-3 grid grid-cols-4 gap-2">
@@ -209,7 +212,7 @@ function StatsBar({ stats }: { stats: HistoryStats | null }) {
         </span>
       </div>
       <div className="flex flex-col items-center justify-center rounded-lg bg-card p-2">
-        <span className="text-[10px] text-muted-foreground">Total P&L</span>
+        <span className="text-[10px] text-muted-foreground">Total P&amp;L</span>
         <span className={`font-mono text-base font-bold ${stats.totalPnlPct >= 0 ? 'text-green-500' : 'text-red-500'}`}>
           {stats.totalPnlPct >= 0 ? '+' : ''}{stats.totalPnlPct.toFixed(1)}%
         </span>
@@ -218,90 +221,134 @@ function StatsBar({ stats }: { stats: HistoryStats | null }) {
   );
 }
 
-type Tab = 'ALL' | 'OPEN' | 'CLOSED';
+function loadData(setTrades: (t: PaperTrade[]) => void, setStats: (s: PaperStats | null) => void, setAsOf: (s: string) => void, setError: (e: string | null) => void, setLoading: (l: boolean) => void) {
+  // Always hit the Next.js proxy — it has the live-price enrichment logic.
+  fetch('/api/paper-trading/history', { cache: 'no-store' })
+    .then(async (r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return (await r.json()) as PaperHistoryResponse;
+    })
+    .then((data) => {
+      const positions = Array.isArray(data?.positions) ? data.positions : [];
+      setTrades(positions);
+      setStats(data?.stats ?? null);
+      setAsOf(data?.asOf ?? new Date().toISOString());
+      setError(null);
+    })
+    .catch((err) => {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+      setTrades([]);
+      setStats(null);
+    })
+    .finally(() => setLoading(false));
+}
 
 export function PaperTradingHistoryWidget() {
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [trades, setTrades] = useState<PaperTrade[]>([]);
+  const [stats, setStats] = useState<PaperStats | null>(null);
+  const [asOf, setAsOf] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('ALL');
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/paper-trading/history`)
-      .then((r) => r.json())
-      .then((data) => {
-        // Guard: API can return { error } on failure, or { positions } on success
-        if (!data) { setTrades([]); return; }
-        const positions: Trade[] = Array.isArray(data)
-          ? data
-          : Array.isArray(data.positions) ? data.positions : [];
-        setTrades(positions);
-      })
-      .catch(() => {
-        fetch('/api/paper-trading/history')
-          .then((r) => r.json())
-          .then((d) => {
-            if (!d) { setTrades([]); return; }
-            const positions: Trade[] = Array.isArray(d)
-              ? d
-              : Array.isArray(d.positions) ? d.positions : [];
-            setTrades(positions);
-          })
-          .catch(() => setTrades([]));
-      })
-      .finally(() => setLoading(false));
+    loadData(setTrades, setStats, setAsOf, setError, setLoading);
   }, []);
 
-  const filtered = Array.isArray(trades)
-    ? tab === 'ALL'
-      ? trades
-      : tab === 'OPEN'
-        ? trades.filter((t) => t.status !== 'closed' && !t.close_reason)
-        : trades.filter((t) => t.status === 'closed' || t.close_reason)
-    : [];
+  const openCount = trades.filter((t) => t.status !== 'closed' && !t.close_reason).length;
+  const closedCount = trades.filter((t) => t.status === 'closed' || t.close_reason != null).length;
 
-  const stats = Array.isArray(trades) ? computeStats(trades) : null;
+  const filtered = tab === 'ALL'
+    ? trades
+    : tab === 'OPEN'
+      ? trades.filter((t) => t.status !== 'closed' && !t.close_reason)
+      : trades.filter((t) => t.status === 'closed' || t.close_reason != null);
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'ALL', label: `All (${trades.length})` },
-    { key: 'OPEN', label: `Open (${filtered.filter((t) => t.status !== 'closed' && !t.close_reason).length})` },
-    { key: 'CLOSED', label: `Closed (${filtered.filter((t) => t.status === 'closed' || t.close_reason).length})` },
+    { key: 'OPEN', label: `Open (${openCount})` },
+    { key: 'CLOSED', label: `Closed (${closedCount})` },
   ];
+
+  const refresh = () => {
+    setLoading(true);
+    loadData(setTrades, setStats, setAsOf, setError, setLoading);
+  };
 
   return (
     <BaseWidget
       title="Paper Trading History"
       summary={
         stats
-          ? `${stats.wins}W/${stats.losses}L · ${stats.winRate.toFixed(0)}% win rate`
-          : `${trades.length} position${trades.length !== 1 ? 's' : ''} open`
+          ? `${stats.wins}W/${stats.losses}L · ${stats.winRate.toFixed(0)}% win rate · ${openCount} open`
+          : `${openCount} open · ${closedCount} closed`
       }
+      contextData={{
+        label: 'Paper Trading',
+        text: stats
+          ? `Win rate ${stats.winRate.toFixed(0)}% across ${stats.totalTrades} closed. ${openCount} open.`
+          : `${openCount} open positions.`,
+      }}
       createdByNanobot
     >
       {loading ? (
         <div className="flex items-center justify-center py-8 text-muted-foreground">
           <Bot className="size-5 animate-pulse" />
         </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+          <AlertCircle className="size-6 text-red-500" />
+          <p className="text-sm">Could not load history</p>
+          <p className="text-xs">{error}</p>
+          <button
+            type="button"
+            onClick={refresh}
+            className="mt-1 flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20"
+          >
+            <RefreshCw className="size-3" />
+            Retry
+          </button>
+        </div>
       ) : (
         <>
           <StatsBar stats={stats} />
 
-          {/* Tabs */}
-          <div className="mb-3 flex gap-1">
-            {tabs.map(({ key, label }) => (
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex gap-1">
+              {tabs.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  className={`rounded px-2 py-0.5 text-xs transition-colors ${
+                    tab === key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              {asOf && (
+                <span className="text-[10px] text-muted-foreground">
+                  <Activity className="mr-0.5 inline size-2.5" />
+                  {fmtRelativeTime(asOf)}
+                </span>
+              )}
               <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`rounded px-2 py-0.5 text-xs transition-colors ${
-                  tab === key
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
+                type="button"
+                onClick={refresh}
+                className="rounded p-0.5 text-muted-foreground hover:bg-muted/50"
+                title="Refresh"
+                aria-label="Refresh"
               >
-                {label}
+                <RefreshCw className="size-3" />
               </button>
-            ))}
+            </div>
           </div>
 
-          {/* Trade list */}
           <div className="flex flex-col gap-2 overflow-y-auto">
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
@@ -309,9 +356,7 @@ export function PaperTradingHistoryWidget() {
                 <p className="text-sm">No trades in this tab</p>
               </div>
             ) : (
-              filtered.map((trade) => (
-                <TradeCard key={trade.id} trade={trade} />
-              ))
+              filtered.map((trade) => <TradeCard key={trade.id} trade={trade} />)
             )}
           </div>
         </>

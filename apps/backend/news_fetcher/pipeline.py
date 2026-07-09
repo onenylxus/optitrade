@@ -3,12 +3,25 @@ import time
 import json
 import re
 import os
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import List, Dict
 
 from .fetcher import YahooNewsFetcher, EconomicTimesFetcher, NewsItem
 from .analyzer import CloudAnalyzer
 from .config import OUTPUT_FILE, CONFIDENCE_FACTOR_FILE
+# Make `src` importable when this module is run from anywhere (the news_fetcher
+# package sits at apps/backend/news_fetcher/, two levels under apps/backend/).
+_PIPELINE_HERE = Path(__file__).resolve()
+_BACKEND_ROOT = _PIPELINE_HERE.parents[1]  # apps/backend
+sys.path.insert(0, str(_BACKEND_ROOT))
+
+from src import db as app_db  # noqa: E402
+
+# Kept for back-compat with any external caller that imports OUTPUT_FILE; the
+# pipeline no longer writes to disk — news lives in optitrade.db.
+OUTPUT_FILE = str(app_db.get_db_path())
 
 
 class Deduplicator:
@@ -81,30 +94,52 @@ class NewsAnalysisPipeline:
         return 0.5
 
     def _load_existing_history(self) -> tuple[set, set]:
-        """Load analyzed news IDs and links from existing JSON archive, preventing duplicate token consumption"""
-        ids = set()
-        links = set()
-        if os.path.exists(OUTPUT_FILE):
-            try:
-                with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    for item in data.get("news", []):
-                        if "id" in item:
-                            ids.add(item["id"])
-                        if "link" in item:
-                            links.add(item["link"])
-            except Exception as e:
-                print(f"⚠️ [Pipeline] Failed to read historical data ({e})")
+        """Load analyzed news IDs and links from the SQLite store, preventing
+        duplicate token consumption. Falls back to an empty set on cold start."""
+        ids: set = set()
+        links: set = set()
+        try:
+            app_db.init_schema()
+            conn = app_db.get_conn()
+            rows = conn.execute(
+                "SELECT a.id, a.url FROM news_articles a"
+            ).fetchall()
+            for r in rows:
+                if r["id"]:
+                    ids.add(r["id"])
+                if r["url"]:
+                    links.add(r["url"])
+        except Exception as e:
+            print(f"⚠️ [Pipeline] Failed to read historical data ({e})")
         return ids, links
+
     def _load_cached_file(self) -> List[Dict]:
-        """Safely read cache file"""
-        if os.path.exists(OUTPUT_FILE):
-            try:
-                with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
-                    return json.load(f).get("news", [])
-            except Exception:
-                pass
-        return []
+        """Read existing analyzed news from the SQLite store."""
+        try:
+            app_db.init_schema()
+            conn = app_db.get_conn()
+            items = app_db.list_news_with_analyses(conn, limit=50)
+            # Reshape to the JSON-file shape callers expect
+            return [
+                {
+                    "id": it.get("id"),
+                    "source": it.get("source"),
+                    "headline": it.get("headline"),
+                    "link": it.get("link") or it.get("url"),
+                    "published_at": it.get("published_at"),
+                    "summary": it.get("summary"),
+                    "highlights": it.get("highlights") or [],
+                    "sentiment": it.get("sentiment"),
+                    "risk_tag": it.get("risk_tag") or it.get("impact"),
+                    "reasoning": it.get("reasoning"),
+                    "related_symbols": it.get("related_symbols") or [],
+                    "readiness_score": it.get("readiness_score"),
+                    "analyzed_at": it.get("analyzed_at"),
+                }
+                for it in items
+            ]
+        except Exception:
+            return []
 
     def _parse_date(self, pub_time: str) -> datetime:
         """Parse various RSS date strings into datetime objects"""
@@ -128,9 +163,14 @@ class NewsAnalysisPipeline:
         return datetime.min
 
     def run_once(self) -> List[Dict]:
-        if not os.path.exists(OUTPUT_FILE):
-            print("⚠️ [Pipeline] Automatically reset memory cache records...")
-            self.processed_ids = set()
+        try:
+            app_db.init_schema()
+            if app_db.get_conn().execute("SELECT COUNT(*) FROM news_articles").fetchone()[0] == 0:
+                print("⚠️ [Pipeline] Empty SQLite store, resetting memory cache...")
+                self.processed_ids = set()
+                self.processed_links = set()
+        except Exception:
+            pass
 
         print("\n" + "="*70)
         print("🚀 OptiTrade News Analysis System (Flow Core)")
@@ -310,28 +350,44 @@ class NewsAnalysisPipeline:
         unique_combined = unique_combined[:50]
         unique_combined.sort(
             key=lambda item: (
-                item.get("readiness_score", 0),
-                abs(item.get("sentiment", 0)),
+                item.get("readiness_score") or 0,
+                abs(item.get("sentiment") or 0),
                 self._parse_date(item.get("published_at", ""))
             ),
             reverse=True
         )
-        output = {
-            "metadata": {
-                "total_news": len(unique_combined),
-                "yahoo_count": len([r for r in unique_combined if r['source'] == 'yahoo']),
-                "et_count": len([r for r in unique_combined if r['source'] == 'economic_times']),
-                "analyzed_at": datetime.now().isoformat(),
-                "model": "openrouter/free"
-            },
-            "news": unique_combined
-        }
 
-        os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-        with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-            json.dump(output, f, indent=2, ensure_ascii=False)
+        # Persist each analyzed row into SQLite. Articles go into
+        # `news_articles`; the AI analysis goes into `news_analyses`.
+        try:
+            app_db.init_schema()
+            with app_db.transaction() as conn:
+                for item in unique_combined:
+                    article = {
+                        "id": item.get("id"),
+                        "source": item.get("source"),
+                        "published_at": item.get("published_at"),
+                        "url": item.get("link") or item.get("url"),
+                        "headline": item.get("headline") or "",
+                        "summary": item.get("summary"),
+                        "tickers": item.get("related_symbols") or [],
+                    }
+                    analysis = {
+                        "sentiment": item.get("sentiment"),
+                        "impact": item.get("risk_tag") or item.get("impact"),
+                        "highlights": item.get("highlights") or [],
+                        "reasoning": item.get("reasoning"),
+                        "related_symbols": item.get("related_symbols") or [],
+                        "readiness_score": item.get("readiness_score"),
+                        "analyzed_at": item.get("analyzed_at") or datetime.now().isoformat(),
+                    }
+                    if not article["id"] or not article["headline"]:
+                        continue
+                    app_db.upsert_news_article(conn, article, analysis)
+            print(f"   ✅ Merged results persisted to SQLite at {app_db.get_db_path()}")
+        except Exception as e:
+            print(f"   ⚠️ [Pipeline] Failed to persist news to SQLite ({e})")
 
-        print(f"   ✅ Merged results saved successfully to: {OUTPUT_FILE}")
         return unique_combined
 
     def start_automated_loop(self, interval_seconds: int = 900):

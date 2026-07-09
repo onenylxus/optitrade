@@ -295,6 +295,156 @@ def _pattern_explanation(summary: dict[str, Any] | None) -> str | None:
     return None
 
 
+def _as_float(value: Any) -> float | None:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _signal_bias(direction: str | None, *, strong: bool = False) -> str:
+    normalized = (direction or "").strip().lower()
+    if normalized == "bullish":
+        return "Strong Bullish" if strong else "Possible Bullish"
+    if normalized == "bearish":
+        return "Strong Bearish" if strong else "Possible Bearish"
+    return "Neutral"
+
+
+def _lens_signal(bias: str, explanation: str) -> dict[str, Any]:
+    return {
+        "bias": bias,
+        "explanation": explanation,
+    }
+
+
+def _build_lens_signals(
+    position: dict[str, Any],
+    summary: dict[str, Any] | None,
+) -> dict[str, Any]:
+    technical_bias = _pattern_bias_label(summary)
+    technical_explanation = (
+        _pattern_explanation(summary)
+        or "No clear chart pattern was detected in the scanned window."
+    )
+
+    if not summary:
+        neutral = _lens_signal(
+            "Neutral",
+            "No lens-specific trigger was derived because no chart pattern was detected.",
+        )
+        return {
+            "technical": _lens_signal(technical_bias, technical_explanation),
+            "day_trade": neutral,
+            "buy_and_hold": _lens_signal(
+                "Neutral",
+                "No longer-horizon tilt stands out without a clearer technical pattern.",
+            ),
+        }
+
+    direction = str(summary.get("direction", "")).strip().lower()
+    status = str(summary.get("status", "")).strip().lower()
+    confidence = _as_float(summary.get("confidencePct"))
+    breakout_level = _as_float(summary.get("breakoutLevel"))
+    invalidation_level = _as_float(summary.get("invalidationLevel"))
+    current_price = _as_float(position.get("currentPrice")) or 0.0
+    pnl_percent = _as_float(position.get("unrealizedPnlPercent")) or 0.0
+    display_name = str(summary.get("displayName", "")).strip() or "pattern setup"
+    confirmed = status == "confirmed"
+    near_breakout = (
+        breakout_level is not None
+        and abs(current_price - breakout_level) / max(abs(breakout_level), 1.0) <= 0.02
+    )
+
+    day_trade_bias = "Neutral"
+    day_trade_explanation = (
+        f"Intraday conviction is muted because {display_name} has not produced a clean trigger yet."
+    )
+    if direction == "bullish":
+        if breakout_level is not None and current_price >= breakout_level:
+            day_trade_bias = _signal_bias(
+                "bullish",
+                strong=confirmed and (confidence or 0) >= 75,
+            )
+            day_trade_explanation = (
+                f"Price is trading through the {display_name} trigger, so day-trade momentum still leans long."
+            )
+        elif near_breakout or confirmed:
+            day_trade_bias = "Possible Bullish"
+            day_trade_explanation = (
+                f"{display_name} is close enough to its trigger to keep an intraday long setup in play."
+            )
+        elif invalidation_level is not None and current_price <= invalidation_level:
+            day_trade_bias = "Possible Bearish"
+            day_trade_explanation = (
+                f"Price is leaning back toward invalidation, so intraday traders would stay defensive for now."
+            )
+    elif direction == "bearish":
+        if breakout_level is not None and current_price <= breakout_level:
+            day_trade_bias = _signal_bias(
+                "bearish",
+                strong=confirmed and (confidence or 0) >= 75,
+            )
+            day_trade_explanation = (
+                f"Price is trading through the {display_name} breakdown area, so day-trade pressure still leans short."
+            )
+        elif near_breakout or confirmed:
+            day_trade_bias = "Possible Bearish"
+            day_trade_explanation = (
+                f"{display_name} keeps a short setup active for intraday traders even before a cleaner extension."
+            )
+        elif invalidation_level is not None and current_price >= invalidation_level:
+            day_trade_bias = "Possible Bullish"
+            day_trade_explanation = (
+                f"Price is pressing the invalidation zone, so shorts lose conviction on a day-trade basis."
+            )
+
+    buy_and_hold_bias = "Neutral"
+    buy_and_hold_explanation = (
+        "The longer-horizon read stays balanced until the technical setup and holding P/L line up more clearly."
+    )
+    if direction == "bullish":
+        if confirmed and pnl_percent >= 10:
+            buy_and_hold_bias = "Strong Bullish"
+            buy_and_hold_explanation = (
+                f"The bullish {display_name} aligns with an existing gain, which supports a stronger hold or accumulate posture."
+            )
+        elif pnl_percent >= 0:
+            buy_and_hold_bias = "Possible Bullish"
+            buy_and_hold_explanation = (
+                f"The longer-horizon posture still leans constructive because the position is holding above cost with a bullish setup."
+            )
+        else:
+            buy_and_hold_bias = "Neutral"
+            buy_and_hold_explanation = (
+                f"The bullish pattern is constructive, but the position is still below cost basis, so a buy-and-hold view stays patient."
+            )
+    elif direction == "bearish":
+        if confirmed and pnl_percent < 0:
+            buy_and_hold_bias = "Strong Bearish"
+            buy_and_hold_explanation = (
+                f"The bearish {display_name} is confirmed while the position is underwater, which weakens the longer-horizon case."
+            )
+        elif pnl_percent < 0:
+            buy_and_hold_bias = "Possible Bearish"
+            buy_and_hold_explanation = (
+                f"The longer-horizon read stays cautious because the position is below cost and the pattern is not supportive."
+            )
+        else:
+            buy_and_hold_bias = "Possible Bearish"
+            buy_and_hold_explanation = (
+                f"The position is still profitable, but the bearish pattern argues more for review than fresh accumulation."
+            )
+
+    return {
+        "technical": _lens_signal(technical_bias, technical_explanation),
+        "day_trade": _lens_signal(day_trade_bias, day_trade_explanation),
+        "buy_and_hold": _lens_signal(buy_and_hold_bias, buy_and_hold_explanation),
+    }
+
+
 def _pattern_bias(summary: dict[str, Any] | None) -> int:
     if not summary:
         return 0
@@ -380,6 +530,7 @@ def _build_position_signals(
                 "pattern": summary.get("displayName") if summary else None,
                 "status": summary.get("status") if summary else None,
                 "explanation": _pattern_explanation(summary),
+                "lenses": _build_lens_signals(position, summary),
             }
         )
     return signals

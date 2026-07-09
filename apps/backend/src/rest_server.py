@@ -1,7 +1,5 @@
 """FastAPI REST server for greeter service."""
 
-import json
-import os
 import threading
 from collections.abc import Mapping
 from contextlib import asynccontextmanager
@@ -13,8 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from news_fetcher import OUTPUT_FILE
-# from news_fetcher.pipeline import NewsAnalysisPipeline
 from news_fetcher.run_news_pipeline import start_analysis
 
 from .api.controllers.portfolio_controller import PortfolioController
@@ -23,6 +19,8 @@ from .api.routes.ai_routes import router as ai_router
 from .api.routes.portfolio_routes import router as portfolio_router
 from .api.routes.stock_routes import router as stock_router
 from .api.routes.price_routes import router as price_router
+from .api.routes.paper_trading_routes import router as paper_trading_router
+from . import db as app_db
 from .firebase_auth import verify_firebase_id_token
 from .firestore_store import get_authenticated_user as load_authenticated_user_profile
 from .firestore_store import upsert_authenticated_user
@@ -185,26 +183,43 @@ def create_app() -> FastAPI:
     )
 
     @app.get("/api/news")
-    async def get_news_data():
-        if os.path.exists(OUTPUT_FILE):
-            with open(OUTPUT_FILE, encoding="utf-8") as f:
-                data = json.load(f)
-            return JSONResponse(content=data)
-        else:
+    async def get_news_data(symbols: str | None = None, limit: int = 100):
+        try:
+            conn = app_db.get_conn()
+            sym_list = (
+                [s.strip().upper() for s in symbols.split(",") if s.strip()]
+                if symbols
+                else None
+            )
+            news = app_db.list_news_with_analyses(conn, limit=limit, symbols=sym_list)
+            metadata = app_db.get_news_metadata(conn)
+            if not news:
+                return JSONResponse(
+                    status_code=status.HTTP_202_ACCEPTED,
+                    content={
+                        "message": (
+                            "AI News Pipeline is running for the first time. "
+                            "Please refresh in a few seconds."
+                        ),
+                        "metadata": metadata,
+                        "news": [],
+                    },
+                )
+            return JSONResponse(content={"metadata": metadata, "news": news})
+        except Exception as exc:  # pragma: no cover - defensive
             return JSONResponse(
-                status_code=status.HTTP_202_ACCEPTED,
-                content={
-                    "message": (
-                        "AI News Pipeline is running for the first time. "
-                        "Please refresh in a few seconds."
-                    )
-                },
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": f"news load failed: {exc}"},
             )
 
     app.include_router(stock_router, prefix="/api/stock", tags=["stock"])
     app.include_router(price_router, prefix="/api/price", tags=["price"])
     app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
     app.include_router(portfolio_router, prefix="/api/portfolio", tags=["portfolio"])
+    app.include_router(paper_trading_router, prefix="/api/paper-trading", tags=["paper-trading"])
+
+    # Initialize the SQLite runtime store (creates optitrade.db + schema if needed)
+    app_db.init_schema()
 
     service = GreeterService()
 

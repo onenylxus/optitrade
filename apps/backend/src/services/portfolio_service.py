@@ -10,6 +10,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from src import db as app_db
 from src import portfolio as portfolio_module
 from src.ibkr_client import (
     IbkrConnectionSettings,
@@ -298,9 +299,13 @@ class PortfolioService:
         positions = self._normalize_positions_payload(payload.get("positions", []))
         total_value = sum(position.market_value for position in positions)
         existing = self._read_editable_portfolio()
-        history = self._normalize_history_payload(
-            payload.get("history") or existing.get("history"),
-            default_total_value=total_value,
+        history = (
+            self._normalize_history_payload(
+                payload.get("history") or existing.get("history"),
+                default_total_value=total_value,
+            )
+            if positions
+            else self._build_history(0)
         )
         record = {
             "name": name,
@@ -315,7 +320,7 @@ class PortfolioService:
         editable_record = self._read_editable_portfolio()
         positions = self._normalize_positions_payload(
             editable_record.get("positions", [])
-        ) or self.positions
+        )
         positions = self._refresh_paper_prices(positions)
         total_value = sum(position.market_value for position in positions)
         total_cost = sum(position.cost_basis for position in positions)
@@ -427,67 +432,93 @@ class PortfolioService:
             file.write("\n")
 
     def _read_editable_portfolio(self) -> dict[str, Any]:
-        if self.editable_portfolio_path.exists():
-            with self.editable_portfolio_path.open("r", encoding="utf-8") as file:
-                payload = json.load(file)
-            if not isinstance(payload, dict):
-                raise ValueError("editable portfolio store must contain an object")
-            positions = self._normalize_positions_payload(payload.get("positions", []))
+        """Read the editable portfolio from the SQLite `editable_portfolio` table.
+
+        On first read, seeds the table either from the legacy JSON file (if it
+        exists) or from the default positions. After that, every read goes to
+        the DB.
+        """
+        app_db.init_schema()
+        conn = app_db.get_conn()
+        row = conn.execute(
+            "SELECT name, positions, history, updated_at FROM editable_portfolio WHERE id = 1"
+        ).fetchone()
+
+        if row is not None:
+            positions = self._normalize_positions_payload(
+                app_db.json_loads(row["positions"], default=[])
+            )
             total_value = sum(position.market_value for position in positions)
+            history_raw = app_db.json_loads(row["history"])
             return {
-                "name": str(payload.get("name", "Portfolio Widget Portfolio")).strip()
+                "name": str(row["name"] or "Portfolio Widget Portfolio").strip()
                 or "Portfolio Widget Portfolio",
                 "positions": [
                     self._position_payload(position) for position in positions
                 ],
-                "history": self._normalize_history_payload(
-                    payload.get("history"), default_total_value=total_value
+                "history": (
+                    self._normalize_history_payload(
+                        history_raw, default_total_value=total_value
+                    )
+                    if positions
+                    else self._build_history(0)
                 ),
-                "updatedAt": str(
-                    payload.get("updatedAt") or datetime.now(UTC).isoformat()
-                ),
+                "updatedAt": str(row["updated_at"] or datetime.now(UTC).isoformat()),
             }
 
-        records = self._read_paper_portfolios()
-        if records:
-            latest = records[-1]
-            positions = self._normalize_positions_payload(latest.get("positions", []))
-            migrated = {
-                "name": str(latest.get("name", "Portfolio Widget Portfolio")).strip()
-                or "Portfolio Widget Portfolio",
+        # Seed: try the legacy JSON first, then fall back to defaults.
+        seeded_payload: dict[str, Any]
+        if self.editable_portfolio_path.exists():
+            try:
+                legacy = json.loads(self.editable_portfolio_path.read_text())
+                if isinstance(legacy, dict):
+                    seeded_payload = {
+                        "name": str(legacy.get("name", "Portfolio Widget Portfolio")),
+                        "positions": legacy.get("positions", []),
+                        "history": legacy.get("history"),
+                    }
+                else:
+                    seeded_payload = {}
+            except (OSError, json.JSONDecodeError):
+                seeded_payload = {}
+        else:
+            seeded_payload = {}
+
+        if not seeded_payload or "positions" not in seeded_payload:
+            seeded_payload = {
+                "name": "Portfolio Widget Portfolio",
                 "positions": [
-                    self._position_payload(position) for position in positions
+                    self._position_payload(position) for position in self.positions
                 ],
-                "history": self._normalize_history_payload(
-                    latest.get("history"),
-                    default_total_value=sum(
-                        position.market_value for position in positions
-                    ),
-                ),
-                "updatedAt": str(
-                    latest.get("createdAt")
-                    or latest.get("updatedAt")
-                    or datetime.now(UTC).isoformat()
-                ),
+                "history": None,
             }
-            self._write_editable_portfolio(migrated)
-            return migrated
 
-        seeded = {
-            "name": "Portfolio Widget Portfolio",
-            "positions": [
-                self._position_payload(position) for position in self.positions
-            ],
-            "history": self._normalize_history_payload(
-                None,
-                default_total_value=sum(
-                    position.market_value for position in self.positions
-                ),
-            ),
-            "updatedAt": datetime.now(UTC).isoformat(),
+        positions = self._normalize_positions_payload(seeded_payload.get("positions", []))
+        total_value = sum(position.market_value for position in positions)
+        history = (
+            self._normalize_history_payload(
+                seeded_payload.get("history"), default_total_value=total_value
+            )
+            if positions
+            else self._build_history(0)
+        )
+        updated_at = datetime.now(UTC).isoformat()
+
+        self._write_editable_portfolio(
+            {
+                "name": seeded_payload.get("name", "Portfolio Widget Portfolio"),
+                "positions": [self._position_payload(position) for position in positions],
+                "history": history,
+                "updatedAt": updated_at,
+            }
+        )
+        return {
+            "name": str(seeded_payload.get("name", "Portfolio Widget Portfolio")).strip()
+            or "Portfolio Widget Portfolio",
+            "positions": [self._position_payload(position) for position in positions],
+            "history": history,
+            "updatedAt": updated_at,
         }
-        self._write_editable_portfolio(seeded)
-        return seeded
 
     def _read_editable_positions(self) -> tuple[Position, ...]:
         record = self._read_editable_portfolio()
@@ -558,10 +589,19 @@ class PortfolioService:
         raise RuntimeError("Unable to refresh paper prices from a running event loop.")
 
     def _write_editable_portfolio(self, record: dict[str, Any]) -> None:
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        with self.editable_portfolio_path.open("w", encoding="utf-8") as file:
-            json.dump(record, file, indent=2)
-            file.write("\n")
+        """Persist the editable portfolio to SQLite. JSON file is no longer used."""
+        app_db.init_schema()
+        conn = app_db.get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO editable_portfolio "
+            "(id, name, positions, history, updated_at) VALUES (1, ?, ?, ?, ?)",
+            (
+                str(record.get("name", "Portfolio Widget Portfolio")),
+                app_db.json_dumps(record.get("positions", [])),
+                app_db.json_dumps(record.get("history")) if record.get("history") else None,
+                str(record.get("updatedAt") or datetime.now(UTC).isoformat()),
+            ),
+        )
 
     def _write_broker_connection(self, connection: dict[str, Any]) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
