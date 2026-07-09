@@ -318,6 +318,245 @@ def get_intraday_volatility(symbol: str) -> float | None:
         return None
 
 
+# ── Enrichment layer (Phase 4 — analytical pre-execution gate) ────────────────
+_TREND_CACHE: dict[str, dict] = {}
+_TREND_CACHE_TTL_SECONDS = 300  # 5 min
+_SPY_TREND_CACHE: dict | None = None
+
+
+def _trend_cache_key(sym: str) -> str:
+    return sym
+
+
+def get_trend(sym: str) -> dict | None:
+    """Return {price, sma20, sma50, sma200, trend} for a symbol.
+    trend ∈ {'strong_up', 'up', 'sideways', 'down', 'strong_down'}.
+    Cached 5 min to keep cron snappy.
+    """
+    import time as _time
+    cached = _TREND_CACHE.get(_trend_cache_key(sym))
+    if cached and _time.time() - cached["ts"] < _TREND_CACHE_TTL_SECONDS:
+        return cached["data"]
+    try:
+        import yfinance
+        hist = yfinance.Ticker(sym).history(period="6mo", interval="1d")
+        if hist is None or len(hist) < 50:
+            return None
+        closes = hist["Close"].astype(float)
+        price = float(closes.iloc[-1])
+        sma20 = float(closes.tail(20).mean())
+        sma50 = float(closes.tail(50).mean())
+        sma200 = float(closes.tail(min(200, len(closes))).mean())
+        # Trend classification (simple but works):
+        if price > sma20 > sma50 > sma200:
+            trend = "strong_up"
+        elif price > sma20 > sma50:
+            trend = "up"
+        elif price < sma20 < sma50 < sma200:
+            trend = "strong_down"
+        elif price < sma20 < sma50:
+            trend = "down"
+        else:
+            trend = "sideways"
+        data = {"price": price, "sma20": sma20, "sma50": sma50,
+                "sma200": sma200, "trend": trend}
+        _TREND_CACHE[_trend_cache_key(sym)] = {"ts": _time.time(), "data": data}
+        return data
+    except Exception:
+        return None
+
+
+def get_spy_trend() -> str:
+    """Return SPY regime: 'up' / 'sideways' / 'down'."""
+    global _SPY_TREND_CACHE
+    import time as _time
+    if _SPY_TREND_CACHE and _time.time() - _SPY_TREND_CACHE["ts"] < 600:
+        return _SPY_TREND_CACHE["regime"]
+    t = get_trend("SPY")
+    if t is None:
+        return "unknown"
+    if t["trend"] in ("strong_up", "up"):
+        regime = "up"
+    elif t["trend"] in ("strong_down", "down"):
+        regime = "down"
+    else:
+        regime = "sideways"
+    _SPY_TREND_CACHE = {"ts": _time.time(), "regime": regime}
+    return regime
+
+
+def our_history_on_symbol(sym: str) -> dict:
+    """Query SQLite for our track record on this ticker.
+    Returns {count, wins, losses, avg_pnl, total_pnl}.
+    """
+    try:
+        with db.transaction() as conn:
+            row = conn.execute(
+                """SELECT
+                       COUNT(*) AS count,
+                       SUM(CASE WHEN pnl_pct > 0 THEN 1 ELSE 0 END) AS wins,
+                       SUM(CASE WHEN pnl_pct < 0 THEN 1 ELSE 0 END) AS losses,
+                       ROUND(AVG(pnl_pct), 2) AS avg_pnl,
+                       ROUND(SUM(pnl_pct), 2) AS total_pnl
+                   FROM paper_trades
+                   WHERE symbol = ? AND status = 'closed'""",
+                (sym,),
+            ).fetchone()
+        if not row or row["count"] == 0:
+            return {"count": 0}
+        return dict(row)
+    except Exception:
+        return {"count": 0}
+
+
+def parse_catalyst(signal_text: str) -> str:
+    """Classify catalyst strength from signal text — returns short label."""
+    t = (signal_text or "").lower()
+    # Quantitative beats first (most actionable)
+    import re
+    beat = re.search(r"(beat|miss|raise|raised).*?(\d+(\.\d+)?)\s*%", t)
+    if beat:
+        return f"{beat.group(1).upper()} {beat.group(2)}%"
+    for kw in ("earnings beat", "earnings miss", "fda approval", "merger",
+              "acquisition", "short squeeze", "activist", "guidance raise"):
+        if kw in t:
+            return kw.upper()
+    if any(k in t for k in ("earnings", "guidance", "fda", "approval",
+                              "merger", "acquisition", "buyback", "dividend",
+                              "split", "squeeze", "activist", "lawsuit",
+                              "contract", "partnership", "launch", "product")):
+        return "THEMED"
+    return "NONE"
+
+
+def enrich_signal(sym: str, side: str, agent_score: float, price: float,
+                   market: str, raw_content: str) -> dict:
+    """Pre-execution analytical layer.
+
+    Returns {score_bonus, reasons, risks, enrich_notes, thesis}.
+    The thesis string captures WHY we follow or reject — written into
+    paper_trades.notes so the paper-trading-history widget's "Why I
+    entered" section can show it later.
+    """
+    score_bonus = 0
+    reasons: list[str] = []
+    risks: list[str] = []
+    notes: dict = {}
+
+    # 1. Trend alignment
+    trend = get_trend(sym)
+    if trend:
+        notes["trend"] = trend["trend"]
+        notes["price_vs_sma20_pct"] = round(
+            (trend["price"] - trend["sma20"]) / trend["sma20"] * 100, 2
+        )
+        notes["price_vs_sma50_pct"] = round(
+            (trend["price"] - trend["sma50"]) / trend["sma50"] * 100, 2
+        )
+        if side == "LONG":
+            if trend["trend"] in ("strong_up", "up"):
+                score_bonus += 1
+                reasons.append(
+                    f"Trend: {trend['trend']} (price {trend['price']:.2f} > "
+                    f"SMA20 {trend['sma20']:.2f} > SMA50 {trend['sma50']:.2f})"
+                )
+            elif trend["trend"] in ("strong_down", "down"):
+                risks.append(
+                    f"Trend: {trend['trend']} (LONG against SMA20/SMA50 downtrend)"
+                )
+        else:  # SHORT
+            if trend["trend"] in ("strong_down", "down"):
+                score_bonus += 1
+                reasons.append(f"Trend: {trend['trend']} (supports SHORT)")
+            elif trend["trend"] in ("strong_up", "up"):
+                risks.append(f"Trend: {trend['trend']} (SHORT against uptrend)")
+
+    # 2. Our historical track record on this ticker
+    history = our_history_on_symbol(sym)
+    notes["our_history"] = history
+    if history.get("count", 0) >= 2:
+        avg = history.get("avg_pnl", 0) or 0
+        cnt = history["count"]
+        if avg > 1.0:
+            score_bonus += 1
+            reasons.append(f"Our history: {cnt} trades avg +{avg:.2f}% on {sym}")
+        elif avg < -3.0:
+            score_bonus -= 1
+            risks.append(f"Our history: {cnt} trades avg {avg:.2f}% on {sym} (poor)")
+
+    # 3. Market regime (SPY)
+    regime = get_spy_trend()
+    notes["spy_regime"] = regime
+    if regime == "down" and side == "LONG":
+        score_bonus -= 1
+        risks.append(f"Market regime: SPY down — tailwind against LONG")
+    elif regime == "up" and side == "LONG":
+        reasons.append(f"Market regime: SPY up — supportive for LONG")
+
+    # 4. Catalyst classification (qualitative)
+    catalyst = parse_catalyst(raw_content)
+    notes["catalyst"] = catalyst
+    if catalyst not in ("NONE", "THEMED"):
+        reasons.append(f"Catalyst strength: {catalyst}")
+    elif catalyst == "THEMED":
+        reasons.append(f"Catalyst: themed (qualitative)")
+    else:
+        risks.append("Catalyst: none detected in signal text")
+
+    # 5. Build thesis — captured in paper_trades.notes for later review
+    thesis = (
+        f"Entry: {side} {sym} @ ${price:.2f}\n"
+        f"Trend: {trend['trend'] if trend else 'unknown'} "
+        f"(vs SMA20 {trend['sma20']:.2f} / SMA50 {trend['sma50']:.2f})\n"
+        if trend else
+        f"Entry: {side} {sym} @ ${price:.2f}\n"
+    )
+    if history.get("count", 0):
+        thesis += f"Our history: {history['count']} trades avg {history.get('avg_pnl', 0):+.2f}% on {sym}\n"
+    thesis += f"Catalyst: {catalyst}\n"
+    thesis += f"Market: {market} | Regime: {regime}\n"
+    thesis += f"Agent: signal score {agent_score}★\n"
+
+    return {
+        "score_bonus": score_bonus,
+        "reasons": reasons,
+        "risks": risks,
+        "enrich_notes": notes,
+        "thesis": thesis.strip(),
+    }
+
+
+# ── Signal log persistence (audit trail) ──────────────────────────────────────
+def log_signal(received_at: str, agent_name: str, symbol: str | None,
+                side: str | None, agent_score: float | None,
+                market: str | None, raw_content: str | None,
+                parsed_action: str | None, score: float | None,
+                entry_price: float | None, live_price: float | None,
+                skip_reasons: list[str] | None, enrich_notes: dict | None,
+                thesis: str | None) -> None:
+    """Persist every evaluated signal to signal_log — regardless of follow /
+    watch / skip outcome. Captures audit trail for later review."""
+    try:
+        with db.transaction() as conn:
+            conn.execute(
+                """INSERT INTO signal_log
+                   (received_at, agent_name, symbol, side, agent_score,
+                    market, raw_content, parsed_action, score,
+                    entry_price, live_price, skip_reasons, enrich_notes, thesis)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    received_at, agent_name, symbol, side, agent_score,
+                    market, raw_content, parsed_action, score,
+                    entry_price, live_price,
+                    db.json_dumps(skip_reasons or []),
+                    db.json_dumps(enrich_notes or {}),
+                    thesis,
+                ),
+            )
+    except Exception as e:
+        log(f"WARNING: signal_log insert failed: {e}")
+
+
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
 def fetch_signals(limit: int = 15) -> list[dict]:
     try:
@@ -451,6 +690,9 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
             "symbol": sym,
             "score": 0,
             "reasons": [f"Symbol {sym} is blacklisted (poor historical win-rate)"],
+            "risks": [],
+            "enrich_notes": {},
+            "thesis": "",
         }
 
     # ── Tier 1: Same-symbol cooldown (avoid same-day whipsaw re-entries) ──
@@ -482,6 +724,9 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
                             f"Same-symbol cooldown: {sym} closed {hours_since:.1f}h ago "
                             f"({'loss' if pnl < 0 else 'win'}, {cooldown}h lockout)"
                         ],
+                        "risks": [],
+                        "enrich_notes": {},
+                        "thesis": "",
                     }
             except Exception:
                 pass
@@ -506,6 +751,9 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
                 f"Signal stale: {age_minutes:.0f}m old "
                 f"(max {SIGNAL_MAX_AGE_MINUTES}m)"
             ],
+            "risks": [],
+            "enrich_notes": {},
+            "thesis": "",
         }
 
     # US-only scope: hard filter on market field (Tier 3)
@@ -516,6 +764,9 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
             "symbol": sym,
             "score": 0,
             "reasons": [f"Market '{market}' outside allowed {ALLOWED_MARKETS}"],
+            "risks": [],
+            "enrich_notes": {},
+            "thesis": "",
         }
 
     live_price = get_live_price(sym)
@@ -580,6 +831,30 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         score += 1
         reasons.append(f"Catalyst-driven signal (theme/keyword match)")
 
+    # ── Phase 4: Pre-execution analytical enrichment ─────────────────────────
+    # Pulls trend + our history + market regime + catalyst classification.
+    # Adds bonus to score if trend/history agree, and ALWAYS records a thesis
+    # in paper_trades.notes for later review (whether we follow or not).
+    enrichment = enrich_signal(sym, side, agent_score, price, market, rec.get("raw_content") or "")
+    score += enrichment["score_bonus"]
+    reasons.extend(enrichment["reasons"])
+    risks = enrichment["risks"]
+
+    # Decide whether to apply analytical veto: a strongly negative
+    # enrichment score or 2+ risk flags without compensating reasons should
+    # drop us to WATCH even if base score ≥ 4. (Preserves the gate, doesn't
+    # silently re-promote SKIPs.)
+    if score >= MIN_SCORE_FOLLOW and len(risks) >= 2 and enrichment["score_bonus"] <= -1:
+        # Demote FOLLOW → WATCH
+        reasons.append(
+            f"Analytical veto: {len(risks)} risk flags + score_bonus {enrichment['score_bonus']}, "
+            f"demoted FOLLOW → WATCH"
+        )
+        for r in risks:
+            reasons.append(f"  risk: {r}")
+        risks = []
+        score = max(score - 2, MIN_SCORE_REPORT)  # push below 4 but ≥ 2
+
     if side == "LONG":
         stop_loss = round(price * (1 - DEFAULT_STOP_PCT / 100), 2)
         target = round(price * (1 + DEFAULT_TARGET_PCT / 100), 2)
@@ -620,6 +895,9 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         "live_price": live_price,
         "agent": agent_name,
         "reasons": reasons,
+        "risks": risks,
+        "enrich_notes": enrichment["enrich_notes"],
+        "thesis": enrichment["thesis"],
         "market": market,
         "created_at": created_at,
     }
@@ -745,6 +1023,16 @@ def build_trade_row(ev: dict) -> dict:
     entry = ev["entry_price"]
     live = ev.get("live_price") or entry
     sym = ev["symbol"]
+
+    # Compose notes — include thesis (why we entered), risks identified at
+    # entry, and the strategy playbook. This is what shows in the
+    # paper-trading-history widget's "Why I entered" section.
+    thesis = ev.get("thesis") or ""
+    risks = ev.get("risks") or []
+    risk_block = ""
+    if risks:
+        risk_block = "\n\nRisks at entry:\n" + "\n".join(f"  • {r}" for r in risks)
+
     return {
         "id": f"paper-{sym}-{now[:13].replace(':', '-')}",
         "symbol": sym,
@@ -763,9 +1051,8 @@ def build_trade_row(ev: dict) -> dict:
         "strategy": f"AI4Trade — {ev['agent']}",
         "sector": "AI / Tech",
         "notes": (
-            f"{ev['agent']} entry on "
-            f"{hkt_now().strftime('%b %d')} (score {ev.get('score')}/5). "
-            f"{ev['side']} @ ${entry:.2f} → target +{DEFAULT_TARGET_PCT}% / stop -{DEFAULT_STOP_PCT}%. "
+            f"{thesis}{risk_block}\n\n"
+            f"Strategy: target +{DEFAULT_TARGET_PCT}% / stop -{DEFAULT_STOP_PCT}%. "
             f"Aggressive mode — stagnation exit after {STAGNATION_DAYS}d in "
             f"[{STAGNATION_LOW}%, {STAGNATION_HIGH}%], partial TP at +{PARTIAL_TP_PCT}%."
         ),
@@ -818,6 +1105,7 @@ def main() -> list[dict]:
         agent = sig.get("agent_name", "Unknown")
         created = sig.get("created_at", "")
         content = sig.get("content", "")
+        received_at = hkt_now().isoformat()
 
         if msg_type == "strategy" and content:
             recs = parse_strategy_content(content)
@@ -826,6 +1114,24 @@ def main() -> list[dict]:
                 ev = evaluate_recommendation(rec, agent, created, mkt, recent_closed=recent_closed)
                 if ev is None:
                     continue
+                # Persist every evaluated signal to signal_log — including skips.
+                # Audit trail lets us later answer "why didn't we trade X?"
+                log_signal(
+                    received_at=received_at,
+                    agent_name=agent,
+                    symbol=rec.get("symbol"),
+                    side=rec.get("side"),
+                    agent_score=rec.get("score"),
+                    market=mkt,
+                    raw_content=rec.get("raw_content"),
+                    parsed_action=ev["action"],
+                    score=ev.get("score"),
+                    entry_price=rec.get("price"),
+                    live_price=ev.get("live_price"),
+                    skip_reasons=ev.get("reasons") if ev.get("skip") else [],
+                    enrich_notes=ev.get("enrich_notes"),
+                    thesis=ev.get("thesis"),
+                )
                 # Log every skip reason so we can audit blacklist / cooldown hits
                 if ev.get("skip"):
                     log(f"    SKIP {rec['symbol']}: {' | '.join(ev.get('reasons', []))}")

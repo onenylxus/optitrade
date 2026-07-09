@@ -101,6 +101,29 @@ CREATE TABLE IF NOT EXISTS follow_list_cache (
     list_json     TEXT NOT NULL,         -- JSON array of agent names
     refreshed_at  TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS signal_log (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    received_at   TEXT NOT NULL,
+    agent_name    TEXT NOT NULL,
+    symbol        TEXT,
+    side          TEXT,
+    agent_score   REAL,
+    market        TEXT,
+    raw_content   TEXT,
+    parsed_action TEXT,             -- FOLLOW / WATCH / SKIP / (null if parse failed)
+    score         REAL,             -- numeric score after enrichment
+    entry_price   REAL,
+    live_price    REAL,
+    skip_reasons  TEXT,             -- JSON array of strings
+    enrich_notes  TEXT,             -- JSON object with trend + history + regime analysis
+    thesis        TEXT,             -- human-readable why-we-followed-or-not
+    created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS ix_signal_log_received_at ON signal_log(received_at);
+CREATE INDEX IF NOT EXISTS ix_signal_log_agent      ON signal_log(agent_name);
+CREATE INDEX IF NOT EXISTS ix_signal_log_symbol     ON signal_log(symbol);
 """
 
 
