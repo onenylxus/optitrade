@@ -95,6 +95,12 @@ CREATE TABLE IF NOT EXISTS price_cache (
     expires_at    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_price_cache_expires ON price_cache(expires_at);
+
+CREATE TABLE IF NOT EXISTS follow_list_cache (
+    id            INTEGER PRIMARY KEY CHECK(id = 1),
+    list_json     TEXT NOT NULL,         -- JSON array of agent names
+    refreshed_at  TEXT NOT NULL
+);
 """
 
 

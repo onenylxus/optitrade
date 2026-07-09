@@ -99,6 +99,67 @@ def upsert_trade(row: dict) -> None:
         db.upsert_paper_trade(conn, row)
 
 
+def _load_follow_list_cache() -> tuple[list[str], str] | None:
+    """Read cached (list, refreshed_at_iso) from SQLite. None if missing."""
+    try:
+        with db.transaction() as conn:
+            row = conn.execute(
+                "SELECT list_json, refreshed_at FROM follow_list_cache WHERE id=1"
+            ).fetchone()
+        if not row:
+            return None
+        return (db.json_loads(row["list_json"]), row["refreshed_at"])
+    except Exception:
+        return None
+
+
+def _save_follow_list_cache(names: list[str]) -> None:
+    """Persist the chosen follow list + refresh timestamp."""
+    with db.transaction() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO follow_list_cache (id, list_json, refreshed_at) "
+            "VALUES (1, ?, ?)",
+            (db.json_dumps(sorted(set(names))), hkt_now().isoformat()),
+        )
+
+
+def refresh_follow_list() -> list[str]:
+    """Return current dynamic follow list. Hit leaderboard every
+    LEADERBOARD_REFRESH_HOURS hours; otherwise return cached list.
+
+    Selection logic:
+        1. Always include PINNED_AGENTS (raftapart, etc.) — these are our
+           trusted workhorses regardless of recent activity.
+        2. Pull top DYNAMIC_FOLLOW_LIMIT active agents from the platform's
+           /signals/grouped endpoint (sorted by signal_count).
+        3. Dedupe, cache in SQLite, return.
+    """
+    cached = _load_follow_list_cache()
+    if cached:
+        names, refreshed_at = cached
+        try:
+            dt = datetime.fromisoformat(refreshed_at)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=HKT)
+            age_hours = (hkt_now() - dt).total_seconds() / 3600
+            if age_hours < LEADERBOARD_REFRESH_HOURS:
+                return names
+        except Exception:
+            pass
+
+    # Stale cache or first run — fetch fresh from leaderboard
+    board = fetch_agent_leaderboard(limit=20, market="us-stock",
+                                      min_last_signal_hours=72)
+    # Filter by minimum signal count (kills one-off noise agents)
+    eligible = [a for a in board if a.get("signal_count", 0) >= MIN_AGENT_SIGNAL_COUNT]
+    top = eligible[:DYNAMIC_FOLLOW_LIMIT]
+    top_names = [a["agent_name"] for a in top if a.get("agent_name")]
+    # Merge with pinned (always include pinned, dedupe)
+    combined = sorted(set(top_names) | set(PINNED_AGENTS))
+    _save_follow_list_cache(combined)
+    return combined
+
+
 # ── State snapshot helpers (used to silence non-actionable runs) ──────────────
 def load_state() -> dict:
     """Return last published state or empty defaults."""
@@ -257,7 +318,85 @@ def get_intraday_volatility(symbol: str) -> float | None:
         return None
 
 
-# ── Strategy parser ───────────────────────────────────────────────────────────
+# ── Signals / heartbeat ───────────────────────────────────────────────────────
+def fetch_signals(limit: int = 15) -> list[dict]:
+    try:
+        resp = requests.get(
+            f"{BASE_URL}/signals/feed",
+            headers=HEADERS,
+            params={"limit": limit},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json().get("signals", [])
+    except Exception as e:
+        log(f"ERROR fetching signals: {e}")
+        return []
+
+
+def fetch_agent_leaderboard(limit: int = 20, market: str = "us-stock",
+                             min_last_signal_hours: int = 72) -> list[dict]:
+    """Fetch /api/signals/grouped and return active agents sorted by recent signal
+    activity. The platform's grouped endpoint already aggregates per-agent
+    signal_count + last_signal_at — we just rank by activity.
+
+    Args:
+        limit: How many agents to inspect from the leaderboard.
+        market: us-stock / crypto / forex. Hard-filter at the API layer.
+        min_last_signal_hours: Agents inactive for longer than this are dropped
+            (avoid auto-following dead traders).
+
+    Returns: list of agent dicts with at least {agent_id, agent_name,
+        signal_count, last_signal_at}.
+    """
+    try:
+        resp = requests.get(
+            f"{BASE_URL}/signals/grouped",
+            headers=HEADERS,
+            params={"limit": limit, "market": market},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        agents = data.get("agents", [])
+        # Filter by activity (skip dead traders — no signal in N hours)
+        from datetime import datetime, timezone
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=min_last_signal_hours)
+        active = []
+        for a in agents:
+            ts = a.get("last_signal_at")
+            if not ts:
+                continue
+            try:
+                dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                if dt < cutoff:
+                    continue
+                a["_last_signal_dt"] = dt
+                active.append(a)
+            except Exception:
+                continue
+        # Sort by signal_count desc (more active = higher signal flow)
+        active.sort(key=lambda a: a.get("signal_count", 0), reverse=True)
+        return active
+    except Exception as e:
+        log(f"ERROR fetching leaderboard: {e}")
+        return []
+
+
+# Dynamic follow-list cache. Refreshed from leaderboard every
+# LEADERBOARD_REFRESH_HOURS hours, persisted in SQLite so restarts reuse it.
+LEADERBOARD_REFRESH_HOURS = 4
+DYNAMIC_FOLLOW_LIMIT = 5  # how many top agents to auto-follow
+# Minimum signals (lifetime) required before we trust an agent's activity
+# signal — keeps one-off lucky / brand-new accounts out.
+MIN_AGENT_SIGNAL_COUNT = 50
+
+# Manual override list — agents we always follow regardless of leaderboard
+# ranking (e.g. raftapart has been our primary workhorse even when activity
+# dips). Listed by name; resolved against the leaderboard.
+PINNED_AGENTS: list[str] = ["raftapart"]
 def parse_strategy_content(content: str) -> list[dict]:
     """Parse markdown blocks like `### AMD: **BUY** (Score: 7.9)` into recs."""
     recommendations: list[dict] = []
@@ -667,6 +806,11 @@ def main() -> list[dict]:
         t for t in trades
         if t.get("status") == "closed" and t.get("closed_at")
     ]
+
+    # 2a. Refresh dynamic follow-list from /api/signals/grouped leaderboard.
+    # Picks the most active US-stock traders + our pinned workhorse (raftapart).
+    follow_list = refresh_follow_list()
+    log(f"Follow list ({len(follow_list)} agents): {', '.join(follow_list)}")
 
     for sig in signals:
         msg_type = sig.get("message_type", "")
