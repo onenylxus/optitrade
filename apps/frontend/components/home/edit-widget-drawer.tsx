@@ -11,6 +11,7 @@ interface EditWidgetDrawerProps {
   open: boolean;
   mode?: 'overlay' | 'inline';
   className?: string;
+  isDraggingWidget?: boolean;
   onWidgetDragStart?: (widgetType: WidgetType) => void;
   onWidgetDragEnd?: () => void;
 }
@@ -19,6 +20,7 @@ export function EditWidgetDrawer({
   open,
   mode = 'overlay',
   className,
+  isDraggingWidget = false,
   onWidgetDragStart,
   onWidgetDragEnd,
 }: EditWidgetDrawerProps) {
@@ -30,6 +32,7 @@ export function EditWidgetDrawer({
   };
 
   const isInline = mode === 'inline';
+  const isExpanded = isInline || open || isDraggingWidget;
 
   return (
     <aside
@@ -37,7 +40,7 @@ export function EditWidgetDrawer({
         isInline
           ? 'h-full min-h-0 p-3 sm:p-4'
           : 'group pointer-events-none fixed top-16 left-0 z-50 h-[calc(100vh-4rem)] p-3 sm:p-4',
-        !isInline && (open ? 'opacity-100' : 'opacity-0'),
+        !isInline && (isExpanded ? 'opacity-100' : 'opacity-0'),
         className,
       )}
       aria-hidden={!open}
@@ -49,7 +52,9 @@ export function EditWidgetDrawer({
             ? 'pointer-events-auto'
             : 'pointer-events-auto relative w-16 border-border/70 bg-card/95 backdrop-blur transition-[width,transform,opacity,box-shadow] duration-300 ease-out hover:w-72 group-hover:w-72',
           !isInline &&
-            (open ? 'translate-x-0 opacity-100 shadow-xl' : 'translate-x-0 opacity-100 shadow-lg'),
+            (isExpanded
+              ? 'translate-x-0 opacity-100 shadow-xl'
+              : 'translate-x-0 opacity-100 shadow-lg'),
         )}
       >
         <CardHeader
@@ -82,7 +87,7 @@ export function EditWidgetDrawer({
         </CardHeader>
 
         {!isInline && (
-          <div className="pointer-events-none absolute inset-0 z-0 flex flex-col opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
+          <div className="pointer-events-auto absolute inset-0 z-0 flex flex-col opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
             <CardHeader className="border-b px-4 py-3 text-left">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
                 <LayoutGrid className="size-4 shrink-0" />
@@ -91,7 +96,7 @@ export function EditWidgetDrawer({
               <CardDescription>Drag a widget onto a grid origin.</CardDescription>
             </CardHeader>
 
-            <CardContent className="h-full space-y-2 overflow-y-auto p-3">
+            <CardContent className="pointer-events-auto h-full space-y-2 overflow-y-auto p-3">
               {widgetLibrary.map((widget) => (
                 <div
                   key={widget.id}
