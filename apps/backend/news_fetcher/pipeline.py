@@ -316,7 +316,7 @@ class NewsAnalysisPipeline:
                 "risk_tag": analysis.get("risk_tag", "Low Risk"),
                 "reasoning": analysis.get("reasoning", ""),
                 "related_symbols": extracted_symbols,
-                "readiness_score": analysis.get("readiness_score", 0),
+                # "readiness_score": analysis.get("readiness_score", 0),
                 "analyzed_at": datetime.now().isoformat()
             }
 
@@ -377,8 +377,9 @@ class NewsAnalysisPipeline:
                         "impact": item.get("risk_tag") or item.get("impact"),
                         "highlights": item.get("highlights") or [],
                         "reasoning": item.get("reasoning"),
+                        # "model_used": item.get("model_used"),
                         "related_symbols": item.get("related_symbols") or [],
-                        "readiness_score": item.get("readiness_score"),
+                        # "readiness_score": item.get("readiness_score"),
                         "analyzed_at": item.get("analyzed_at") or datetime.now().isoformat(),
                     }
                     if not article["id"] or not article["headline"]:

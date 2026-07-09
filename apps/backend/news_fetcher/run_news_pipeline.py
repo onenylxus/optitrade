@@ -14,9 +14,9 @@ def start_analysis():
     results = pipeline.start_automated_loop(interval_seconds=900)
     # results = pipeline.run_once()
 
-    print(f"\n✅ Analysis completed!")
-    print(f"📁 Results saved to: {OUTPUT_FILE}")
-    print(f"📊 Total analyzed: {len(results)} news items")
+    print(f"\nAnalysis completed!")
+    print(f"Results saved to: {OUTPUT_FILE}")
+    print(f"Total analyzed: {len(results)} news items")
 
     # Display first 5 results
     print("\n📰 Latest News Summary:")

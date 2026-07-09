@@ -10,12 +10,12 @@ import time
 class CloudAnalyzer:
     """Financial news analyzer using OpenRouter Cloud API"""
     def __init__(self, api_key: str = None, model_name: str = None):
-        # self.api_key = api_key or OPENROUTER_API_KEY
-        # self.model_name = model_name or CLOUD_MODEL_NAME
-        # self._check_api_key()
-        # ===========ollama=============================
-        self.url = "http://localhost:11434/api/generate"
+        self.api_key = api_key or OPENROUTER_API_KEY
         self.model_name = model_name or CLOUD_MODEL_NAME
+        self._check_api_key()
+        # ===========ollama=============================
+        # self.url = "http://localhost:11434/api/generate"
+        # self.model_name = model_name or CLOUD_MODEL_NAME
         print(f"llm Model: {self.model_name}")
 
     def _check_api_key(self):
@@ -69,8 +69,8 @@ class CloudAnalyzer:
             print(f"    ❌ API call failed: {e}")
             return None
     def _call_api(self, prompt: str, max_tokens: int = 1000) -> Optional[str]:
-        return self._call_ollama(prompt)
-        # return self._call_openrouter(prompt, max_tokens)
+        # return self._call_ollama(prompt)
+        return self._call_openrouter(prompt, max_tokens)
 
     def analyze(self, title: str, summary: str, content: str = "", mode: str = "batch"):
             """Analyze a single news article, returning sentiment, risk_tag, reasoning, highlights, and readiness_score"""
@@ -153,11 +153,11 @@ class CloudAnalyzer:
                     json_match = re.search(r'\{[\s\S]*\}', clean_text, re.DOTALL)
                     if json_match:
                         result = json.loads(json_match.group())
-                        ai_score = result.get("confidence_score", 0)
+                        # ai_score = result.get("confidence_score", 0)
                         sentiment = max(-1.0, min(1.0, float(result.get("sentiment", 0))))
                         risk_tag = result.get("risk_tag", "Low Risk")
                         highlights = result.get("highlights", ["No highlights"])
-                        local_score = self.calculate_readiness_score(result)
+                        # local_score = self.calculate_readiness_score(result)
 
                         sentiment = max(-1.0, min(1.0, sentiment))
 
@@ -195,7 +195,7 @@ class CloudAnalyzer:
                             # "quality_warning": warning
                         }
 
-                        final_result["readiness_score"] = self.calculate_readiness_score(final_result)
+                        # final_result["readiness_score"] = self.calculate_readiness_score(final_result)
 
                         return final_result
 
@@ -242,27 +242,27 @@ class CloudAnalyzer:
                 "highlights": ["Standard market event", "No clear directional catalysts", "Monitor standard developments"]
             }
 
-    def calculate_readiness_score(self, analysis_result: Dict) -> int:
-        score = 100
-        sentiment = analysis_result.get("sentiment", 0)
-        risk_tag = analysis_result.get("risk_tag", "Low Risk")
+    # def calculate_readiness_score(self, analysis_result: Dict) -> int:
+    #     score = 100
+    #     sentiment = analysis_result.get("sentiment", 0)
+    #     risk_tag = analysis_result.get("risk_tag", "Low Risk")
 
-        if abs(sentiment) < 0.01 and risk_tag in ["Medium Risk", "High Risk"]:
-            score -= 50
+    #     if abs(sentiment) < 0.01 and risk_tag in ["Medium Risk", "High Risk"]:
+    #         score -= 50
 
-        if risk_tag == "High Risk" and sentiment >= 0:
-            score -= 40
+    #     if risk_tag == "High Risk" and sentiment >= 0:
+    #         score -= 40
 
-        if risk_tag == "Low Risk" and sentiment <= -0.5:
-            score -= 30
+    #     if risk_tag == "Low Risk" and sentiment <= -0.5:
+    #         score -= 30
 
-        if len(analysis_result.get("reasoning", "")) < 20:
-            score -= 20
+    #     if len(analysis_result.get("reasoning", "")) < 20:
+    #         score -= 20
 
-        if "AI analysis completed" in str(analysis_result.get("highlights", [])):
-            score -= 30
+    #     if "AI analysis completed" in str(analysis_result.get("highlights", [])):
+    #         score -= 30
 
-        return max(0, score)
+    #     return max(0, score)
 
     @staticmethod
     def parse_json_safely(text: str) -> Dict:

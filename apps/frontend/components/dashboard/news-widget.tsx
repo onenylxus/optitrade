@@ -104,10 +104,14 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
       try {
         let url = '/api/news';
 
-        if (allInterestedSymbols.length > 0) {
-          const symbolsParam = allInterestedSymbols.join(',');
-          url = `/api/news?symbols=${symbolsParam}`;
-        }
+        // if (allInterestedSymbols.length > 0) {
+        //   const symbolsParam = allInterestedSymbols.join(',');
+        //   url = `/api/news?symbols=${symbolsParam}`;
+        // }
+        if (currentFilter !== 'all' && allInterestedSymbols.length > 0) {
+        const symbolsParam = allInterestedSymbols.join(',');
+        url = `/api/news?symbols=${symbolsParam}`;
+      }
 
         console.log(`[API Request] Fetching news using all stock symbols, URL: ${url}`);
         const response = await fetch(url);
@@ -152,7 +156,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
     };
 
     fetchNews();
-  }, [allInterestedSymbols]);
+  }, [allInterestedSymbols , currentFilter]);
 
   const matchesWatchlist = useCallback(
     (headline: string, summary?: string): boolean => {
@@ -189,9 +193,12 @@ const matchesPortfolio = useCallback(
     const itemSummary = item.summary || "";
     const text = `${itemHeadline} ${itemSummary}`.toLowerCase();
 
-    return portfolioSymbols.some((symbol) =>
-      text.includes(symbol.toLowerCase())
-    );
+    return portfolioSymbols.some((symbol) =>{
+      // text.includes(symbol.toLowerCase())
+        const lowerSymbol = symbol.toLowerCase();
+        const regex = new RegExp(`\\b${lowerSymbol}\\b`, 'i');
+        return regex.test(text);
+      });
   },
   [portfolioSymbols],
 );
@@ -416,7 +423,7 @@ const matchesPortfolio = useCallback(
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-muted-foreground">🔄 15min</span>
           <span className="text-[10px] text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
-            🤖 Llama 3.2
+            🤖 Mistral-nemo
           </span>
         </div>
       </div>
@@ -453,7 +460,7 @@ const matchesPortfolio = useCallback(
                         : 'border-border'
                   }`}
                 >
-                  {/* 標題行 */}
+                  {/* Title */}
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-1">
@@ -462,7 +469,7 @@ const matchesPortfolio = useCallback(
                       </div>
                       <div className="text-sm font-medium line-clamp-2">{news.headline}</div>
                     </div>
-                    {/* 簡化情感標籤 */}
+                    {/* sentimentLabel */}
                     <div
                       className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
                         sentimentLabel.text === 'Bullish'
@@ -476,7 +483,7 @@ const matchesPortfolio = useCallback(
                     </div>
                   </div>
 
-                  {/* Card View 詳細內容 */}
+                  {/* Card View */}
                   {currentView === 'card' && (
                     <>
                     <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
@@ -490,9 +497,9 @@ const matchesPortfolio = useCallback(
                         </ul>
                       )}
 
-                      {/* Sentiment 分數 + AI Reason + Risk Tag */}
+                      {/* Sentiment  + AI Reason + Risk Tag */}
                       <div className="mt-2 flex items-center gap-2 flex-wrap">
-                    {/* Sentiment 分數 */}
+                    {/* Sentiment  */}
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                             (news.sentiment ?? 0) > 0.2
@@ -507,7 +514,7 @@ const matchesPortfolio = useCallback(
                           {(news.sentiment ?? 0).toFixed(2)}
                         </span>
 
-                        {/* AI Reason（hover 顯示） */}
+                        {/* AI Reason（hover) */}
                         <div className="relative group cursor-help">
                           <span className="text-[10px] text-muted-foreground">💡 AI</span>
                           <div className="absolute bottom-full left-0 mb-1 hidden max-w-62.5 truncate rounded bg-foreground px-2 py-1 text-[10px] text-background whitespace-nowrap z-10 group-hover:block">
@@ -527,21 +534,6 @@ const matchesPortfolio = useCallback(
                         >
                           {news.risk_tag || 'Low Risk'}
                         </span>
-
-
-  {/* 新增：準備率分數 */}
-  {/* {news.readiness_score !== undefined && (
-    // <span
-    //   className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary/50 text-muted-foreground border border-border"
-    //   title={`Analysis Reliability Score: ${news.readiness_score}/100`}
-    // >
-    //   ✅ {news.readiness_score}%
-    // </span>
-      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary/50 text-muted-foreground border border-border">
-        ✅ Reliability:{news.readiness_score}%
-      </span>
-
-  )} */}
                       </div>
                     </>
                   )}
