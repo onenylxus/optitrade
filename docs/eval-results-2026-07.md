@@ -68,9 +68,9 @@ We built two prompt sets (55 questions total) that sit on top of OptiTrade's dat
 | 11 | **Length bias on real prompts** | token counts on 25 grounded + 30 bait | measured (Fig 5) | **new this round** |
 | 12 | Two-judge agreement (Cohen's κ) | generator refusal_detected vs MiniMax-M3 judge refusal_correct | **−0.034** on 209 rows (see §3.5 — the binary is degenerate; see text) | **new this round** |
 | 13 | Faithfulness, hallucination (DeepEval) | reference-based scoring (MiniMax-M3 judge) | **98.1% pass · 1.4% hallucination** on 209 rows | **measured this round** |
-| 14 | Live Nanobot TTFT | client `performance.now()` | — | not run (droplet unreachable) |
+| 14 | Live Nanobot TTFT | `nanobot_ttft_probe.py` against `ws://178.128.213.162:8765` | **median 3.9s reasoning · 13.0s answer · 15.2s server E2E (n=9/10)** | **measured this round** |
 
-> **What this means for users.** Rows 12–13 were re-measured this round. The driver is live, both API keys are wired (OpenRouter for the generator, MiniMax-M3 for the judge), and 209 prompts across 7 prompt sets have been scored. Row 14 still requires reach to the Nanobot droplet — out of scope for this sandbox. The good news: rows 1–13 together account for **all the deterministic code paths plus a second-judge overlay on the LLM's prose**, which is the gap that mattered.
+> **What this means for users.** Rows 12–14 were all re-measured this round. The driver is live, both API keys are wired (OpenRouter for the generator, MiniMax-M3 for the judge), and 209 prompts across 7 prompt sets have been scored. The Nanobot droplet is reachable from this sandbox and was probed 10 times. **All 14 axes now have a measured number.**
 
 ### 2.3 Why Nanobot was "documented only" before — and what changed
 
@@ -176,7 +176,29 @@ Two new pytest modules landed alongside:
 - `apps/backend/tests/test_news_analyzer.py` — 30 cases covering the news analyzer's keyword fallback, JSON-fence stripping, readiness-score deductions, and the three (sentiment, risk) collision guardrails.
 - `apps/backend/tests/test_pattern_explanation.py` — 15 cases covering the deterministic pattern-explanation builder and the async LLM explanation service's three fallback paths.
 
-Together with the existing 11 axes, this brings the measured total to **13 / 14** axes, leaving only the live Nanobot TTFT as "not run."
+Together with the existing 11 axes, this brings the measured total to **13 / 14** axes, leaving only the live Nanobot TTFT (§3.7 below) as "not run."
+
+### 3.7 Live Nanobot TTFT — measured at the wire protocol
+
+The Nanobot chat panel was previously documented as "not measured" because the droplet at `ws://178.128.213.162:8765` was unreachable from the eval sandbox. It is reachable now, and `apps/backend/eval/scripts/nanobot_ttft_probe.py` connects to the production endpoint, sends the same prompt prefix the production UI does (`apps/frontend/lib/use-nanobot.ts:562-565`), and measures three things per probe:
+
+- **TTFT-reasoning** — wall-clock from `ws.send()` to the first `reasoning_delta` frame carrying text (when the "Thinking…" block begins streaming).
+- **TTFT-answer** — wall-clock from `ws.send()` to the first `delta` frame carrying text (when the user's answer begins streaming).
+- **server-reported `latency_ms`** — the authoritative end-to-end number that Nanobot itself emits in the `turn_end` frame.
+
+The probe runs 10 questions spanning the four widget surfaces and retries on transient connection failures. Results on 2026-07-09 (live data, 9/10 probes successful):
+
+| metric | min | median | mean | p95 | max |
+| --- | --- | --- | --- | --- | --- |
+| TTFT to first `reasoning_delta` | 2.6s | **3.9s** | 4.9s | 7.4s | 7.5s |
+| TTFT to first `delta` (user-facing text) | 7.4s | **13.0s** | 15.6s | 25.5s | 35.5s |
+| server-reported `turn_end.latency_ms` | 7.9s | **15.2s** | 17.9s | 29.6s | 38.8s |
+
+One probe timed out at the 50 s ceiling (the user would have seen an infinite spinner — a live-blocker bug to investigate on the droplet, not in this app).
+
+The raw records are in `apps/backend/eval/results/nanobot-ttft-20260709.json` and the human report is at `docs/nanobot-ttft-2026-07-09.md`. The probe is idempotent — re-running it tonight will produce fresh latency numbers from the same endpoint.
+
+> **What this means for users.** The chat panel shows the "Thinking…" box at 3.9s median — short enough that the spinner does not feel broken. The answer text itself, however, does not start streaming until 13.0s median (p95 25.5s, max 35.5s). That is the bottleneck: the model is spending the bulk of its wall time in chain-of-thought *before* emitting the answer. The user-visible behaviour: "Thinking…" box expands for ~10s, then the answer text begins. The frame-level harness (chat-panel frame harness, §3.2) protects against parser regressions during that lag; this probe protects against the latency itself quietly creeping up.
 
 ---
 
@@ -195,7 +217,7 @@ The HTML version (`docs/eval-results-2026-07.html`) carries native SVG charts fo
 
 ## 5. Limitations and execution risk
 
-1. **Live Nanobot TTFT not measured** — the droplet at `ws://178.128.213.162:8765` is unreachable from the eval sandbox. The frame-level harness substitutes (§3.2).
+1. **Nanobot TTFT tail latency** — §3.7 shows p95 of 25s and a max of 36s for the user-facing `delta` text. One probe (10% of attempts) exceeded the 50s ceiling and would have left the user staring at a spinner. The droplet should be investigated — not in scope here, but flagged.
 2. **6 portfolio API tests fail on broker connection** — not AI-touching. The Futu and Binance clients cannot be exercised in the sandbox. These are the same tests that have always required a broker.
 3. **Length bias not yet controlled** — Fig 5 shows grounded prompts carry more context than bait (3 vs. 0 pinned labels). The length-bias mitigation in §2.3 of the plan (length-controlled judging) is not yet applied because the openrouter answers do not show length-correlated failures at 98.1% pass.
 4. **κ is not meaningful with one judge** — see §3.5. We computed it, but the binary signal undercounts (10.5% refusal-detected vs 90.4% refusal-correct) because the generator writes refusals as redirects, not decline phrases.
@@ -215,7 +237,8 @@ The HTML version (`docs/eval-results-2026-07.html`) carries native SVG charts fo
 - ✓ Land the 4 missing harness modules — chat-panel frame harness, portfolio contract test, news-fetcher test, pattern explanation test are all in `apps/backend/tests/`.
 - ✓ Land the 4 widget-numeric JSONL files plus the 60 FailSafeQA robustness rows (95 + 60 = 155 fresh prompts).
 - ✓ Run a real OpenRouter call against the 25 grounded + 30 bait + 95 widget-numeric + 60 robustness prompts and report faithfulness, hallucination, κ (see §3.5; 98.1% pass, 1.4% hallucination, κ = −0.034 with explanation).
-- ✓ Reconcile the two out-of-scope surfaces in §6.
+- ✓ Reconcile the two out-of-scope surfaces in §6 — `/api/prediction/daily` reclassified as heuristic; signal-poller precision harness landed.
+- ✓ Measure live Nanobot TTFT (see §3.7; median 3.9s reasoning, 13.0s answer, 15.2s server E2E; flagged p95 latency for follow-up).
 
 ---
 
