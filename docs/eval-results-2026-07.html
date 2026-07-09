@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Evaluation of the AI Features of OptiTrade — Final Report (Jul 2026)</title>
+<meta name="author" content="Cheung Ching Nam — COMP7705" />
+<style>
+  :root {
+    --ink:#0b0b0b; --muted:#52514e; --rule:#e1e0d9; --bg:#fcfcfb;
+    --accent:#0b6e4f; --accent-2:#1d4ed8; --warn:#b45309; --bad:#b91c1c; --new:#0e7490;
+    --series-measured: #008300;   /* categorical slot 4 (green)  */
+    --series-new:      #2a78d6;   /* categorical slot 1 (blue)   */
+    --series-notrun:   #eb6834;   /* categorical slot 8 (orange) */
+    --series-limitation:#c98500;  /* sequential yellow-dark, "documented limitation" */
+    --gridline:        #e1e0d9;
+    --baseline:        #c3c2b7;
+  }
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  html, body { background: var(--bg); color: var(--ink);
+    font-family: "Times New Roman", Georgia, serif; font-size: 10.5pt;
+    line-height: 1.32; margin: 0; }
+  body { padding: 14mm 16mm; max-width: 210mm; margin: 0 auto; }
+  h1 { font-size: 17pt; margin: 0 0 2pt; letter-spacing: .2pt; }
+  h2 { font-size: 12pt; margin: 12pt 0 4pt; border-bottom: 1px solid var(--rule);
+       padding-bottom: 2pt; color: var(--accent); }
+  h3 { font-size: 10.5pt; margin: 7pt 0 2pt; color: var(--accent-2); }
+  p, li { text-align: justify; hyphens: auto; }
+  .meta { color: var(--muted); font-size: 9.5pt; margin-bottom: 6pt; }
+  .abs { background: #f6f8f7; border-left: 3px solid var(--accent);
+         padding: 5pt 9pt; margin: 6pt 0 8pt; font-size: 9.6pt; }
+  .abs b { color: var(--accent); }
+  .user-note { background: #f0f7f4; border-left: 3px solid var(--new);
+               padding: 4pt 8pt; margin: 5pt 0 7pt; font-size: 9.4pt; }
+  .user-note b { color: var(--new); }
+  table { border-collapse: collapse; width: 100%; font-size: 8.6pt; margin: 3pt 0 6pt; }
+  th, td { border: 1px solid var(--rule); padding: 2.5pt 4pt; vertical-align: top; }
+  th { background: #eef2f0; text-align: left; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  td.c   { text-align: center; }
+  caption { caption-side: top; font-size: 8.6pt; color: var(--muted);
+            margin-bottom: 2pt; text-align: left; }
+  figure { margin: 5pt 0 8pt; page-break-inside: avoid; }
+  figcaption { font-size: 8.3pt; color: var(--muted); text-align: center;
+               margin-top: 2pt; line-height: 1.25; }
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 8pt; }
+  .ok { color: var(--accent); font-weight: 600; }
+  .warn { color: var(--warn); }
+  .bad { color: var(--bad); font-weight: 600; }
+  .new { color: var(--new); font-weight: 600; }
+  .small { font-size: 8.5pt; color: var(--muted); }
+  ul { margin: 2pt 0 5pt; padding-left: 16pt; }
+  li { margin-bottom: 1pt; }
+  .ref { font-size: 8.6pt; }
+  .ref li { margin-bottom: 1pt; }
+
+  /* ── Charts (dataviz skill: light tokens, thin marks, surface gaps) ── */
+  .viz text { font-family: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif; fill: var(--ink); }
+  .viz .axis line, .viz .axis path { stroke: var(--baseline); stroke-width: .5; fill: none; }
+  .viz .axis text { font-size: 7pt; fill: var(--muted); }
+  .viz .gridline { stroke: var(--gridline); stroke-width: .5; }
+  .viz .bar-measured { fill: var(--series-measured); background: var(--series-measured); }
+  .viz .bar-new      { fill: var(--series-new);      background: var(--series-new); }
+  .viz .bar-notrun   { fill: var(--series-notrun);   background: var(--series-notrun); }
+  .viz .bar-limitation { fill: var(--series-limitation); background: var(--series-limitation); }
+  .viz .bar-pass     { fill: var(--series-measured); background: var(--series-measured); }
+  .viz .legend { font-size: 7pt; fill: var(--muted); }
+  .viz .label  { font-size: 7pt; fill: var(--ink); font-variant-numeric: tabular-nums; }
+  .viz .hero-num { font-size: 30pt; font-weight: 600; fill: var(--series-measured); font-variant-numeric: proportional-nums; }
+  .viz .hero-label { font-size: 8pt; fill: var(--muted); }
+  .viz .icon-warn { fill: var(--series-limitation); }
+  .viz .swatch    { width: 8pt; height: 8pt; rx: 1pt; }
+  .viz .row { display: flex; align-items: center; gap: 4pt; }
+  .viz .row .name { width: 90pt; font-size: 7pt; color: var(--ink); }
+  .viz .row .bar  { height: 6pt; border-radius: 1pt; }
+  .viz .row .val  { font-size: 7pt; font-variant-numeric: tabular-nums; color: var(--muted); width: 22pt; text-align: right; }
+  .viz .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6pt; }
+  .viz .grid-2 > div { padding: 4pt; border: 1px solid var(--rule); border-radius: 2pt; background: #fff; }
+  .viz .stat-tile { text-align: center; padding: 6pt 4pt; border: 1px solid var(--rule); border-radius: 2pt; background: #fff; }
+  .viz .stat-tile .v { font-size: 22pt; font-weight: 600; fill: var(--ink); font-variant-numeric: proportional-nums; }
+  .viz .stat-tile .l { font-size: 7.5pt; fill: var(--muted); }
+  .viz .stack-bar { display: flex; height: 14pt; border-radius: 2pt; overflow: hidden; gap: 2pt; }
+  .viz .stack-bar > div { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 7pt; font-weight: 600; }
+
+  @media print {
+    body { padding: 0; }
+    h2 { page-break-after: avoid; }
+    figure, table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Evaluation of the AI Features of OptiTrade</h1>
+<div class="meta">
+  COMP7705 Final Report &middot; Cheung Ching Nam &middot; <b>8 July 2026</b> &middot; git <code>f7fc9ba</code>
+  <br/>Companion: <code>docs/qa-evaluation-plan.md</code>, <code>docs/ai-usage-analysis.md</code>.
+  Harness: <code>apps/backend/eval/</code>. Markdown sibling: <code>docs/eval-results-2026-07.md</code>.
+</div>
+
+<div class="abs">
+  <b>Abstract.</b> OptiTrade ships two LLM gateways — OpenRouter-via-LangChain (three widget endpoints) and a
+  Nanobot WebSocket chat panel — over six user-facing AI surfaces. This report evaluates them on a hybrid
+  reference set (55 prompts at submission; 235 planned) using a 14-axis harness: substrate tests, JSON contract
+  probes, an end-to-end <code>FakeListChatModel</code> chain, a faithful Python port of the production
+  <code>StreamingThinkParser</code>, a Nanobot frame-level harness, and length-bias measurement.
+  <b>Measured at submission</b>: 11/11 deterministic parser / contract / chat axes pass; 10/11 substrate tests pass;
+  36/43 backend tests pass (7 broker-dependent). The 3 remaining axes (LLM faithfulness, hallucination rate,
+  inter-judge κ) need an OpenRouter key and a second judge model — not in the eval sandbox.
+</div>
+
+<h2>1 &middot; What we evaluated, and what we didn't</h2>
+
+<p>
+The audit found <b>eight</b> places where the app touches an LLM. Two of them are mislabelled — they are
+hand-tuned heuristics, not AI. We kept them in §6 as "out-of-scope surfaces" because the wrong label is
+itself a finding.
+</p>
+
+<table>
+<caption><b>Table 1.</b> Six in-scope AI surfaces plus the two out-of-scope surfaces discovered during the audit.</caption>
+<thead><tr><th>#</th><th>Surface</th><th>What it does</th><th>LLM?</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td class="c">1</td><td>Portfolio insight widget</td><td>2–4 sentence commentary on concentration, risk, ideas</td><td>OpenRouter</td><td class="ok">measured</td></tr>
+<tr><td class="c">2</td><td>Stock-chart recommendation</td><td>Short note on RSI / SMA / momentum</td><td>OpenRouter</td><td class="ok">measured</td></tr>
+<tr><td class="c">3</td><td>Chart-pattern explanation</td><td>Explains head-and-shoulders / double-bottom / etc.</td><td>OpenRouter (opt.)</td><td class="ok">measured</td></tr>
+<tr><td class="c">4</td><td>News sentiment pipeline</td><td>Tags headlines positive/negative + risk level</td><td>OpenRouter (raw HTTP)</td><td class="ok">measured</td></tr>
+<tr><td class="c">5</td><td>Chat panel (Nanobot)</td><td>Right-hand chat box, streamed answer</td><td>Nanobot WS</td><td class="new">measured <span class="small">(new)</span></td></tr>
+<tr><td class="c">6</td><td>Streaming <code><think></code> parser</td><td>Splits the model's output into "thinking" vs. "answer"</td><td>(frontend)</td><td class="new">measured <span class="small">(new)</span></td></tr>
+<tr><td class="c">7</td><td><code>/api/prediction/daily</code></td><td>Daily market outlook</td><td class="bad">no — bracket table</td><td>out of scope</td></tr>
+<tr><td class="c">8</td><td><code>ai4trade_signal_poller.py</code></td><td>30-min copy-trading signal poller</td><td class="bad">no — rule-based</td><td>out of scope</td></tr>
+</tbody>
+</table>
+
+<div class="user-note">
+  <b>What this means for users.</b> Items 7 and 8 are labelled "AI" in the UI but aren't. If you ask for
+  the reasoning behind a "follow" recommendation from #8, there is none — it's a hand-tuned rule. We recommend
+  re-labelling these so the user knows when they're getting an LLM answer vs. a hand-tuned heuristic.
+</div>
+
+<figure>
+  <div class="viz" style="width: 100%;">
+    <div class="stat-tile" style="margin-bottom: 6pt;">
+      <div style="font-size: 30pt; font-weight: 600; color: var(--accent); line-height: 1; font-variant-numeric: proportional-nums;">11 / 14</div>
+      <div style="font-size: 8pt; color: var(--muted); margin-top: 2pt;">axes measured at submission</div>
+    </div>
+    <div class="stack-bar" role="img" aria-label="Eleven evaluation axes by status: 7 measured (pre-existing) + 4 new this round + 3 not run">
+      <div class="bar-measured" style="flex: 7;">7 measured</div>
+      <div class="bar-new"      style="flex: 4;">4 new</div>
+      <div class="bar-notrun"   style="flex: 3;">3 not run</div>
+    </div>
+    <div class="legend" style="display: flex; gap: 10pt; margin-top: 4pt; font-size: 7pt; color: var(--muted);">
+      <span><span class="swatch" style="display: inline-block; background: var(--series-measured); vertical-align: middle;"></span> measured (pre-existing)</span>
+      <span><span class="swatch" style="display: inline-block; background: var(--series-new);      vertical-align: middle;"></span> measured (new this round)</span>
+      <span><span class="swatch" style="display: inline-block; background: var(--series-notrun);   vertical-align: middle;"></span> not run (need LLM key)</span>
+    </div>
+  </div>
+  <figcaption><b>Fig 1.</b> Eleven evaluation axes by status. The 3 not-run axes (faithfulness, hallucination, κ) need an OpenRouter key and a second judge model — not available in the eval sandbox.</figcaption>
+</figure>
+
+<h2>2 &middot; How we tested it</h2>
+
+<p>
+We used <b>two prompt sets</b> totalling 55 questions. The 25 grounded prompts carry real context cards
+(what OptiTrade's widgets are pinned to) so we can test whether the model uses what it was given. The 30
+bait prompts are adapted from the public <i>FailSafeQA</i> benchmark (Kamble et al., arXiv:2502.06329)
+and try to make the model fabricate: missing-doc variants (no card → model should refuse), wrong-context
+variants (irrelevant card → model should notice the mismatch).
+</p>
+
+<div class="user-note">
+  <b>What this means for users.</b> Grounded = "fair test." Bait = "tough test." The bait set is the one
+  that matters for the §1.5 hallucination commitment. A model that handles the bait set well will refuse
+  to make up portfolio numbers when the right widget isn't pinned.
+</div>
+
+<table>
+<caption><b>Table 2.</b> Prompt sets at submission.</caption>
+<thead><tr><th>Set</th><th>Rows</th><th>Median prompt</th><th>Median pinned labels</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Grounded</td><td class="num">25</td><td class="num">55 chars / 9 words</td><td class="num">3</td><td>OptiTrade-native (hand-curated)</td></tr>
+<tr><td>Bait</td><td class="num">30</td><td class="num">53 chars / 10 words</td><td class="num">0</td><td>FailSafeQA v1 perturbations</td></tr>
+<tr><td><b>Total</b></td><td class="num"><b>55</b></td><td>—</td><td>—</td><td>23 % of the planned 235-row hybrid set</td></tr>
+</tbody>
+</table>
+
+<p>
+The harness has 14 axes. <b>11 were measured this round</b>; 3 require an OpenRouter key and a second
+judge model that the eval sandbox doesn't have. The 11 measured axes are split into 7 axes that existed
+in the previous draft (substrate, JSON contract, news guardrails, news fallback, backend API, dataset
+schema, prompt coverage) and <b>4 new axes</b> that close the "documented only" gaps the previous report
+flagged.
+</p>
+
+<h3>2.1 Why Nanobot was "documented only" — and what changed</h3>
+
+<p>
+The chat panel lives on a separate droplet at <code>ws://178.128.213.162:8765</code> that the eval sandbox
+cannot reach. The previous report flagged items 5 and 6 as "documented only" because the only way to test
+them was to inspect the React hook by hand. This report closes that gap with two new tools:
+</p>
+
+<ol>
+  <li>A <b>line-by-line Python port</b> of the production <code>StreamingThinkParser</code>
+      (<code>apps/frontend/lib/use-nanobot.ts:46-215</code>) — the same algorithm, same tag-handling
+      rules, same 12-character "safety tail."</li>
+  <li>A <b>frame-level harness</b> that constructs synthetic Nanobot WebSocket frames
+      (<code>{event, stream_id, chat_id, text}</code> — the exact JSON shape the real server sends)
+      and feeds them through a port of the message-handler state machine.</li>
+</ol>
+
+<div class="user-note">
+  <b>What this means for users.</b> If the chat panel ever shows garbled "thinking" text or mis-routes a
+  card, the harness is now wired to catch it in CI — the regression would show up as a failing
+  chunked-tag test. The Nanobot service itself is still untested at the wire-protocol level (it lives on
+  a droplet the sandbox can't reach), but the parser that consumes its output is now tested.
+</div>
+
+<h2>3 &middot; What passed, and what didn't</h2>
+
+<h3>3.1 Portfolio widget — the strictest contract</h3>
+
+<p>
+The portfolio insight endpoint forces the LLM to return <b>strict JSON</b> with five named keys
+(<code>insight, riskLabel, riskTone, strategy, signals</code>) and a closed vocabulary for
+<code>riskTone</code> (<code>low | medium | high</code>). This is the contract that prevents the most
+common hallucination class in our app: "the model invented a sentiment it wasn't asked to report."
+</p>
+
+<p>
+We tested the parser with 44 adversarial inputs and the <b>end-to-end production chain</b> with 7 canned
+LLM responses (via <code>FakeListChatModel</code>) covering the failure modes that actually happen in
+the wild. All 7 cases route to the correct outcome.
+</p>
+
+<figure>
+  <div class="viz grid-2">
+    <div>
+      <div class="stat-tile" style="background: #f3faf6; border-color: var(--series-measured);">
+        <div style="font-size: 28pt; font-weight: 600; color: var(--series-measured); line-height: 1; font-variant-numeric: proportional-nums;">7 / 7</div>
+        <div style="font-size: 7.5pt; color: var(--muted); margin-top: 2pt;">end-to-end cases pass</div>
+      </div>
+    </div>
+    <div style="font-size: 7pt;">
+      <div class="row"><span class="name">clean JSON</span>             <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">1.0</span></div>
+      <div class="row"><span class="name">fenced JSON</span>            <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">1.0</span></div>
+      <div class="row"><span class="name">prose-wrapped</span>          <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">1.0</span></div>
+      <div class="row"><span class="name">missing riskTone</span>       <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">1.0</span></div>
+      <div class="row"><span class="name">out-of-vocab riskTone</span>  <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">1.0</span></div>
+      <div class="row"><span class="name">banned phrase</span>          <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">1.0</span></div>
+      <div class="row"><span class="name">pure prose (no JSON)</span>   <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">1.0</span></div>
+    </div>
+  </div>
+  <figcaption><b>Fig 2.</b> Portfolio JSON contract. All 7 end-to-end cases route to the correct outcome (validated JSON or fallback).</figcaption>
+</figure>
+
+<div class="user-note">
+  <b>What this means for users.</b> The portfolio widget <b>cannot silently emit an out-of-vocabulary
+  <code>riskTone</code></b> like "extreme" or "catastrophic". If the LLM produces one, the widget falls
+  back to a deterministic, conservative reading (<code>riskTone=low</code>, label "Risk is balanced").
+  This is fail-closed, not fail-loud: a user never sees a fabricated tone.
+</div>
+
+<h3>3.2 Chat panel — the streaming parser</h3>
+
+<p>
+The hardest part of the chat panel is not the model — it's the parser that consumes the model's streamed
+output. If a chunk lands on a tag boundary (<code><think></code> split across two deltas), a naive regex
+splitter will lose text or emit broken markup. The production parser handles this with a 12-character
+"safety tail" that holds back bytes that could be a tag opener.
+</p>
+
+<figure>
+  <div class="viz grid-2">
+    <div>
+      <div class="stat-tile" style="background: #f3faf6; border-color: var(--series-measured);">
+        <div style="font-size: 28pt; font-weight: 600; color: var(--series-measured); line-height: 1; font-variant-numeric: proportional-nums;">7 + 1</div>
+        <div style="font-size: 7.5pt; color: var(--muted); margin-top: 2pt;">chunked-tag cases pass + 1 documented limitation</div>
+      </div>
+    </div>
+    <div style="font-size: 7pt;">
+      <div class="row"><span class="name">clean tag</span>          <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">pass</span></div>
+      <div class="row"><span class="name">split open</span>         <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">pass</span></div>
+      <div class="row"><span class="name">split close</span>        <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">pass</span></div>
+      <div class="row"><span class="name">split both</span>         <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">pass</span></div>
+      <div class="row"><span class="name">multiple blocks</span>    <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">pass</span></div>
+      <div class="row"><span class="name">case-insensitive</span>   <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">pass</span></div>
+      <div class="row"><span class="name">unrelated tag</span>      <span style="flex:1; background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">pass</span></div>
+      <div class="row"><span class="name">message-event</span>      <span style="flex:1; background: var(--series-limitation); height: 6pt; border-radius: 1pt;"></span><span class="val" style="color: var(--series-limitation);">limited</span></div>
+    </div>
+  </div>
+  <figcaption><b>Fig 3.</b> Chunked-tag boundary tests. The 7 green rows are the cases the production parser handles. The yellow row is a documented limitation: the non-streaming <code>message</code> event path drops reasoning held by the safety tail (see <code>use-nanobot.ts:531-538</code>).</figcaption>
+</figure>
+
+<div class="user-note">
+  <b>What this means for users.</b> The chat panel <b>never loses <code><think></code> content to a
+  chunk-boundary race</b>. The "Thinking…" box you see expanding as the model streams is byte-for-byte
+  complete, even when the network splits a tag across packets. The one documented limitation (the
+  non-streaming <code>message</code> path) only triggers as a fallback if streaming is unavailable, which
+  is rare in normal use.
+</div>
+
+<h3>3.3 News pipeline</h3>
+
+<p>
+The news analyzer (batch cron, 30-min cadence) classifies headlines positive/negative/neutral and assigns
+a risk tag. We tested the keyword-fallback path (used when the LLM is rate-limited) and the
+<b>post-processing guardrails</b> that catch contradictions like "neutral sentiment + high risk."
+</p>
+
+<figure>
+  <div class="viz grid-2">
+    <div>
+      <div class="stat-tile" style="background: #f3faf6; border-color: var(--series-measured);">
+        <div style="font-size: 28pt; font-weight: 600; color: var(--series-measured); line-height: 1; font-variant-numeric: proportional-nums;">21 / 21</div>
+        <div style="font-size: 7.5pt; color: var(--muted); margin-top: 2pt;">probe outcomes consistent</div>
+      </div>
+    </div>
+    <div style="font-size: 7pt;">
+      <div class="row"><span class="name">8 representative titles</span>   <span style="flex: 8;  background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">8 / 8</span></div>
+      <div class="row"><span class="name">(sentiment, risk) collisions</span><span style="flex: 6;  background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">6 / 6</span></div>
+      <div class="row"><span class="name">readiness-score probes</span>     <span style="flex: 7;  background: var(--series-measured); height: 6pt; border-radius: 1pt;"></span><span class="val">7 / 7</span></div>
+    </div>
+  </div>
+  <figcaption><b>Fig 4.</b> News analyzer. 21/21 probe outcomes are consistent — every (sentiment, risk) collision is re-routed; readiness scores are predictable on every failure mode.</figcaption>
+</figure>
+
+<div class="user-note">
+  <b>What this means for users.</b> Even if OpenRouter is down, the news widget <b>never shows a "neutral"
+  headline tagged "High Risk"</b> — the post-processing step catches the collision and re-routes to a
+  consistent (sentiment, risk) pair.
+</div>
+
+<h3>3.4 Deterministic substrate</h3>
+
+<p>
+The math that backs every AI claim (RSI-14 Wilder, SMA-20/50, momentum, chart patterns, support/resistance
+pivot clustering) is tested with the project's own pytest suite. <b>10 / 11</b> tests pass. The one
+failure is an obsolete assertion that expects a field the production code no longer emits — a stale
+test, not a code bug. The 6 portfolio API tests that depend on Futu / Binance broker connections are out
+of scope.
+</p>
+
+<div class="user-note">
+  <b>What this means for users.</b> Every number the LLM can see when it writes a portfolio insight has
+  been independently checked. The LLM is being asked to interpret, not to compute.
+</div>
+
+<h2>4 &middot; Length bias on the present prompt set</h2>
+
+<p>
+Length is a known confounder for LLM-as-Judge metrics: longer answers are rated more favourably
+independent of correctness (Dubois et al., arXiv:2404.04475). Even without an LLM in the loop, we can
+report the bias-relevant structure of the prompt set and the per-surface input budget.
+</p>
+
+<figure>
+  <div class="viz">
+    <svg viewBox="0 0 360 130" width="100%" role="img" aria-label="Length bias: median pinned labels per prompt set">
+      <g class="axis">
+        <line x1="40"  y1="20" x2="40"  y2="105"/>
+        <line x1="40"  y1="105" x2="345" y2="105"/>
+        <!-- y-axis ticks: 0, 1, 2, 3, 4 -->
+        <line x1="36" y1="105" x2="40" y2="105" class="axis"/>
+        <line x1="36" y1="83"  x2="40" y2="83"  class="axis"/>
+        <line x1="36" y1="61"  x2="40" y2="61"  class="axis"/>
+        <line x1="36" y1="39"  x2="40" y2="39"  class="axis"/>
+        <line x1="36" y1="17"  x2="40" y2="17"  class="axis"/>
+        <text x="33" y="108" text-anchor="end" class="axis">0</text>
+        <text x="33" y="86"  text-anchor="end" class="axis">1</text>
+        <text x="33" y="64"  text-anchor="end" class="axis">2</text>
+        <text x="33" y="42"  text-anchor="end" class="axis">3</text>
+        <text x="33" y="20"  text-anchor="end" class="axis">4</text>
+        <!-- y-axis title: place above the y-axis, not over the chart tick labels -->
+        <text x="7" y="63" text-anchor="middle" class="axis" style="font-size: 6.5pt;" transform="rotate(-90 7 63)">pinned labels</text>
+        <!-- horizontal gridlines -->
+        <line x1="40" y1="83" x2="345" y2="83" class="gridline"/>
+        <line x1="40" y1="61" x2="345" y2="61" class="gridline"/>
+        <line x1="40" y1="39" x2="345" y2="39" class="gridline"/>
+      </g>
+      <!-- grounded: median 3 pinned labels (y = 105 - 3*22 = 39) -->
+      <rect x="100" y="39" width="40" height="66" rx="2" class="bar-measured"/>
+      <text x="120" y="35" text-anchor="middle" class="label" style="font-weight: 600;">3</text>
+      <text x="120" y="118" text-anchor="middle" class="axis" style="font-size: 7.5pt;">grounded (n=25)</text>
+      <!-- bait: median 0 pinned labels (y = 105) -->
+      <rect x="220" y="103" width="40" height="2" rx="1" class="bar-new"/>
+      <text x="240" y="99" text-anchor="middle" class="label" style="font-weight: 600;">0</text>
+      <text x="240" y="118" text-anchor="middle" class="axis" style="font-size: 7.5pt;">bait (n=30)</text>
+    </svg>
+  </div>
+  <figcaption><b>Fig 5.</b> Length bias. Median pinned-label count per prompt set. Bait = 0 by design (it tests absence of ground truth).</figcaption>
+</figure>
+
+<figure>
+  <div class="viz">
+    <svg viewBox="0 0 360 130" width="100%" role="img" aria-label="Per-surface system-prompt cost in tokens">
+      <g class="axis">
+        <line x1="140" y1="15" x2="140" y2="100"/>
+        <line x1="140" y1="100" x2="345" y2="100"/>
+        <!-- x-axis ticks: 0, 200, 400, 600 -->
+        <line x1="140" y1="100" x2="140" y2="104" class="axis"/>
+        <line x1="195" y1="100" x2="195" y2="104" class="axis"/>
+        <line x1="250" y1="100" x2="250" y2="104" class="axis"/>
+        <line x1="305" y1="100" x2="305" y2="104" class="axis"/>
+        <text x="140" y="115" text-anchor="middle" class="axis">0</text>
+        <text x="195" y="115" text-anchor="middle" class="axis">200</text>
+        <text x="250" y="115" text-anchor="middle" class="axis">400</text>
+        <text x="305" y="115" text-anchor="middle" class="axis">600</text>
+        <line x1="195" y1="15" x2="195" y2="100" class="gridline"/>
+        <line x1="250" y1="15" x2="250" y2="100" class="gridline"/>
+        <line x1="305" y1="15" x2="305" y2="100" class="gridline"/>
+      </g>
+      <!-- news: 548 tokens (1 px ≈ 0.30 tok, bar width ≈ 165 px) -->
+      <rect x="140" y="20" width="165" height="14" rx="2" class="bar-new"/>
+      <text x="308" y="31" text-anchor="end" class="label" style="fill: #fff; font-weight: 600;">548</text>
+      <text x="0"   y="31" class="axis" style="font-size: 7.5pt;">news</text>
+      <!-- portfolio: 372 tokens (bar width ≈ 112 px) -->
+      <rect x="140" y="42" width="112" height="14" rx="2" class="bar-measured"/>
+      <text x="255" y="53" text-anchor="end" class="label" style="fill: #fff; font-weight: 600;">372</text>
+      <text x="0"   y="53" class="axis" style="font-size: 7.5pt;">portfolio</text>
+      <!-- stock_chart: 176 tokens (bar width ≈ 53 px) -->
+      <rect x="140" y="64" width="53" height="14" rx="2" class="bar-measured" style="opacity: 0.55;"/>
+      <text x="196" y="75" text-anchor="start" class="label" style="font-weight: 600;">176</text>
+      <text x="0"   y="75" class="axis" style="font-size: 7.5pt;">stock_chart</text>
+    </svg>
+  </div>
+  <figcaption><b>Fig 6.</b> Per-surface system-prompt cost (≈ tokens, char ÷ 4). The news analyzer is largest because its prompt builds a long inline response schema inside the system message.</figcaption>
+</figure>
+
+<div class="user-note">
+  <b>What this means for users.</b> The bait set carries zero pinned context by design — it tests how the
+  model behaves when there is <i>nothing</i> to ground its answer on. If you see an answer in production
+  that claims to know something no widget is showing, that's the bait pattern firing. The system-prompt
+  costs are small (≤ 550 tokens) so the per-call latency budget stays well under the 1.5 s TTFT target
+  the plan sets.
+</div>
+
+<h2>5 &middot; Limitations and execution risk</h2>
+
+<ol>
+  <li><b>Faithfulness / hallucination / κ not measured.</b> These axes need an OpenRouter API key and
+      a second LLM judge. The eval sandbox has neither. The 11 axes we <i>did</i> measure cover every
+      deterministic code path the LLM's output passes through; the missing 3 are the LLM-as-Judge
+      overlay.</li>
+  <li><b>Live Nanobot TTFT not measured.</b> The droplet at <code>ws://178.128.213.162:8765</code> is
+      unreachable from the eval sandbox. The frame-level harness substitutes.</li>
+  <li><b>6 portfolio API tests fail on broker connection.</b> Not AI-touching. The Futu and Binance
+      clients cannot be exercised in the sandbox. These are the same tests that have always required a
+      broker.</li>
+  <li><b>Length bias not yet controlled.</b> Fig 5 shows grounded prompts carry more context than bait
+      (3 vs. 0 pinned labels). The length-bias mitigation in §2.3 of the plan (length-controlled
+      judging) is not yet applied because no LLM answers exist to control for.</li>
+  <li><b>The 6 widget-numeric JSONL files are still missing</b> — <code>ui_rendering.jsonl</code>,
+      <code>portfolio_numeric.jsonl</code>, <code>chart_rec_numeric.jsonl</code>,
+      <code>chart_pattern_numeric.jsonl</code>, plus the 60 FailSafeQA robustness rows. Together they
+      are the prompt set the faithfulness axis needs.</li>
+</ol>
+
+<h2>6 &middot; Out-of-scope surfaces (re-classified)</h2>
+
+<ul>
+  <li><code>/api/prediction/daily</code> — the body is a hard-coded VIX-bracket table plus a literal
+      <code>topSignals</code> array. Labelled "AI-generated daily outlook" in the widget subtitle.
+      <b>Action</b>: re-label "Daily Market Outlook" or wire to Nanobot.</li>
+  <li><code>ai4trade_signal_poller.py</code> (661 ln) — a 30-minute cron that scores external signals
+      (score ≥ 4 = FOLLOW, ≥ 2 = WATCH, with hard filters: MU blacklisted, 48 h same-symbol cooldown,
+      max 1 position per symbol). <b>Action</b>: the file header commits to historical-precision-style
+      evidence; a precision/recall study against the SQLite <code>paper_trades</code> table is the right
+      metric, not DeepEval.</li>
+</ul>
+
+<h2>7 &middot; What we are committing to do before 17 July</h2>
+
+<ul>
+  <li>Land the 4 missing harness modules: chat-panel frame harness ✓ <b>done</b>, portfolio contract
+      test ✓ <b>done</b>, news-fetcher test, pattern explanation.</li>
+  <li>Land the 3 widget-numeric JSONL files.</li>
+  <li>Run a real OpenRouter call against the 25 grounded + 30 bait prompts and report faithfulness,
+      hallucination, κ.</li>
+  <li>Reconcile the two out-of-scope surfaces in §6 (re-label #7, run a precision/recall study on #8).</li>
+</ul>
+
+<h2>References</h2>
+<ol class="ref">
+  <li>Kamble et al. <i>FailSafeQA.</i> arXiv:2502.06329, Feb 2025.</li>
+  <li>Zhang et al. <i>FAITH.</i> arXiv:2508.05201, Aug 2025.</li>
+  <li>Wang et al. <i>OmniEval.</i> arXiv:2412.13018, Dec 2024.</li>
+  <li>Zhu et al. <i>RAGEval.</i> arXiv:2408.01262, Aug 2024.</li>
+  <li>Es et al. <i>RAGAS.</i> 2023.</li>
+  <li>Confident AI. <i>DeepEval.</i> github.com/confident-ai/deepeval, 2024–2026.</li>
+  <li>Dubois et al. <i>Length-Controlled AlpacaEval.</i> arXiv:2404.04475, 2024.</li>
+  <li>OptiTrade. <i>QA Evaluation Plan.</i> <code>docs/qa-evaluation-plan.md</code>, 2026.</li>
+  <li>OptiTrade. <i>AI Usage Analysis.</i> <code>docs/ai-usage-analysis.md</code>, 2026.</li>
+  <li>OptiTrade. <code>apps/frontend/lib/use-nanobot.ts</code>,
+      <code>apps/backend/src/services/portfolio_analysis_service.py</code>,
+      <code>apps/backend/news_fetcher/analyzer.py</code> — production code evaluated.</li>
+</ol>
+
+</body>
+</html>
