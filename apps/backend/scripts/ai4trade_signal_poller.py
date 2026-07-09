@@ -63,6 +63,58 @@ SAME_SYMBOL_COOLDOWN_HOURS = 24
 SAME_SYMBOL_LOSS_COOLDOWN_HOURS = 72
 # Maximum open positions allowed in the same symbol at any one time
 MAX_POSITIONS_PER_SYMBOL = 1
+
+# Position sizing — 50 shares per signal as per AI4Trade 2026 Aggressive strategy.
+# (Was 10 in initial scaffold; corrected 2026-07-09 to align with USER.md spec.)
+TRADE_QUANTITY = 50
+
+# SQLite retention — keep last 30 days of high-frequency tables.
+# Older rows purged by run_cleanup() at end of each poller pass.
+SQLITE_RETENTION_DAYS = 30
+
+
+def run_cleanup(retention_days: int = SQLITE_RETENTION_DAYS) -> dict:
+    """Purge rows older than retention_days from high-frequency tables.
+
+    Targets (cron-driven, end-of-pass):
+      - signal_log    (~450 rows/day, cap 30d ≈ 13.5k rows)
+      - price_cache   (TTL-managed but expired rows linger)
+      - news_articles / news_analyses (mirror 30d)
+
+    Kept indefinitely:
+      - paper_trades   (audit trail, ~50 rows/month)
+      - follow_list_cache, editable_portfolio (1 row / user data)
+    """
+    deleted = {}
+    try:
+        with db.transaction() as conn:
+            for table, ts_col in [
+                ("signal_log",    "received_at"),
+                ("news_articles", "created_at"),
+                # news_analyses has no created_at; use analyzed_at or join
+                # to news_articles.created_at via article_id.
+                ("price_cache",   "fetched_at"),
+            ]:
+                cur = conn.execute(
+                    f"DELETE FROM {table} "
+                    f"WHERE {ts_col} < datetime('now', ?)",
+                    (f"-{retention_days} days",),
+                )
+                deleted[table] = cur.rowcount
+            # news_analyses: cascade-style — delete orphans whose parent
+            # article is older than retention.
+            cur = conn.execute(
+                """DELETE FROM news_analyses
+                   WHERE article_id IN (
+                       SELECT id FROM news_articles
+                       WHERE created_at < datetime('now', ?)
+                   )""",
+                (f"-{retention_days} days",),
+            )
+            deleted["news_analyses"] = cur.rowcount
+    except Exception as e:
+        log(f"WARNING: cleanup failed: {e}")
+    return deleted
 # Hard blacklist: symbols where historical win-rate is too poor to keep
 # re-entering. MU has 1 win / 7 losses-or-flat across 8 attempts (12.5%).
 BLACKLIST_SYMBOLS = {"MU"}
@@ -533,13 +585,31 @@ def log_signal(received_at: str, agent_name: str, symbol: str | None,
                 parsed_action: str | None, score: float | None,
                 entry_price: float | None, live_price: float | None,
                 skip_reasons: list[str] | None, enrich_notes: dict | None,
-                thesis: str | None) -> None:
+                thesis: str | None, signal_log_id: int | None = None) -> int | None:
     """Persist every evaluated signal to signal_log — regardless of follow /
-    watch / skip outcome. Captures audit trail for later review."""
+    watch / skip outcome. Captures audit trail for later review.
+
+    Dedup: uq_signal_log_dedup on (agent, symbol, created_at, side). If the
+    same signal lands twice (re-poll within freshness window), we return the
+    existing row's id rather than failing.
+    """
     try:
         with db.transaction() as conn:
-            conn.execute(
-                """INSERT INTO signal_log
+            # Look up existing row first (cheap with uq index). The INSERT
+            # OR IGNORE below also guards against the race where two poller
+            # passes run concurrently; whichever loses the race gets rowcount=0.
+            if symbol and agent_name:
+                existing = conn.execute(
+                    """SELECT id FROM signal_log
+                       WHERE agent_name=? AND symbol=? AND created_at=?
+                         AND COALESCE(side,'')=COALESCE(?, '')""",
+                    (agent_name, symbol, received_at, side),
+                ).fetchone()
+                if existing:
+                    return existing["id"]
+
+            cur = conn.execute(
+                """INSERT OR IGNORE INTO signal_log
                    (received_at, agent_name, symbol, side, agent_score,
                     market, raw_content, parsed_action, score,
                     entry_price, live_price, skip_reasons, enrich_notes, thesis)
@@ -553,8 +623,20 @@ def log_signal(received_at: str, agent_name: str, symbol: str | None,
                     thesis,
                 ),
             )
+            # If INSERT OR IGNORE hit the unique constraint (race condition),
+            # fetch the existing row's id and return that instead.
+            if cur.lastrowid == 0:
+                existing = conn.execute(
+                    """SELECT id FROM signal_log
+                       WHERE agent_name=? AND symbol=? AND created_at=?
+                         AND COALESCE(side,'')=COALESCE(?, '')""",
+                    (agent_name, symbol, received_at, side),
+                ).fetchone()
+                return existing["id"] if existing else None
+            return cur.lastrowid
     except Exception as e:
         log(f"WARNING: signal_log insert failed: {e}")
+        return None
 
 
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
@@ -1045,7 +1127,7 @@ def build_trade_row(ev: dict) -> dict:
         "live_price": live,
         "target_price": ev["target_price"],
         "stop_loss": ev["stop_loss"],
-        "quantity": 10,
+        "quantity": TRADE_QUANTITY,
         "pnl_pct": 0.0,
         "pnl_abs": 0.0,
         "strategy": f"AI4Trade — {ev['agent']}",
@@ -1060,6 +1142,8 @@ def build_trade_row(ev: dict) -> dict:
         "agent": ev["agent"],
         "agent_score": ev.get("score"),
         "market": ev.get("market"),
+        "signal_log_id": ev.get("_signal_log_id"),
+        "partial_tp_taken": 0,
         "created_at": now,
         "updated_at": now,
         "closed_at": None,
@@ -1116,7 +1200,7 @@ def main() -> list[dict]:
                     continue
                 # Persist every evaluated signal to signal_log — including skips.
                 # Audit trail lets us later answer "why didn't we trade X?"
-                log_signal(
+                sig_log_id = log_signal(
                     received_at=received_at,
                     agent_name=agent,
                     symbol=rec.get("symbol"),
@@ -1132,6 +1216,8 @@ def main() -> list[dict]:
                     enrich_notes=ev.get("enrich_notes"),
                     thesis=ev.get("thesis"),
                 )
+                # Stash the audit id on the event for trade linkage below
+                ev["_signal_log_id"] = sig_log_id
                 # Log every skip reason so we can audit blacklist / cooldown hits
                 if ev.get("skip"):
                     log(f"    SKIP {rec['symbol']}: {' | '.join(ev.get('reasons', []))}")
@@ -1197,14 +1283,23 @@ def main() -> list[dict]:
 
     # 7. Persist new state snapshot (covers both new opens and big swings so
     # the next run's diff returns empty until something actually happens)
-    closed_all = [t for t in trades if t.get("status") == "closed"]
+    closed_all = [t.get("id") for t in trades if t.get("status") == "closed"]
     new_state = {
         "open_ids": [t.get("id") for t in open_p],
         "open_pnl": {t.get("id"): float(t.get("pnl_pct") or 0) for t in open_p},
-        "closed_ids": [t.get("id") for t in closed_all],
+        "closed_ids": closed_all,
         "last_published_at": hkt_now().isoformat(),
     }
     save_state(new_state)
+
+    # 8. Retention sweep — purge high-frequency rows older than 30 days.
+    # Runs at end so any rows just-written this pass are kept.
+    try:
+        deleted = run_cleanup()
+        if any(v > 0 for v in deleted.values()):
+            log(f"Retention sweep: {deleted}")
+    except Exception as e:
+        log(f"Retention sweep failed: {e}")
 
     log("AI4Trade Poller END")
     log("-" * 55)
