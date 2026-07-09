@@ -1,0 +1,102 @@
+{
+  "overall": {
+    "label": "(overall)",
+    "n": 209,
+    "pass_count": 205,
+    "hallu_count": 3,
+    "refusal_correct_count": 189,
+    "refusal_detected_count": 22,
+    "pass_rate": 0.9808612440191388,
+    "hallu_rate": 0.014354066985645933,
+    "refusal_correct_rate": 0.9043062200956937,
+    "mean_elapsed_s": 5.930871228899826
+  },
+  "by_set": [
+    {
+      "label": "chart_pattern_numeric.jsonl",
+      "n": 24,
+      "pass_count": 24,
+      "hallu_count": 0,
+      "refusal_correct_count": 24,
+      "refusal_detected_count": 0,
+      "pass_rate": 1.0,
+      "hallu_rate": 0.0,
+      "refusal_correct_rate": 1.0,
+      "mean_elapsed_s": 5.423341982628092
+    },
+    {
+      "label": "chart_rec_numeric.jsonl",
+      "n": 24,
+      "pass_count": 24,
+      "hallu_count": 0,
+      "refusal_correct_count": 24,
+      "refusal_detected_count": 0,
+      "pass_rate": 1.0,
+      "hallu_rate": 0.0,
+      "refusal_correct_rate": 1.0,
+      "mean_elapsed_s": 9.480398727458427
+    },
+    {
+      "label": "failsafeqa_bait.jsonl",
+      "n": 30,
+      "pass_count": 29,
+      "hallu_count": 1,
+      "refusal_correct_count": 29,
+      "refusal_detected_count": 5,
+      "pass_rate": 0.9666666666666667,
+      "hallu_rate": 0.03333333333333333,
+      "refusal_correct_rate": 0.9666666666666667,
+      "mean_elapsed_s": 5.641362398532025
+    },
+    {
+      "label": "failsafeqa_robustness.jsonl",
+      "n": 60,
+      "pass_count": 60,
+      "hallu_count": 0,
+      "refusal_correct_count": 59,
+      "refusal_detected_count": 11,
+      "pass_rate": 1.0,
+      "hallu_rate": 0.0,
+      "refusal_correct_rate": 0.9833333333333333,
+      "mean_elapsed_s": 4.931730922967835
+    },
+    {
+      "label": "grounded_prompts.jsonl",
+      "n": 26,
+      "pass_count": 23,
+      "hallu_count": 2,
+      "refusal_correct_count": 23,
+      "refusal_detected_count": 0,
+      "pass_rate": 0.8846153846153846,
+      "hallu_rate": 0.07692307692307693,
+      "refusal_correct_rate": 0.8846153846153846,
+      "mean_elapsed_s": 6.448730578535246
+    },
+    {
+      "label": "portfolio_numeric.jsonl",
+      "n": 25,
+      "pass_count": 25,
+      "hallu_count": 0,
+      "refusal_correct_count": 25,
+      "refusal_detected_count": 0,
+      "pass_rate": 1.0,
+      "hallu_rate": 0.0,
+      "refusal_correct_rate": 1.0,
+      "mean_elapsed_s": 6.183224445200758
+    },
+    {
+      "label": "ui_rendering.jsonl",
+      "n": 20,
+      "pass_count": 20,
+      "hallu_count": 0,
+      "refusal_correct_count": 5,
+      "refusal_detected_count": 6,
+      "pass_rate": 1.0,
+      "hallu_rate": 0.0,
+      "refusal_correct_rate": 0.25,
+      "mean_elapsed_s": 4.723498814601044
+    }
+  ],
+  "cohens_kappa_refusal_detected_vs_refusal_correct": -0.033814940055333594,
+  "n_records": 209
+}

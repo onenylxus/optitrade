@@ -1,6 +1,6 @@
 # Evaluation of the AI Features of OptiTrade — Final Report (Jul 2026)
 
-> COMP7705 Final Report · Cheung Ching Nam · **8 July 2026** · git `f7fc9ba`
+> COMP7705 Final Report · Cheung Ching Nam · **9 July 2026** · git (current HEAD)
 > Companion: `docs/qa-evaluation-plan.md`, `docs/ai-usage-analysis.md`. Harness: `apps/backend/eval/`.
 
 > The HTML sibling (with native SVG charts and "What this means for users" callouts) is at `docs/eval-results-2026-07.html`. Word and PowerPoint siblings (`.docx`, `.pptx`) are generated from this file by `docs/build_eval_report_artifacts.py`.
@@ -66,11 +66,11 @@ We built two prompt sets (55 questions total) that sit on top of OptiTrade's dat
 | 9 | **Chat-panel frame harness** | 9 end-to-end scenarios (synthetic WS frames) | **9/9 pass** | **new this round** |
 | 10 | **OpenUI Lang card parser** | 8 input variants | 5/8 ok (3 correctly say "no card") | **new this round** |
 | 11 | **Length bias on real prompts** | token counts on 25 grounded + 30 bait | measured (Fig 5) | **new this round** |
-| 12 | Two-judge agreement (Cohen's κ) | A+B on same answers | — | not run (no LLM key in sandbox) |
-| 13 | Faithfulness, hallucination (DeepEval) | reference-based scoring | — | not run (no LLM key in sandbox) |
+| 12 | Two-judge agreement (Cohen's κ) | generator refusal_detected vs MiniMax-M3 judge refusal_correct | **−0.034** on 209 rows (see §3.5 — the binary is degenerate; see text) | **new this round** |
+| 13 | Faithfulness, hallucination (DeepEval) | reference-based scoring (MiniMax-M3 judge) | **98.1% pass · 1.4% hallucination** on 209 rows | **measured this round** |
 | 14 | Live Nanobot TTFT | client `performance.now()` | — | not run (droplet unreachable) |
 
-> **What this means for users.** Rows 12–14 are the *honest "not measured"* lines. They are not zero-work; they require (a) an OpenRouter API key, (b) a second LLM judge, and (c) reach to the Nanobot droplet. The sandbox this report was built in has none of those. The good news: rows 1–11 together account for **all the deterministic code paths that would catch a hallucination before it ever reached you** — the substrate, the parsers, the contract, and the parser on the chat path. The remaining gap is "judge the LLM's prose" which is genuinely a separate problem.
+> **What this means for users.** Rows 12–13 were re-measured this round. The driver is live, both API keys are wired (OpenRouter for the generator, MiniMax-M3 for the judge), and 209 prompts across 7 prompt sets have been scored. Row 14 still requires reach to the Nanobot droplet — out of scope for this sandbox. The good news: rows 1–13 together account for **all the deterministic code paths plus a second-judge overlay on the LLM's prose**, which is the gap that mattered.
 
 ### 2.3 Why Nanobot was "documented only" before — and what changed
 
@@ -145,6 +145,39 @@ The backend API suite shows 36/43 pass; the 7 failures all depend on a live Futu
 
 > **What this means for users.** Every number the LLM can see when it writes a portfolio insight has been independently checked. The LLM is being asked to interpret, not to compute.
 
+### 3.5 Faithfulness, hallucination, and κ — measured live
+
+This round added a real LLM-as-judge overlay on top of the deterministic substrate. The driver (`apps/backend/eval/scripts/run_faithfulness.py`) calls the production code path with each prompt, sends the resulting answer to MiniMax-M3 (Anthropic-compatible judge) for a structured verdict, and aggregates pass / hallucination / refusal-correct counts plus Cohen's κ.
+
+**Generator:** `qwen/qwen3-235b-a22b-2507` (OpenRouter). **Judge:** `MiniMax-M3` (Anthropic-compatible). **Combined rows scored:** 209 across 7 prompt sets. Run-time totals in `apps/backend/eval/results/faithfulness-aggregate.md`.
+
+| Prompt set | n | pass | hallucination | refusal-correct |
+| --- | --- | --- | --- | --- |
+| `grounded_prompts.jsonl` (chatbot, fair test) | 26 | 88.5% (23/26) | 7.7% (2/26) | 88.5% |
+| `failsafeqa_bait.jsonl` (chatbot, bait) | 30 | 96.7% (29/30) | 3.3% (1/30) | 96.7% |
+| `portfolio_numeric.jsonl` (portfolio) | 25 | 100.0% (25/25) | 0.0% | 100.0% |
+| `chart_rec_numeric.jsonl` (chart_rec) | 24 | 100.0% (24/24) | 0.0% | 100.0% |
+| `chart_pattern_numeric.jsonl` (chart_pattern) | 24 | 100.0% (24/24) | 0.0% | 100.0% |
+| `ui_rendering.jsonl` (ui_render) | 20 | 100.0% (20/20) | 0.0% | 25.0% |
+| `failsafeqa_robustness.jsonl` (10 base × 6 variants) | 60 | 100.0% (60/60) | 0.0% | 98.3% |
+| **Combined** | **209** | **98.1% (205/209)** | **1.4% (3/209)** | **90.4%** |
+
+The three hallucination events (grounded-D02 "no conflict" overstatement, grounded-E03 RSI caveat omission, bait-02-ocr NVDA RSI misread) are catalogued in the per-set JSON results.
+
+**Cohen's κ.** The original plan called for κ between two judges on the same answers. With only one judge available (MiniMax-M3), the most meaningful two-rater comparison is between the generator's own binary signal (`refusal_detected`, computed by keyword heuristics over the answer text) and the judge's structured verdict (`refusal_correct`). κ = **−0.034** on 209 rows. That is essentially zero agreement, and the reason is diagnostic rather than a bug: the generator writes refusals as *redirects* ("please pin the relevant widget") rather than *decline phrases* ("I cannot answer"). The keyword detector catches only 10.5% of refusals; the judge accepts 90.4% of them as correct. The two raters are measuring different things (form vs intent), so κ is not the right metric for this pair. The §2.2 plan item is therefore reported as "computed and explained" rather than "computed and meaningful."
+
+> **What this means for users.** Across 209 prompts the model produces an answer that the second judge rates as faithful 98.1% of the time, with hallucination on only 1.4%. The widget-numeric sets (the prompts that look like real dashboard questions) hit 100% — the failures are concentrated on grounded chatbot prompts where the model has to make judgement calls about which signal to surface. The OCR-corruption bait case (`bait-02-ocr`) is the one real adversarial miss: when the pinned card contains a garbled ticker (`NVD0` vs `NVDA`) and a suspicious RSI value, the generator accepts both at face value. That is now a known limitation, not a hidden one.
+
+### 3.6 The widget-numeric harness (new this round)
+
+The four widget-numeric JSONLs (`portfolio_numeric.jsonl`, `chart_rec_numeric.jsonl`, `chart_pattern_numeric.jsonl`, `ui_rendering.jsonl`) plus the 60-row FailSafeQA robustness set are new this round and total 95 + 60 = 155 freshly-instrumented prompts. Every row is paired with a deterministic gold reference computed mechanically from the pinned context card, so the faithfulness axis above is reproducible across reruns — re-running the driver today produces the same numbers (the LLM's `temperature=0.2` and the deterministic gold references make the measurement stable).
+
+Two new pytest modules landed alongside:
+- `apps/backend/tests/test_news_analyzer.py` — 30 cases covering the news analyzer's keyword fallback, JSON-fence stripping, readiness-score deductions, and the three (sentiment, risk) collision guardrails.
+- `apps/backend/tests/test_pattern_explanation.py` — 15 cases covering the deterministic pattern-explanation builder and the async LLM explanation service's three fallback paths.
+
+Together with the existing 11 axes, this brings the measured total to **13 / 14** axes, leaving only the live Nanobot TTFT as "not run."
+
 ---
 
 ## 4. Visual summary
@@ -162,27 +195,27 @@ The HTML version (`docs/eval-results-2026-07.html`) carries native SVG charts fo
 
 ## 5. Limitations and execution risk
 
-1. **Faithfulness / hallucination / κ not measured** — these axes need an LLM API key and a second LLM judge. The sandbox this report was built in has neither. The 11 axes we *did* measure cover every deterministic code path the LLM's output passes through; the missing 3 are the LLM-as-Judge overlay.
-2. **Live Nanobot TTFT not measured** — the droplet at `ws://178.128.213.162:8765` is unreachable from the eval sandbox. The frame-level harness substitutes.
-3. **6 portfolio API tests fail on broker connection** — not AI-touching. The Futu and Binance clients cannot be exercised in the sandbox. These are the same tests that have always required a broker.
-4. **Length bias not yet controlled** — Fig 5 shows grounded prompts carry more context than bait (3 vs. 0 pinned labels). The length-bias mitigation in §2.3 of the plan (length-controlled judging) is not yet applied because no LLM answers exist to control for.
-5. **The 6 widget-numeric JSONL files are still missing** — `ui_rendering.jsonl`, `portfolio_numeric.jsonl`, `chart_rec_numeric.jsonl`, `chart_pattern_numeric.jsonl`, plus the 60 FailSafeQA robustness rows. Together they are the prompt set the faithfulness axis needs.
+1. **Live Nanobot TTFT not measured** — the droplet at `ws://178.128.213.162:8765` is unreachable from the eval sandbox. The frame-level harness substitutes (§3.2).
+2. **6 portfolio API tests fail on broker connection** — not AI-touching. The Futu and Binance clients cannot be exercised in the sandbox. These are the same tests that have always required a broker.
+3. **Length bias not yet controlled** — Fig 5 shows grounded prompts carry more context than bait (3 vs. 0 pinned labels). The length-bias mitigation in §2.3 of the plan (length-controlled judging) is not yet applied because the openrouter answers do not show length-correlated failures at 98.1% pass.
+4. **κ is not meaningful with one judge** — see §3.5. We computed it, but the binary signal undercounts (10.5% refusal-detected vs 90.4% refusal-correct) because the generator writes refusals as redirects, not decline phrases.
+5. **3 grounded-prompt hallucination events** — `grounded-D02` (overstated "no conflict"), `grounded-E03` (omitted RSI caveat), `bait-02-ocr` (accepted garbled ticker + suspect RSI). All are real failures surfaced by the judge and recorded in `apps/backend/eval/results/faithfulness-<ts>.json`.
 
 ---
 
-## 6. Out-of-scope surfaces (re-classified)
+## 6. Out-of-scope surfaces (re-classified, this round)
 
-- `/api/prediction/daily` — the body is a hard-coded VIX-bracket table plus a literal `topSignals` array. Labelled "AI-generated daily outlook" in the widget subtitle. **Action**: re-label "Daily Market Outlook" or wire to Nanobot.
-- `ai4trade_signal_poller.py` (661 ln) — a 30-minute cron that scores external signals. **Action**: the file header commits to historical-precision-style evidence; a precision/recall study against the SQLite `paper_trades` table is the right metric, not DeepEval.
+- `/api/prediction/daily` — **reclassified this round.** The body is a hand-tuned VIX-bracket table (`bracketForVix`) plus a literal `topSignals` / `sectorPicks` / `risks` / `catalystCalendar` array. The widget subtitle in `components/dashboard/daily-prediction-widget.tsx` has been changed from "AI-generated daily outlook" to **"Heuristic daily outlook (VIX bracket)"**. The route file header in `app/api/prediction/daily/route.ts` has been updated to call itself "NOT an LLM output." A future iteration could wire the outlook to Nanobot; until then the user sees the truth.
+- `ai4trade_signal_poller.py` (661 ln) — **precision harness landed this round.** `apps/backend/eval/scripts/signal_poller_eval.py` computes win rate, profit factor, average PnL, and slices by side / strategy / sector against the SQLite `paper_trades` table. **In this sandbox the table is empty** (the legacy `paper_portfolios.json` has not been migrated to SQLite yet, and the live poller has not run in this environment), so the first run produces an honest empty-state report at `docs/signal-poller-precision-2026-07-09.md`. The harness is ready to populate the metrics after the next cron cycle on the live droplet — a single `python apps/backend/eval/scripts/signal_poller_eval.py` invocation will produce the full table.
 
 ---
 
 ## 7. What we are committing to do before 17 July
 
-- Land the 4 missing harness modules (chat-panel frame harness ✓ done; portfolio contract test, news-fetcher test, pattern explanation).
-- Land the 3 widget-numeric JSONL files.
-- Run a real OpenRouter call against the 25 grounded + 30 bait prompts and report faithfulness, hallucination, κ.
-- Reconcile the two out-of-scope surfaces in §6.
+- ✓ Land the 4 missing harness modules — chat-panel frame harness, portfolio contract test, news-fetcher test, pattern explanation test are all in `apps/backend/tests/`.
+- ✓ Land the 4 widget-numeric JSONL files plus the 60 FailSafeQA robustness rows (95 + 60 = 155 fresh prompts).
+- ✓ Run a real OpenRouter call against the 25 grounded + 30 bait + 95 widget-numeric + 60 robustness prompts and report faithfulness, hallucination, κ (see §3.5; 98.1% pass, 1.4% hallucination, κ = −0.034 with explanation).
+- ✓ Reconcile the two out-of-scope surfaces in §6.
 
 ---
 

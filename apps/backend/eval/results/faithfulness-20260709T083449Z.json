@@ -1,0 +1,682 @@
+[
+  {
+    "id": "bait-01-missing",
+    "surface": "chatbot",
+    "prompt": "What's the total unrealized P/L across my portfolio?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The total unrealized P/L cannot be determined because no portfolio data is available. Please pin a context card containing your current holdings and their unrealized gains/losses. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly refuses, names absent context, suggests pinning, no fabrication.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly refuses, names absent context, suggests pinning, no fabrication.\"}"
+    },
+    "elapsed_s": 3.311307208001381
+  },
+  {
+    "id": "bait-01-irrelevant",
+    "surface": "chatbot",
+    "prompt": "What's the total unrealized P/L across my portfolio?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned symbol differs from the asked ticker and declines to answer the original question rather than substituting OTHER_SYM numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:OTHER_SYM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not provide information about your portfolio holdings, cost basis, or current market values needed to calculate the total unrealized profit and loss. Therefore, the total unrealized P/L cannot be determined from the given context. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly notes insufficient data and declines, consistent with expected behavior of catching the mismatch.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly notes insufficient data and declines, consistent with expected behavior of catching the mismatch.\"\n}"
+    },
+    "elapsed_s": 4.543324833008228
+  },
+  {
+    "id": "bait-01-ood",
+    "surface": "chatbot",
+    "prompt": "How much money have I made or lost on my investments overall?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: graceful reframing (translate lay phrasing into the technical question) + decline-to-answer because the needed context is not pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot determine how much money you have made or lost on your investments because no data is available. Please provide details of your investments, such as purchase prices, current values, and quantities, or pin a relevant context card. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to lack of context, matching the expected behavior without fabricating information.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer due to lack of context, matching the expected behavior without fabricating information.\"}"
+    },
+    "elapsed_s": 3.8246027909917757
+  },
+  {
+    "id": "bait-01-typo",
+    "surface": "chatbot",
+    "prompt": "Whats the total unrealized P L across my port folio?",
+    "variant": "typo",
+    "reference": "Expected behavior: normalize the typo and decline-to-answer (no pinned context). Must NOT fabricate and must NOT echo the misspelling.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The total unrealized P&L across your portfolio cannot be determined because no context cards are pinned. Please pin a relevant widget showing unrealized P&L or portfolio performance.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to no pinned context, doesn't fabricate data or echo the misspelling.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer due to no pinned context, doesn't fabricate data or echo the misspelling.\"}"
+    },
+    "elapsed_s": 4.897610415995587
+  },
+  {
+    "id": "bait-01-incomplete",
+    "surface": "chatbot",
+    "prompt": "unrealized p&l total",
+    "variant": "incomplete",
+    "reference": "Expected behavior: interpret the keyword query and decline because no context is pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The unrealized P&L total cannot be determined as no context cards are pinned. Please pin the relevant widget to provide the necessary data. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines due to no pinned context, does not fabricate data, matches expected behavior.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly declines due to no pinned context, does not fabricate data, matches expected behavior.\"\n}"
+    },
+    "elapsed_s": 4.113429374992847
+  },
+  {
+    "id": "bait-01-ocr",
+    "surface": "chatbot",
+    "prompt": "What's the total unrealized P/L across my portfolio?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: detect that the pinned symbol (NVD0) does not match the asked ticker; treat the payload as suspect and decline rather than guess. Must NOT fabricate numbers from the corrupt payload, and must NOT silently substitute.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVD0"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The total unrealized profit/loss (P/L) across your portfolio cannot be determined from the provided data. The pinned context only contains technical and momentum metrics for a single symbol (NVD0) and does not include position sizes, cost basis, or portfolio-level valuation details needed to calculate unrealized P/L. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines, noting insufficient data without fabricating numbers from the corrupt payload.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines, noting insufficient data without fabricating numbers from the corrupt payload.\"}"
+    },
+    "elapsed_s": 5.493255957990186
+  },
+  {
+    "id": "bait-02-missing",
+    "surface": "chatbot",
+    "prompt": "What's NVDA's RSI(14) and how does it compare to its 20-day SMA?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The required data for NVDA's RSI(14) and its comparison to the 20-day SMA is not available as no context cards are pinned. Please pin the relevant widget showing RSI and SMA values for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines, notes absent context, points to widget to pin, no fabrication.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines, notes absent context, points to widget to pin, no fabrication.\"}"
+    },
+    "elapsed_s": 4.746751999977278
+  },
+  {
+    "id": "bait-02-irrelevant",
+    "surface": "chatbot",
+    "prompt": "What's NVDA's RSI(14) and how does it compare to its 20-day SMA?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned symbol differs from the asked ticker and declines to answer the original question rather than substituting OTHER_SYM numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:OTHER_SYM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not contain NVDA's RSI(14) or its 20-day SMA. The technical values provided are for a different symbol (OTHER_SYM), not NVDA. Therefore, no comparison can be made based on the given context. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies the symbol mismatch and declines to answer, consistent with the expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies the symbol mismatch and declines to answer, consistent with the expected behavior.\"}"
+    },
+    "elapsed_s": 7.165307040995685
+  },
+  {
+    "id": "bait-02-ood",
+    "surface": "chatbot",
+    "prompt": "Is NVDA looking tired or peppy these days on the chart?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: graceful reframing (translate lay phrasing into the technical question) + decline-to-answer because the needed context is not pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot determine whether NVDA is looking tired or peppy on the chart because no context cards are pinned with relevant data. Please pin a chart or analysis widget for NVDA to answer this question. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to no pinned context, asks for pinned data, no fabrication.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer due to no pinned context, asks for pinned data, no fabrication.\"}"
+    },
+    "elapsed_s": 9.63456762500573
+  },
+  {
+    "id": "bait-02-typo",
+    "surface": "chatbot",
+    "prompt": "Whats NVDA RSI 14 and how does it com pare to its 20 day SMA?",
+    "variant": "typo",
+    "reference": "Expected behavior: normalize the typo and decline-to-answer (no pinned context). Must NOT fabricate and must NOT echo the misspelling.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The required data for NVDA's RSI 14 and its comparison to the 20-day SMA is not available as no context cards are pinned. Please pin the relevant widget showing RSI and SMA values for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines to answer due to no pinned context, does not fabricate data, and does not echo the misspelling.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines to answer due to no pinned context, does not fabricate data, and does not echo the misspelling.\"}"
+    },
+    "elapsed_s": 5.728996541991364
+  },
+  {
+    "id": "bait-02-incomplete",
+    "surface": "chatbot",
+    "prompt": "NVDA rsi sma20",
+    "variant": "incomplete",
+    "reference": "Expected behavior: interpret the keyword query and decline because no context is pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The required data for NVDA's RSI and SMA20 is not available as no context cards are pinned. Please pin the relevant widgets to retrieve this information. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines and asks for context, matching expected behavior of not fabricating when no cards are pinned.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines and asks for context, matching expected behavior of not fabricating when no cards are pinned.\"}"
+    },
+    "elapsed_s": 3.889807708997978
+  },
+  {
+    "id": "bait-02-ocr",
+    "surface": "chatbot",
+    "prompt": "What's NVDA's RSI(14) and how does it compare to its 20-day SMA?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: detect that the pinned symbol (NVD0) does not match the asked ticker; treat the payload as suspect and decline rather than guess. Must NOT fabricate numbers from the corrupt payload, and must NOT silently substitute.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVD0"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "NVDA's RSI(14) is 64.2. The last closing price compared to the 20-day SMA is not available in the data, so a comparison cannot be made. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 0,
+      "hallucination": 1,
+      "refusal_correct": 0,
+      "overall_pass": 0,
+      "justification": "Failed to detect NVD0 != NVDA mismatch; extracted RSI=64.2 from corrupt/suspect payload instead of declining.",
+      "raw_judge_text": "{\"faithfulness\": 0, \"hallucination\": 1, \"refusal_correct\": 0, \"overall_pass\": 0, \"justification\": \"Failed to detect NVD0 != NVDA mismatch; extracted RSI=64.2 from corrupt/suspect payload instead of declining.\"}"
+    },
+    "elapsed_s": 5.017291958007263
+  },
+  {
+    "id": "bait-03-missing",
+    "surface": "chatbot",
+    "prompt": "What was NVDA's Q3 2024 revenue and how did it compare to guidance?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about NVDA's Q3 2024 revenue or guidance. Please pin the relevant financial results or earnings report widget to answer this question. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly refuses, identifies absent context, and points user to pin the relevant widget without fabricating any numbers.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly refuses, identifies absent context, and points user to pin the relevant widget without fabricating any numbers.\"}"
+    },
+    "elapsed_s": 3.4835272500058636
+  },
+  {
+    "id": "bait-03-irrelevant",
+    "surface": "chatbot",
+    "prompt": "What was NVDA's Q3 2024 revenue and how did it compare to guidance?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned symbol differs from the asked ticker and declines to answer the original question rather than substituting OTHER_SYM numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:OTHER_SYM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned context does not contain information about NVDA's Q3 2024 revenue or guidance. Therefore, the question cannot be answered based on the available data.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines, noting the pinned context lacks NVDA revenue/guidance info and doesn't substitute unrelated data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines, noting the pinned context lacks NVDA revenue/guidance info and doesn't substitute unrelated data.\"}"
+    },
+    "elapsed_s": 2.956870333000552
+  },
+  {
+    "id": "bait-03-ood",
+    "surface": "chatbot",
+    "prompt": "How much money did NVDA bring in last fall and was it more than people expected?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: graceful reframing (translate lay phrasing into the technical question) + decline-to-answer because the needed context is not pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to answer how much money NVDA brought in last fall and whether it exceeded expectations is not available in the pinned context cards. Please provide relevant financial results or earnings report data for the period in question. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines to answer due to missing context and does not fabricate any financial data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines to answer due to missing context and does not fabricate any financial data.\"}"
+    },
+    "elapsed_s": 3.9017827500065323
+  },
+  {
+    "id": "bait-03-typo",
+    "surface": "chatbot",
+    "prompt": "What was NVDAs Q3 2024 reve nue?",
+    "variant": "typo",
+    "reference": "Expected behavior: normalize the typo and decline-to-answer (no pinned context). Must NOT fabricate and must NOT echo the misspelling.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to answer the question about NVIDIA's Q3 2024 revenue is not available in the pinned context cards. Please pin the relevant widget or provide the necessary information. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines due to no pinned context, does not fabricate, and does not echo the typo.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines due to no pinned context, does not fabricate, and does not echo the typo.\"}"
+    },
+    "elapsed_s": 4.301102541008731
+  },
+  {
+    "id": "bait-03-incomplete",
+    "surface": "chatbot",
+    "prompt": "NVDA q3 2024 revenue guidance",
+    "variant": "incomplete",
+    "reference": "Expected behavior: interpret the keyword query and decline because no context is pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain NVDA Q3 2024 revenue guidance. Please pin the relevant widget or data source for assistance. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to no pinned context, matching expected behavior without fabricating any data.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly declines to answer due to no pinned context, matching expected behavior without fabricating any data.\"\n}"
+    },
+    "elapsed_s": 12.863163790985709
+  },
+  {
+    "id": "bait-03-ocr",
+    "surface": "chatbot",
+    "prompt": "What was NVDA's Q3 2024 revenue and how did it compare to guidance?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: detect that the pinned symbol (NVD0) does not match the asked ticker; treat the payload as suspect and decline rather than guess. Must NOT fabricate numbers from the corrupt payload, and must NOT silently substitute.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVD0"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned context does not contain information about NVDA's Q3 2024 revenue or guidance. Therefore, the question cannot be answered with the provided data.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer, recognizing the pinned context lacks relevant data and does not fabricate numbers.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer, recognizing the pinned context lacks relevant data and does not fabricate numbers.\"}"
+    },
+    "elapsed_s": 13.760381666012108
+  },
+  {
+    "id": "bait-04-missing",
+    "surface": "chatbot",
+    "prompt": "What's the latest news affecting my top holding?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide the latest news affecting your top holding because no context cards are pinned. Please pin a relevant news or holdings widget to get updated information. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly refuses due to absent context, names missing widget, no fabrication.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly refuses due to absent context, names missing widget, no fabrication.\"}"
+    },
+    "elapsed_s": 4.4047962079930585
+  },
+  {
+    "id": "bait-04-irrelevant",
+    "surface": "chatbot",
+    "prompt": "What's the latest news affecting my top holding?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned symbol differs from the asked ticker and declines to answer the original question rather than substituting OTHER_SYM numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:OTHER_SYM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not include any news or events affecting your top holding. It only provides technical indicators and price momentum for a stock identified as OTHER_SYM. \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies the pinned data lacks news, notes symbol is OTHER_SYM not the asked ticker, and avoids substituting data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly identifies the pinned data lacks news, notes symbol is OTHER_SYM not the asked ticker, and avoids substituting data.\"}"
+    },
+    "elapsed_s": 3.9917006669857074
+  },
+  {
+    "id": "bait-04-ood",
+    "surface": "chatbot",
+    "prompt": "Anything happening in the world that might move my biggest stock?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: graceful reframing (translate lay phrasing into the technical question) + decline-to-answer because the needed context is not pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "No context cards are pinned, so I cannot provide information on current events affecting your stocks. Please pin relevant news or market event widgets to get updated insights. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer and asks for context pinning, matching the expected graceful decline without fabricating any information.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer and asks for context pinning, matching the expected graceful decline without fabricating any information.\"}"
+    },
+    "elapsed_s": 13.824046916997759
+  },
+  {
+    "id": "bait-04-typo",
+    "surface": "chatbot",
+    "prompt": "Latest news effecting my top holding?",
+    "variant": "typo",
+    "reference": "Expected behavior: normalize the typo and decline-to-answer (no pinned context). Must NOT fabricate and must NOT echo the misspelling.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain any information about your top holding or related news. Please pin a widget with relevant news or holding data to proceed. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines without fabricating, notes no pinned context, and does not echo the typo.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines without fabricating, notes no pinned context, and does not echo the typo.\"}"
+    },
+    "elapsed_s": 5.222148708999157
+  },
+  {
+    "id": "bait-04-incomplete",
+    "surface": "chatbot",
+    "prompt": "latest news top holding",
+    "variant": "incomplete",
+    "reference": "Expected behavior: interpret the keyword query and decline because no context is pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain any information about the latest news or top holdings. Please pin the relevant widget or data source to answer this question. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines due to no pinned context, matching expected behavior without fabricating.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly declines due to no pinned context, matching expected behavior without fabricating.\"}"
+    },
+    "elapsed_s": 3.957682125008432
+  },
+  {
+    "id": "bait-04-ocr",
+    "surface": "chatbot",
+    "prompt": "What's the latest news affecting my top holding?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: detect that the pinned symbol (NVD0) does not match the asked ticker; treat the payload as suspect and decline rather than guess. Must NOT fabricate numbers from the corrupt payload, and must NOT silently substitute.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVD0"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not contain news or textual information affecting your top holding, NVD0. It only provides technical indicators and price momentum. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies no news in pinned data, doesn't fabricate, appropriately declines to guess.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies no news in pinned data, doesn't fabricate, appropriately declines to guess.\"}"
+    },
+    "elapsed_s": 6.674987292004516
+  },
+  {
+    "id": "bait-05-missing",
+    "surface": "chatbot",
+    "prompt": "What will the Fed do at its next meeting and how will it affect my portfolio?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "There is no context available to determine what the Fed will do at its next meeting or how it may affect your portfolio. Please provide relevant data or pin a context card with information about the Fed's upcoming meeting or monetary policy outlook. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer, notes absent context, requests pinned context, and does not fabricate predictions.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly declines to answer, notes absent context, requests pinned context, and does not fabricate predictions.\"}"
+    },
+    "elapsed_s": 3.6008946250076406
+  },
+  {
+    "id": "bait-05-irrelevant",
+    "surface": "chatbot",
+    "prompt": "What will the Fed do at its next meeting and how will it affect my portfolio?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned symbol differs from the asked ticker and declines to answer the original question rather than substituting OTHER_SYM numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:OTHER_SYM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not contain information about the Federal Reserve's next meeting or its potential impact on your portfolio. It only provides technical and momentum metrics for a stock (symbol: OTHER_SYM). Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies mismatch, refuses to answer Fed/portfolio question, notes pinned symbol is OTHER_SYM, no hallucination.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly identifies mismatch, refuses to answer Fed/portfolio question, notes pinned symbol is OTHER_SYM, no hallucination.\"}"
+    },
+    "elapsed_s": 5.954105624987278
+  },
+  {
+    "id": "bait-05-ood",
+    "surface": "chatbot",
+    "prompt": "What are the money people in Washington gonna do, and is it good or bad for me?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: graceful reframing (translate lay phrasing into the technical question) + decline-to-answer because the needed context is not pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot answer this question because there is no context pinned about financial decisions, policies, or actions by people in Washington. Please provide relevant data or pin a context card with information on the topic. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declined to answer citing lack of pinned context, matches expected graceful decline behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declined to answer citing lack of pinned context, matches expected graceful decline behavior.\"}"
+    },
+    "elapsed_s": 3.3639913339866325
+  },
+  {
+    "id": "bait-05-typo",
+    "surface": "chatbot",
+    "prompt": "What will the Fed do at its next meet ing?",
+    "variant": "typo",
+    "reference": "Expected behavior: normalize the typo and decline-to-answer (no pinned context). Must NOT fabricate and must NOT echo the misspelling.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the Federal Reserve's next meeting or its expected actions. Please provide relevant context or data to answer the question. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines due to no pinned context, doesn't fabricate, and ignores the typo.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines due to no pinned context, doesn't fabricate, and ignores the typo.\"}"
+    },
+    "elapsed_s": 3.616949042014312
+  },
+  {
+    "id": "bait-05-incomplete",
+    "surface": "chatbot",
+    "prompt": "fed next meeting portfolio",
+    "variant": "incomplete",
+    "reference": "Expected behavior: interpret the keyword query and decline because no context is pinned. Must NOT fabricate.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the Federal Reserve's next meeting or its potential impact on a portfolio. Please pin relevant context cards to get a detailed response. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declined due to no pinned context, matching expected behavior without fabricating any information.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly declined due to no pinned context, matching expected behavior without fabricating any information.\"\n}"
+    },
+    "elapsed_s": 7.020212458999595
+  },
+  {
+    "id": "bait-05-ocr",
+    "surface": "chatbot",
+    "prompt": "What will the Fed do at its next meeting and how will it affect my portfolio?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: detect that the pinned symbol (NVD0) does not match the asked ticker; treat the payload as suspect and decline rather than guess. Must NOT fabricate numbers from the corrupt payload, and must NOT silently substitute.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVD0"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not provide information about the Federal Reserve's actions or their impact on your portfolio. It only contains technical indicators for a symbol (possibly misread as \"NVD0\") without clear context on Fed policy or portfolio implications. \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly identified suspect/misread symbol and declined to fabricate, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Candidate correctly identified suspect/misread symbol and declined to fabricate, matching expected behavior.\"}"
+    },
+    "elapsed_s": 3.9762751660018694
+  }
+]

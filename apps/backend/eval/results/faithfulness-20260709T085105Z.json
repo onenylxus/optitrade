@@ -1,0 +1,578 @@
+[
+  {
+    "id": "crc-01",
+    "surface": "chart_rec",
+    "prompt": "Give me a quick read on NVDA.",
+    "variant": null,
+    "reference": "Pinned NVDA technicals on 1d / 3M: last_close $905.60, 20-day SMA $872.40 (last close +3.81% vs SMA20), 1-bar return +2.10%, 5-bar return +4.80%, 20-bar return +11.20%, RSI(14) 72.3 (overbought). Uptrend with RSI stretched; momentum strong, mean-reversion risk elevated. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "NVDA is trading at $905.60, above its 20-day SMA of $872.40, indicating positive short-term momentum. The stock has gained 2.1% over one day, 4.8% over five days, and 11.2% over 20 days. RSI is at 72.3, suggesting it may be overbought. SMA-50 is not available in the data. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context data points and includes appropriate disclaimer, matching the reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context data points and includes appropriate disclaimer, matching the reference.\"}"
+    },
+    "elapsed_s": 6.92110337500344
+  },
+  {
+    "id": "crc-02",
+    "surface": "chart_rec",
+    "prompt": "Is AAPL overbought right now?",
+    "variant": null,
+    "reference": "Pinned AAPL technicals on 1d / 3M: last_close $905.60, 20-day SMA $895.00 (last close +1.18% vs SMA20), 1-bar return +2.40%, 5-bar return +6.10%, 20-bar return +12.50%, RSI(14) 74.8 (overbought). RSI in overbought territory; momentum strong in the short term. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "AAPL's RSI(14) is 74.8, which is above the typical overbought threshold of 70, suggesting the stock is currently overbought. Price is also trading above its 20-day SMA by 1.18%, confirming short-term bullish momentum. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context: RSI 74.8, +1.18% vs SMA20, and includes appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context: RSI 74.8, +1.18% vs SMA20, and includes appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 10.341754207998747
+  },
+  {
+    "id": "crc-03",
+    "surface": "chart_rec",
+    "prompt": "Is MSFT in a downtrend?",
+    "variant": null,
+    "reference": "Pinned MSFT technicals on 1d / 3M: last_close $178.40, 20-day SMA $190.00 (last close -6.11% vs SMA20), 1-bar return -1.10%, 5-bar return -3.20%, 20-bar return -9.40%, RSI(14) 36.8 (bearish-leaning but not oversold). Price below the 20-day SMA with negative returns; trend is down. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:MSFT"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Yes, MSFT is in a downtrend based on the negative returns over 1, 5, and 20 bars, with a 9.4% decline over the past 20 days. The RSI of 36.8 and the last close trading 6.11% below the 20-day SMA further support bearish momentum. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context data and matches gold reference conclusion.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context data and matches gold reference conclusion.\"}"
+    },
+    "elapsed_s": 6.745942665991606
+  },
+  {
+    "id": "crc-04",
+    "surface": "chart_rec",
+    "prompt": "What's the momentum picture on JPM?",
+    "variant": null,
+    "reference": "Pinned JPM technicals on 1d / 3M: last_close $421.30, 20-day SMA $410.00 (last close +2.76% vs SMA20), 1-bar return +1.80%, 5-bar return +5.00%, 20-bar return +8.40%, RSI(14) 68.1 (bullish-leaning but not overbought). Constructive uptrend: above SMA20 with healthy RSI and positive momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "JPM shows positive momentum over multiple timeframes: +1.8% over one day, +5.0% over five days, and +8.4% over 20 days. The stock is trading 2.76% above its 20-day simple moving average (SMA 20: 410.0) with an RSI of 68.1, indicating strong momentum but approaching overbought territory. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate accurately reports all pinned context values and adds appropriate disclaimer; matches gold reference.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Candidate accurately reports all pinned context values and adds appropriate disclaimer; matches gold reference.\"\n}"
+    },
+    "elapsed_s": 4.88329262501793
+  },
+  {
+    "id": "crc-05",
+    "surface": "chart_rec",
+    "prompt": "Should I be cautious on PYPL?",
+    "variant": null,
+    "reference": "Pinned PYPL technicals on 1d / 3M: last_close $62.10, 20-day SMA $72.00 (last close -13.75% vs SMA20), 1-bar return -1.60%, 5-bar return -4.80%, 20-bar return -11.50%, RSI(14) 33.0 (bearish-leaning but not oversold). RSI in oversold territory; price well below SMA20 with sustained negative momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:PYPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Yes, you should be cautious on PYPL. The stock has shown negative momentum over the past 1, 5, and 20 days (-1.6%, -4.8%, and -11.5% returns, respectively), and the last close (62.1) is significantly below the 20-day SMA (72.0), indicating downside pressure. The RSI of 33.0 suggests the stock is approaching oversold territory but not yet at a contrarian buy signal.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context metrics and matches the gold reference's cautious stance and educational disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context metrics and matches the gold reference's cautious stance and educational disclaimer.\"}"
+    },
+    "elapsed_s": 13.909602708998136
+  },
+  {
+    "id": "crc-06",
+    "surface": "chart_rec",
+    "prompt": "What's TSLA's technical setup right now?",
+    "variant": null,
+    "reference": "Pinned TSLA technicals on 1d / 3M: last_close $232.50, 20-day SMA $228.00 (last close +1.97% vs SMA20), 1-bar return +0.30%, 5-bar return +1.80%, 20-bar return +3.20%, RSI(14) 55.1 (bullish-leaning but not overbought). Sideways tape: price hugging the 20-day SMA with low-magnitude returns. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:TSLA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "TSLA is trading at $232.50, above its 20-day SMA of $228.00 by 1.97%, indicating short-term bullish momentum. The 14-day RSI is 55.1, suggesting neutral to slightly positive momentum. Recent returns are positive across 1-day (+0.3%), 5-day (+1.8%), and 20-day (+3.2%) periods. The 50-day SMA is not available in the current data. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context data points and correctly notes the unavailable SMA50.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context data points and correctly notes the unavailable SMA50.\"}"
+    },
+    "elapsed_s": 16.87833616702119
+  },
+  {
+    "id": "crc-07",
+    "surface": "chart_rec",
+    "prompt": "Compare {{TICKER1}} and {{TICKER2}} on momentum.",
+    "variant": null,
+    "reference": "Pinned XOM technicals on 1d / 3M: last_close $905.60, 20-day SMA $872.40 (last close +3.81% vs SMA20), 1-bar return +2.10%, 5-bar return +4.80%, 20-bar return +11.20%, RSI(14) 72.3 (overbought). Uptrend with RSI stretched; momentum strong, mean-reversion risk elevated. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:XOM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The momentum for XOM shows a 1-day return of 2.1%, 5-day return of 4.8%, and 20-day return of 11.2%. Since {{TICKER2}} data is not provided, a full comparison cannot be made. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly reports XOM momentum figures from context and notes TICKER2 data unavailable, matching reference behavior.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Candidate correctly reports XOM momentum figures from context and notes TICKER2 data unavailable, matching reference behavior.\"}"
+    },
+    "elapsed_s": 11.726582458999474
+  },
+  {
+    "id": "crc-08",
+    "surface": "chart_rec",
+    "prompt": "Is JNJ's trend intact?",
+    "variant": null,
+    "reference": "Pinned JNJ technicals on 1d / 3M: last_close $178.40, 20-day SMA $185.60 (last close -3.88% vs SMA20), 1-bar return -1.20%, 5-bar return -3.40%, 20-bar return -8.70%, RSI(14) 38.4 (bearish-leaning but not oversold). Price below the 20-day SMA with negative returns; trend is down. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:JNJ"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "JNJ's trend is not intact based on the downward momentum over 1-day (-1.2%), 5-day (-3.4%), and 20-day (-8.7%) periods, and the current price (178.4) is below the 20-day SMA (185.6) by 3.88%. The RSI of 38.4 suggests weakening momentum but not oversold conditions. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate accurately reflects all pinned context data and concludes trend is down, matching the gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate accurately reflects all pinned context data and concludes trend is down, matching the gold reference.\"}"
+    },
+    "elapsed_s": 11.057456125010503
+  },
+  {
+    "id": "crc-09",
+    "surface": "chart_rec",
+    "prompt": "Where does DIS sit relative to its 20-day SMA?",
+    "variant": null,
+    "reference": "Pinned DIS technicals on 1d / 3M: last_close $231.00, 20-day SMA $230.50 (last close +0.22% vs SMA20), 1-bar return +0.10%, 5-bar return -0.30%, 20-bar return +0.40%, RSI(14) 50.2 (near the midline). Sideways tape: price hugging the 20-day SMA with low-magnitude returns. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:DIS"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "DIS is trading slightly above its 20-day SMA. The last close was 231.0, compared to the 20-day SMA of 230.5, representing a 0.22% premium. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context: close 231.0, SMA20 230.5, +0.22%, and includes disclaimer matching reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context: close 231.0, SMA20 230.5, +0.22%, and includes disclaimer matching reference.\"}"
+    },
+    "elapsed_s": 6.8080887499963865
+  },
+  {
+    "id": "crc-10",
+    "surface": "chart_rec",
+    "prompt": "What does an RSI of 71 mean on NVDA?",
+    "variant": null,
+    "reference": "Pinned NVDA technicals on 1d / 3M: last_close $905.60, 20-day SMA $895.00 (last close +1.18% vs SMA20), 1-bar return +1.90%, 5-bar return +5.50%, 20-bar return +10.00%, RSI(14) 71.0 (overbought). RSI in overbought territory; momentum strong in the short term. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "An RSI of 71 on NVDA indicates that the stock is in overbought territory, as RSI values above 70 typically suggest elevated momentum and potential for a pullback. This is based on the 14-period RSI from the 1-day chart. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states RSI 71 is overbought, consistent with pinned context RSI(14) 71.0; no invented facts.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly states RSI 71 is overbought, consistent with pinned context RSI(14) 71.0; no invented facts.\"\n}"
+    },
+    "elapsed_s": 5.174029749992769
+  },
+  {
+    "id": "crc-12",
+    "surface": "chart_rec",
+    "prompt": "Is AAPL consolidating?",
+    "variant": null,
+    "reference": "Pinned AAPL technicals on 1d / 3M: last_close $231.00, 20-day SMA $230.50 (last close +0.22% vs SMA20), 1-bar return +0.10%, 5-bar return -0.30%, 20-bar return +0.40%, RSI(14) 50.2 (near the midline). Sideways tape: price hugging the 20-day SMA with low-magnitude returns. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "AAPL is near its 20-day SMA with a slight positive deviation (0.22%), RSI at neutral 50.2, and mixed short-term momentum (slight 1-day gain, small 5-day loss). This suggests price action is range-bound, consistent with consolidation over the recent period. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context: price near SMA20, RSI 50.2, mixed momentum, range-bound/consolidation conclusion, with proper disclaimer.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer accurately reflects pinned context: price near SMA20, RSI 50.2, mixed momentum, range-bound/consolidation conclusion, with proper disclaimer.\"\n}"
+    },
+    "elapsed_s": 10.300487083004555
+  },
+  {
+    "id": "crc-13",
+    "surface": "chart_rec",
+    "prompt": "What's the 5-bar return for MSFT?",
+    "variant": null,
+    "reference": "Pinned MSFT technicals on 1d / 3M: last_close $421.30, 20-day SMA $410.00 (last close +2.76% vs SMA20), 1-bar return +1.80%, 5-bar return +5.00%, 20-bar return +8.40%, RSI(14) 68.1 (bullish-leaning but not overbought). Constructive uptrend: above SMA20 with healthy RSI and positive momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:MSFT"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The 5-bar return for MSFT is 5.0%.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states 5-bar return is 5.0% per pinned context, with appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states 5-bar return is 5.0% per pinned context, with appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 3.761622249992797
+  },
+  {
+    "id": "crc-14",
+    "surface": "chart_rec",
+    "prompt": "Is JPM's 20-day SMA sloping up or down?",
+    "variant": null,
+    "reference": "Pinned JPM technicals on 1d / 3M: last_close $198.20, 20-day SMA $192.00 (last close +3.23% vs SMA20), 1-bar return +0.60%, 5-bar return +2.40%, 20-bar return +5.10%, RSI(14) 61.0 (bullish-leaning but not overbought). Constructive uptrend: above SMA20 with healthy RSI and positive momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The 20-day SMA for JPM is sloping up, as the stock's price has risen 5.1% over the past 20 trading days, indicating an upward trend. Additionally, the last close (198.2) is above the 20-day SMA (192.0), further supporting an upward slope. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly infers uptrend from +5.1% 20-bar return and price above SMA20, consistent with pinned context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly infers uptrend from +5.1% 20-bar return and price above SMA20, consistent with pinned context.\"}"
+    },
+    "elapsed_s": 7.782161499984795
+  },
+  {
+    "id": "crc-15",
+    "surface": "chart_rec",
+    "prompt": "What's PYPL's last close?",
+    "variant": null,
+    "reference": "Pinned PYPL technicals on 1d / 3M: last_close $905.60, 20-day SMA $872.40 (last close +3.81% vs SMA20), 1-bar return +2.10%, 5-bar return +4.80%, 20-bar return +11.20%, RSI(14) 72.3 (overbought). Uptrend with RSI stretched; momentum strong, mean-reversion risk elevated. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:PYPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "PYPL's last close was 905.6.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states PYPL's last close as 905.6, consistent with pinned context and reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states PYPL's last close as 905.6, consistent with pinned context and reference.\"}"
+    },
+    "elapsed_s": 12.901528792019235
+  },
+  {
+    "id": "crc-16",
+    "surface": "chart_rec",
+    "prompt": "How far is TSLA from its 20-day SMA (in %)?",
+    "variant": null,
+    "reference": "Pinned TSLA technicals on 1d / 3M: last_close $232.50, 20-day SMA $228.00 (last close +1.97% vs SMA20), 1-bar return +0.30%, 5-bar return +1.80%, 20-bar return +3.20%, RSI(14) 55.1 (bullish-leaning but not overbought). Sideways tape: price hugging the 20-day SMA with low-magnitude returns. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:TSLA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "TSLA is 1.97% above its 20-day SMA.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states +1.97% per pinned context and includes disclaimer, matching the reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states +1.97% per pinned context and includes disclaimer, matching the reference.\"}"
+    },
+    "elapsed_s": 51.56912620799267
+  },
+  {
+    "id": "crc-17",
+    "surface": "chart_rec",
+    "prompt": "Is XOM approaching overbought territory?",
+    "variant": null,
+    "reference": "Pinned XOM technicals on 1d / 3M: last_close $421.30, 20-day SMA $410.00 (last close +2.76% vs SMA20), 1-bar return +1.80%, 5-bar return +5.00%, 20-bar return +8.40%, RSI(14) 68.1 (bullish-leaning but not overbought). Constructive uptrend: above SMA20 with healthy RSI and positive momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:XOM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "XOM's 14-day RSI is 68.1, which is approaching the overbought threshold of 70. Combined with a 5-day return of 5.0% and trading 2.76% above its 20-day SMA, the stock shows strong momentum and is nearing overbought territory.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer aligns with pinned context values (RSI 68.1, +5% 5-bar, +2.76% vs SMA20) and appropriately notes approaching but not yet overbought.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer aligns with pinned context values (RSI 68.1, +5% 5-bar, +2.76% vs SMA20) and appropriately notes approaching but not yet overbought.\"}"
+    },
+    "elapsed_s": 10.050581791991135
+  },
+  {
+    "id": "crc-18",
+    "surface": "chart_rec",
+    "prompt": "What does JNJ's RSI tell me?",
+    "variant": null,
+    "reference": "Pinned JNJ technicals on 1d / 3M: last_close $178.40, 20-day SMA $190.00 (last close -6.11% vs SMA20), 1-bar return -1.10%, 5-bar return -3.20%, 20-bar return -9.40%, RSI(14) 36.8 (bearish-leaning but not oversold). Price below the 20-day SMA with negative returns; trend is down. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:JNJ"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "JNJ's 14-day RSI is 36.8, which suggests the stock is approaching oversold conditions but is not yet in the oversold range (typically below 30). This may indicate downward momentum is building, but not yet at an extreme. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly cites RSI 36.8 from context, accurately describes it as bearish-leaning but not oversold, and adds appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly cites RSI 36.8 from context, accurately describes it as bearish-leaning but not oversold, and adds appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 5.045150374993682
+  },
+  {
+    "id": "crc-19",
+    "surface": "chart_rec",
+    "prompt": "Is DIS's last close above the 20-day SMA?",
+    "variant": null,
+    "reference": "Pinned DIS technicals on 1d / 3M: last_close $905.60, 20-day SMA $872.40 (last close +3.81% vs SMA20), 1-bar return +2.10%, 5-bar return +4.80%, 20-bar return +11.20%, RSI(14) 72.3 (overbought). Uptrend with RSI stretched; momentum strong, mean-reversion risk elevated. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:DIS"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Yes, DIS's last close of 905.6 is above the 20-day SMA of 872.4, as indicated by the positive 3.81% spread. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states last close 905.6 is above 20-day SMA 872.4 with 3.81% spread, matching pinned context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states last close 905.6 is above 20-day SMA 872.4 with 3.81% spread, matching pinned context.\"}"
+    },
+    "elapsed_s": 5.162361416994827
+  },
+  {
+    "id": "crc-20",
+    "surface": "chart_rec",
+    "prompt": "What's the 20-bar return for NVDA?",
+    "variant": null,
+    "reference": "Pinned NVDA technicals on 1d / 3M: last_close $62.10, 20-day SMA $72.00 (last close -13.75% vs SMA20), 1-bar return -1.60%, 5-bar return -4.80%, 20-bar return -11.50%, RSI(14) 33.0 (bearish-leaning but not oversold). RSI in oversold territory; price well below SMA20 with sustained negative momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The 20-bar return for NVDA is -11.5%.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly states 20-bar return as -11.5% matching pinned context, with appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly states 20-bar return as -11.5% matching pinned context, with appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 4.156236832990544
+  },
+  {
+    "id": "crc-21",
+    "surface": "chart_rec",
+    "prompt": "Brief me on NVDA's technicals.",
+    "variant": null,
+    "reference": "Pinned NVDA technicals on 1d / 3M: last_close $905.60, 20-day SMA $872.40 (last close +3.81% vs SMA20), 1-bar return +2.10%, 5-bar return +4.80%, 20-bar return +11.20%, RSI(14) 72.3 (overbought). Uptrend with RSI stretched; momentum strong, mean-reversion risk elevated. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "NVDA is trading at $905.60, above its 20-day SMA of $872.40, indicating short-term bullish momentum. The RSI (14) is at 72.3, suggesting the stock may be overbought. Positive returns over 1, 5, and 20 bars support upward momentum. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context data and matches the gold reference without inventing facts.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context data and matches the gold reference without inventing facts.\"}"
+    },
+    "elapsed_s": 5.790930124989245
+  },
+  {
+    "id": "crc-22",
+    "surface": "chart_rec",
+    "prompt": "Is AAPL's short-term momentum positive?",
+    "variant": null,
+    "reference": "Pinned AAPL technicals on 1d / 3M: last_close $421.30, 20-day SMA $410.00 (last close +2.76% vs SMA20), 1-bar return +1.80%, 5-bar return +5.00%, 20-bar return +8.40%, RSI(14) 68.1 (bullish-leaning but not overbought). Constructive uptrend: above SMA20 with healthy RSI and positive momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Yes, AAPL's short-term momentum is positive. The 1-day return is +1.8%, the 5-day return is +5.0%, and the 20-day return is +8.4%, all indicating upward momentum. Additionally, the RSI of 68.1 suggests strong bullish momentum, though nearing overbought levels. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context data and gold reference, correctly describing positive momentum with appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context data and gold reference, correctly describing positive momentum with appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 3.942745125008514
+  },
+  {
+    "id": "crc-23",
+    "surface": "chart_rec",
+    "prompt": "Is MSFT's short-term momentum negative?",
+    "variant": null,
+    "reference": "Pinned MSFT technicals on 1d / 3M: last_close $178.40, 20-day SMA $190.00 (last close -6.11% vs SMA20), 1-bar return -1.10%, 5-bar return -3.20%, 20-bar return -9.40%, RSI(14) 36.8 (bearish-leaning but not oversold). Price below the 20-day SMA with negative returns; trend is down. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:MSFT"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Yes, MSFT's short-term momentum is negative. The 1-day, 5-day, and 20-day returns are all negative (-1.1%, -3.2%, -9.4%), and the RSI of 36.8 suggests downward momentum, though not yet in oversold territory. Additionally, the last close is 6.11% below the 20-day simple moving average, reinforcing the bearish short-term trend. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context data and matches the gold reference's conclusion and disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context data and matches the gold reference's conclusion and disclaimer.\"}"
+    },
+    "elapsed_s": 4.243623125017621
+  },
+  {
+    "id": "crc-24",
+    "surface": "chart_rec",
+    "prompt": "Where does JPM sit on RSI (0–100)?",
+    "variant": null,
+    "reference": "Pinned JPM technicals on 1d / 3M: last_close $231.00, 20-day SMA $230.50 (last close +0.22% vs SMA20), 1-bar return +0.10%, 5-bar return -0.30%, 20-bar return +0.40%, RSI(14) 50.2 (near the midline). Sideways tape: price hugging the 20-day SMA with low-magnitude returns. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "JPM's RSI (14-day) is 50.2, which places it near the neutral midpoint of the 0–100 range.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states RSI(14) is 50.2, matching pinned context, and includes appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states RSI(14) is 50.2, matching pinned context, and includes appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 3.170158958004322
+  },
+  {
+    "id": "crc-25",
+    "surface": "chart_rec",
+    "prompt": "Read PYPL's tape for me.",
+    "variant": null,
+    "reference": "Pinned PYPL technicals on 1d / 3M: last_close $62.10, 20-day SMA $72.00 (last close -13.75% vs SMA20), 1-bar return -1.60%, 5-bar return -4.80%, 20-bar return -11.50%, RSI(14) 33.0 (bearish-leaning but not oversold). RSI in oversold territory; price well below SMA20 with sustained negative momentum. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:PYPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "PYPL is trading at $62.10, down 1.6% over the past day and down 11.5% over the past month. The stock is below its 20-day SMA of $72.00 by 13.75%, indicating bearish momentum. The RSI of 33 suggests it is approaching oversold territory. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "All figures match pinned context; no invented facts; correctly summarizes the tape.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"All figures match pinned context; no invented facts; correctly summarizes the tape.\"\n}"
+    },
+    "elapsed_s": 5.206667041988112
+  }
+]
