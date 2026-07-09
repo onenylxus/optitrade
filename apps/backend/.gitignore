@@ -229,3 +229,19 @@ protos/*_pb2.py
 optitrade-hku-firebase-adminsdk.json
 # Local portfolio runtime store
 data/*.json
+
+#newsData
+/news_data
+/news_data_bu
+/news_result
+/news_result_granite4.1_3b
+/news_result_llama2
+/news_result_llama3.2-3b
+/news_result_mistralP1
+/news_result_qwen2-7b
+/news_fetcher/calibration_data.json
+/news_fetcher/confidence_factor.json
+/news_fetcher/compare_sentiment_v2.py
+/news_result_mistral-nemo
+daily_positive_rate_report_qwen2.5_1.5b.json
+daily_positive_rate_report.json

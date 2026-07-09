@@ -1,14 +1,13 @@
-#!/usr/bin/env python3
 """Execute news fetching and analysis pipeline"""
-
 import sys
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from news_fetcher import NewsAnalysisPipeline, OUTPUT_FILE
-
+# from news_fetcher import NewsAnalysisPipeline, OUTPUT_FILE
+from news_fetcher.pipeline import NewsAnalysisPipeline
+from .config import OUTPUT_FILE
 
 def start_analysis():
     pipeline = NewsAnalysisPipeline(limit_per_source=50)

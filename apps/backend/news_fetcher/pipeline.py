@@ -8,7 +8,7 @@ from typing import List, Dict
 
 from .fetcher import YahooNewsFetcher, EconomicTimesFetcher, NewsItem
 from .analyzer import CloudAnalyzer
-from .config import OUTPUT_FILE
+from .config import OUTPUT_FILE, CONFIDENCE_FACTOR_FILE
 
 
 class Deduplicator:
@@ -64,12 +64,21 @@ class FinanceNewsFilter:
 
 class NewsAnalysisPipeline:
     """News analysis pipeline - integrates fetching, persistence, and automated polling"""
-
     def __init__(self, limit_per_source: int = 50):
         self.limit_per_source = limit_per_source
         self.analyzer = CloudAnalyzer()
-        # self.processed_ids = self._load_existing_ids()
         self.processed_ids, self.processed_links = self._load_existing_history()
+        self.confidence_factor = self._load_confidence_factor()
+
+    def _load_confidence_factor(self) -> float:
+        if os.path.exists(CONFIDENCE_FACTOR_FILE):
+            try:
+                with open(CONFIDENCE_FACTOR_FILE, 'r') as f:
+                    data = json.load(f)
+                    return data.get("hit_rate", 0.5)
+            except:
+                return 0.5
+        return 0.5
 
     def _load_existing_history(self) -> tuple[set, set]:
         """Load analyzed news IDs and links from existing JSON archive, preventing duplicate token consumption"""
@@ -203,45 +212,12 @@ class NewsAnalysisPipeline:
 
         new_results = []
         for i, news in enumerate(new_news_to_analyze, 1):
-          print(f"\n   [{i}/{len(new_news_to_analyze)}] Mock analysis: {news.headline[:50]}...")
-
-        # Mock data - 唔 call API
-        # analysis = {
-        #     "highlights": ["Testing pipeline", "AI skipped", "Mock mode"],
-        #     "sentiment": 0.0,
-        #     "risk_tag": "Low Risk",
-        #     "reasoning": "Mock analysis - no API call made for testing.",
-        #     "related_symbols": []
-        # }
-
-        # result = {
-        #     "id": news.id,
-        #     "source": news.source,
-        #     "headline": news.headline,
-        #     "link": news.link,
-        #     "published_at": news.published_at,
-        #     "summary": news.summary[:200],
-        #     "highlights": analysis.get("highlights", []),
-        #     "sentiment": analysis.get("sentiment", 0),
-        #     "risk_tag": analysis.get("risk_tag", "Low Risk"),
-        #     "reasoning": analysis.get("reasoning", ""),
-        #     "related_symbols": analysis.get("related_symbols", []),
-        #     "analyzed_at": datetime.now().isoformat()
-        # }
-
-        # new_results.append(result)
-        # self.processed_ids.add(news.id)
-        # self.processed_links.add(news.link)
-
-        # emoji = "🟡"
-        # print(f"       {emoji} Sentiment: {result['sentiment']:.2f} | Risk: {result['risk_tag']} (MOCK)")
-        # time.sleep(0.1)
-# real code
-        for i, news in enumerate(new_news_to_analyze, 1):
+            headline = news.headline or "No Headline"
+            summary = news.summary or ""
             print(f"\n   [{i}/{len(new_news_to_analyze)}] Analyzing: {news.headline[:50]}...")
 
             try:
-                analysis = self.analyzer.analyze(news.headline, news.summary)
+                analysis = self.analyzer.analyze(news.headline, news.summary, mode="realtime")
                 if not analysis or ('choices' in str(analysis) and not isinstance(analysis, dict)):
                     raise ValueError("Invalid API response format")
             except Exception as e:

@@ -28,7 +28,7 @@ interface NewsItem {
   reasoning: string;
   analyzed_at: string;
   related_symbols?: string[];
-  readiness_score?: number;
+  // readiness_score?: number;
 }
 
 interface NewsWidgetProps {
@@ -531,7 +531,7 @@ const matchesPortfolio = useCallback(
 
 
   {/* 新增：準備率分數 */}
-  {news.readiness_score !== undefined && (
+  {/* {news.readiness_score !== undefined && (
     // <span
     //   className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary/50 text-muted-foreground border border-border"
     //   title={`Analysis Reliability Score: ${news.readiness_score}/100`}
@@ -542,7 +542,7 @@ const matchesPortfolio = useCallback(
         ✅ Reliability:{news.readiness_score}%
       </span>
 
-  )}
+  )} */}
                       </div>
                     </>
                   )}

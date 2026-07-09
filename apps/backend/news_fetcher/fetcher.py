@@ -9,7 +9,6 @@ from dataclasses import dataclass
 
 from .config import HEADERS, YAHOO_RSS_URL, ET_RSS_URL
 
-
 @dataclass
 class NewsItem:
     """Unified news data structure"""
@@ -38,13 +37,27 @@ class NewsItem:
             "reasoning": self.reasoning,
         }
 
+# def is_relevant_to_gold(text: str) -> bool:
+#     """Debug mode: print everything so we can see what's happening"""
+#     text_lower = text.lower()
+
+#     # 暫時放寬到極致：只有「這幾個垃圾詞」才擋掉
+#     junk_keywords = ["renters", "insurance", "recipe", "horoscope"]
+
+#     for junk in junk_keywords:
+#         if junk in text_lower:
+#             print(f"    DEBUG: Filter blocked: {text}") # 印出被擋掉的標題
+#             return False
+
+#     print(f"    DEBUG: Filter accepted: {text}") # 印出通過的標題
+#     return True
 
 class YahooNewsFetcher:
     """Yahoo Finance RSS news fetcher"""
 
     @staticmethod
     def fetch(limit: int = 10) -> List[NewsItem]:
-        """Fetch news from Yahoo Finance RSS"""
+        """Fetch news from Yahoo Finance RSS with filtering"""
         print(f"  📰 [Yahoo] Fetching RSS news...")
 
         try:
@@ -56,6 +69,11 @@ class YahooNewsFetcher:
             news_list = []
             for i, item in enumerate(items[:limit], 1):
                 title = item.title.text.strip() if item.title else ""
+
+                # Apply filter before processing
+                # if not is_relevant_to_gold(title):
+                #     continue
+
                 link = item.link.text.strip() if item.link else ""
                 description = item.description.text.strip() if item.description else ""
                 pub_date = item.pubDate.text.strip() if item.pubDate else datetime.now().isoformat()
@@ -71,19 +89,18 @@ class YahooNewsFetcher:
                 )
                 news_list.append(news_item)
 
-            print(f"    ✅ [Yahoo] Successfully fetched {len(news_list)} news items")
+            print(f"    ✅ [Yahoo] Successfully fetched {len(news_list)} filtered news items")
             return news_list
         except Exception as e:
             print(f"    ❌ [Yahoo] Fetch failed: {e}")
             return []
-
 
 class EconomicTimesFetcher:
     """The Economic Times RSS news fetcher"""
 
     @staticmethod
     def fetch(limit: int = 10) -> List[NewsItem]:
-        """Fetch news from Economic Times RSS"""
+        """Fetch news from Economic Times RSS with filtering"""
         print(f"  📰 [Economic Times] Fetching RSS news...")
 
         try:
@@ -95,9 +112,15 @@ class EconomicTimesFetcher:
             news_list = []
             for i, item in enumerate(items[:limit], 1):
                 title = item.title.text.strip() if item.title else ""
+
+                # Apply filter before processing
+                # if not is_relevant_to_gold(title):
+                #     continue
+
                 link = item.link.text.strip() if item.link else ""
                 description = item.description.text.strip() if item.description else ""
                 pub_date = item.pubDate.text.strip() if item.pubDate else datetime.now().isoformat()
+
                 # Clean HTML tags
                 description = re.sub(r'<[^>]+>', '', description)
 
@@ -112,7 +135,7 @@ class EconomicTimesFetcher:
                 )
                 news_list.append(news_item)
 
-            print(f"    ✅ [Economic Times] Successfully fetched {len(news_list)} news items")
+            print(f"    ✅ [Economic Times] Successfully fetched {len(news_list)} filtered news items")
             return news_list
         except Exception as e:
             print(f"    ❌ [Economic Times] Fetch failed: {e}")

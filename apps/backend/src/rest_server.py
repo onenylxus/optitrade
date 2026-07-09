@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from news_fetcher import OUTPUT_FILE
+# from news_fetcher.pipeline import NewsAnalysisPipeline
 from news_fetcher.run_news_pipeline import start_analysis
 
 from .api.controllers.portfolio_controller import PortfolioController
