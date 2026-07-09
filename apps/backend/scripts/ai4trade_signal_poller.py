@@ -54,15 +54,24 @@ STAGNATION_LOW = -2.0
 STAGNATION_HIGH = 3.0
 # Earlier partial take-profit signal at +PARTIAL_TP_PCT% — trim half & move stop
 PARTIAL_TP_PCT = 5.0
-# ── Tier 1 follow-filters (added 2026-07-08) ────────────────────────────────
-# Don't re-enter the same symbol within this many hours of a prior close —
-# prevents same-day whipsaw churn (4 prior MU re-entries all closed at loss).
-SAME_SYMBOL_COOLDOWN_HOURS = 48
+# ── Tier 1 follow-filters (added 2026-07-08, tightened 2026-07-09) ──────────
+# Don't re-enter the same symbol within this many hours of a prior WIN/TP.
+# Stops same-day whipsaw churn while still letting overnight setups through.
+SAME_SYMBOL_COOLDOWN_HOURS = 24
+# After a LOSS-close on a symbol, the cooldown is extended to this many hours
+# — losing twice on the same ticker in 48h has historically never worked.
+SAME_SYMBOL_LOSS_COOLDOWN_HOURS = 72
 # Maximum open positions allowed in the same symbol at any one time
 MAX_POSITIONS_PER_SYMBOL = 1
 # Hard blacklist: symbols where historical win-rate is too poor to keep
 # re-entering. MU has 1 win / 7 losses-or-flat across 8 attempts (12.5%).
 BLACKLIST_SYMBOLS = {"MU"}
+# Signal freshness — reject signals older than this many minutes. Was 6h
+# which let through stale entries (2026-07-09 03:33 OKLO/HST were hours old).
+SIGNAL_MAX_AGE_MINUTES = 15
+# US-only scope: ignore crypto/A-share signals entirely (was relying on
+# score gate, now hard filter per scope guardrail).
+ALLOWED_MARKETS = {"us-stock"}
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -282,6 +291,9 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
         }
 
     # ── Tier 1: Same-symbol cooldown (avoid same-day whipsaw re-entries) ──
+    # Loss-closes extend the cooldown to 72h; normal closes use 24h. This
+    # lets overnight winners through while protecting against repeated losses
+    # on the same ticker (e.g. AVGO 3-loss streak in June 2026).
     if recent_closed:
         now = hkt_now()
         for c in recent_closed:
@@ -295,7 +307,9 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
                 if closed_dt.tzinfo is None:
                     closed_dt = closed_dt.replace(tzinfo=HKT)
                 hours_since = (now - closed_dt).total_seconds() / 3600
-                if hours_since < SAME_SYMBOL_COOLDOWN_HOURS:
+                pnl = float(c.get("pnl_pct") or 0)
+                cooldown = SAME_SYMBOL_LOSS_COOLDOWN_HOURS if pnl < 0 else SAME_SYMBOL_COOLDOWN_HOURS
+                if hours_since < cooldown:
                     return {
                         "skip": True,
                         "action": "SKIP",
@@ -303,48 +317,89 @@ def evaluate_recommendation(rec: dict, agent_name: str, created_at: str, market:
                         "score": 0,
                         "reasons": [
                             f"Same-symbol cooldown: {sym} closed {hours_since:.1f}h ago "
-                            f"(< {SAME_SYMBOL_COOLDOWN_HOURS}h)"
+                            f"({'loss' if pnl < 0 else 'win'}, {cooldown}h lockout)"
                         ],
                     }
             except Exception:
                 pass
 
-    # Time decay: only act on fresh strategies (<6h old)
-    age_hours = 999
+    # Time decay: only act on FRESH signals (tightened from 6h → 15min).
+    # Stale entries were responsible for 50% of skip-reasons on 2026-07-09.
+    age_minutes = 9999
     if created_at:
         try:
             dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-            age_hours = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+            age_minutes = (datetime.now(timezone.utc) - dt).total_seconds() / 60
         except Exception:
             pass
 
-    if age_hours > 6:
-        return None
+    if age_minutes > SIGNAL_MAX_AGE_MINUTES:
+        return {
+            "skip": True,
+            "action": "SKIP",
+            "symbol": sym,
+            "score": 0,
+            "reasons": [
+                f"Signal stale: {age_minutes:.0f}m old "
+                f"(max {SIGNAL_MAX_AGE_MINUTES}m)"
+            ],
+        }
+
+    # US-only scope: hard filter on market field (Tier 3)
+    if market and market not in ALLOWED_MARKETS:
+        return {
+            "skip": True,
+            "action": "SKIP",
+            "symbol": sym,
+            "score": 0,
+            "reasons": [f"Market '{market}' outside allowed {ALLOWED_MARKETS}"],
+        }
 
     live_price = get_live_price(sym)
     if not live_price:
         return None
 
+    # Price-drift gate: if the live price has moved more than 1.5% from the
+    # signal's quoted entry, the setup is no longer valid — too much slippage.
+    # Was silently absorbed into the score; now a hard skip.
+    if price:
+        diff_pct = abs(live_price - price) / price * 100
+        if diff_pct > 1.5:
+            return {
+                "skip": True,
+                "action": "SKIP",
+                "symbol": sym,
+                "score": 0,
+                "reasons": [
+                    f"Price drift: signal ${price:.2f} vs live ${live_price:.2f} "
+                    f"({diff_pct:.1f}%, max 1.5%)"
+                ],
+            }
+
     score = 0.0
     reasons: list[str] = []
 
     if agent_score >= 7:
-        score += 2
+        score += 3
         reasons.append(f"Agent score {agent_score} (strong)")
+    elif agent_score >= 5:
+        score += 2
+        reasons.append(f"Agent score {agent_score} (high)")
     elif agent_score >= 4:
         score += 1
         reasons.append(f"Agent score {agent_score}")
 
     if price:
         diff_pct = abs(live_price - price) / price * 100
-        if diff_pct <= 3:
+        if diff_pct <= 0.5:
+            score += 2
+            reasons.append(f"Entry price ${price:.2f} very close to live ${live_price:.2f} ({diff_pct:.1f}% diff)")
+        elif diff_pct <= 1.5:
             score += 1
             reasons.append(f"Entry price ${price:.2f} close to live ${live_price:.2f} ({diff_pct:.1f}% diff)")
-        elif diff_pct <= 10:
-            reasons.append(f"Entry price ${price:.2f} vs live ${live_price:.2f} ({diff_pct:.1f}% diff)")
 
     if market == "us-stock":
-        score += 0.5
+        score += 1
         reasons.append(f"US stock ({market})")
 
     ai_stocks = {"NVDA", "AMD", "AVGO", "MSFT", "MU", "QCOM", "TSLA", "LIN", "AXP", "BA"}
