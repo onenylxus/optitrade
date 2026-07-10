@@ -235,6 +235,7 @@ def upsert_paper_trade(conn: sqlite3.Connection, row: dict[str, Any]) -> None:
         "pnl_pct", "pnl_abs", "strategy", "sector", "notes",
         "close_reason", "agent", "agent_score", "market",
         "created_at", "updated_at", "closed_at",
+        "signal_log_id", "partial_tp_taken",
     )
     values = tuple(row.get(c) for c in cols)
     placeholders = ",".join("?" for _ in cols)

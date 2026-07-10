@@ -121,6 +121,18 @@ BLACKLIST_SYMBOLS = {"MU"}
 # Agents that have produced persistent garbage / crypto-only output; never
 # auto-add them to follow_list even if their leaderboard activity spikes.
 BLACKLIST_AGENTS: set[str] = set()
+# Cap follow_list size to prevent runaway expansion from polluting cache
+# with test agents or one-off noise sources.
+MAX_FOLLOW_LIST_SIZE = 10
+# Skip auto-include for agent names matching these patterns (test fixtures,
+# CI bots, temporary handles — anything that wouldn't be a real production
+# trader we want to follow long-term).
+TEST_AGENT_PATTERNS: tuple[str, ...] = (
+    "TestAgent_", "E2E_", "MockAgent", "test_", "Mock", "TEST_",
+)
+def _is_test_agent(name: str) -> bool:
+    n = name or ""
+    return any(p in n for p in TEST_AGENT_PATTERNS)
 # Signal freshness — reject signals older than this many minutes. Was 6h
 # which let through stale entries (2026-07-09 03:33 OKLO/HST were hours old).
 SIGNAL_MAX_AGE_MINUTES = 15
@@ -1218,11 +1230,19 @@ def main() -> list[dict]:
         recently_active_outside = [a["agent_name"] for a in outside
                                     if recent_enough(a)
                                     and a.get("agent_name")
-                                    and a.get("agent_name") not in BLACKLIST_AGENTS]
+                                    and a.get("agent_name") not in BLACKLIST_AGENTS
+                                    and not _is_test_agent(a.get("agent_name", ""))]
         if recently_active_outside:
-            # Cap dynamic addition at 3 to avoid runaway expansion
+            # Cap dynamic addition at 3 to avoid runaway expansion.
+            # Also enforce MAX_FOLLOW_LIST_SIZE so the cache can't grow unbounded.
             to_add = recently_active_outside[:3]
             new_list = sorted(set(follow_list) | set(to_add))
+            if len(new_list) > MAX_FOLLOW_LIST_SIZE:
+                # Trim: keep PINNED + recent dynamic additions (preserve order)
+                pinned = [n for n in new_list if n in PINNED_AGENTS]
+                dynamic = [n for n in new_list if n not in PINNED_AGENTS]
+                dynamic = dynamic[:MAX_FOLLOW_LIST_SIZE - len(pinned)]
+                new_list = pinned + dynamic
             if new_list != follow_list:
                 log(f"Auto-expanding follow_list with active us-stock agents: {to_add}")
                 follow_list = new_list
