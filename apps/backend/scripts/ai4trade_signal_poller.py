@@ -118,6 +118,9 @@ def run_cleanup(retention_days: int = SQLITE_RETENTION_DAYS) -> dict:
 # Hard blacklist: symbols where historical win-rate is too poor to keep
 # re-entering. MU has 1 win / 7 losses-or-flat across 8 attempts (12.5%).
 BLACKLIST_SYMBOLS = {"MU"}
+# Agents that have produced persistent garbage / crypto-only output; never
+# auto-add them to follow_list even if their leaderboard activity spikes.
+BLACKLIST_AGENTS: set[str] = set()
 # Signal freshness — reject signals older than this many minutes. Was 6h
 # which let through stale entries (2026-07-09 03:33 OKLO/HST were hours old).
 SIGNAL_MAX_AGE_MINUTES = 15
@@ -175,7 +178,7 @@ def _save_follow_list_cache(names: list[str]) -> None:
         )
 
 
-def refresh_follow_list() -> list[str]:
+def refresh_follow_list(force: bool = False) -> list[str]:
     """Return current dynamic follow list. Hit leaderboard every
     LEADERBOARD_REFRESH_HOURS hours; otherwise return cached list.
 
@@ -185,9 +188,14 @@ def refresh_follow_list() -> list[str]:
         2. Pull top DYNAMIC_FOLLOW_LIMIT active agents from the platform's
            /signals/grouped endpoint (sorted by signal_count).
         3. Dedupe, cache in SQLite, return.
+
+    Cache invalidation (force=True):
+        - Triggered by caller when we detect high-value agents outside the
+          current cache (e.g., fresh us-stock activity).
+        - Triggered manually via API.
     """
     cached = _load_follow_list_cache()
-    if cached:
+    if cached and not force:
         names, refreshed_at = cached
         try:
             dt = datetime.fromisoformat(refreshed_at)
@@ -285,12 +293,14 @@ def compute_diff(trades: list[dict], prev: dict) -> list[str]:
 
 
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
-def fetch_signals(limit: int = 15) -> list[dict]:
+def fetch_signals(limit: int = 15, market: str = "us-stock") -> list[dict]:
+    """Fetch raw signal feed filtered by market. Pre-filtering at the API
+    layer avoids wasting parse quota on signals we'll SKIP downstream."""
     try:
         resp = requests.get(
             f"{BASE_URL}/signals/feed",
             headers=HEADERS,
-            params={"limit": limit},
+            params={"limit": limit, "market": market},
             timeout=10,
         )
         resp.raise_for_status()
@@ -640,12 +650,14 @@ def log_signal(received_at: str, agent_name: str, symbol: str | None,
 
 
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
-def fetch_signals(limit: int = 15) -> list[dict]:
+def fetch_signals(limit: int = 15, market: str = "us-stock") -> list[dict]:
+    """Fetch raw signal feed filtered by market. Pre-filtering at the API
+    layer avoids wasting parse quota on signals we'll SKIP downstream."""
     try:
         resp = requests.get(
             f"{BASE_URL}/signals/feed",
             headers=HEADERS,
-            params={"limit": limit},
+            params={"limit": limit, "market": market},
             timeout=10,
         )
         resp.raise_for_status()
@@ -1169,7 +1181,7 @@ def main() -> list[dict]:
     new_events.extend(pos_events)
 
     # 2. Parse strategy signals and evaluate recommendations
-    signals = fetch_signals(limit=15)
+    signals = fetch_signals(limit=15, market="us-stock")
     new_follows: list[dict] = []
     open_symbols = {t.get("symbol") for t in trades if t.get("status") == "open"}
     # Pass recent closed positions (within last 7 days) so cooldown logic has data
@@ -1180,8 +1192,44 @@ def main() -> list[dict]:
 
     # 2a. Refresh dynamic follow-list from /api/signals/grouped leaderboard.
     # Picks the most active US-stock traders + our pinned workhorse (raftapart).
-    follow_list = refresh_follow_list()
-    log(f"Follow list ({len(follow_list)} agents): {', '.join(follow_list)}")
+    # Force refresh on first run of the day (00:00–00:30 HKT) to catch any
+    # newly-active agents that emerged during overnight / pre-market.
+    force_refresh = hkt_now().hour == 0
+    follow_list = refresh_follow_list(force=force_refresh)
+    log(f"Follow list ({len(follow_list)} agents, force={force_refresh}): {', '.join(follow_list)}")
+
+    # 2a-i. Detect active us-stock agents OUTSIDE current follow list.
+    # If any such agent has emitted ≥3 signals today, expand follow_list
+    # for the remainder of the day (auto-include). This catches the case
+    # where raftapart stops emitting us-stock but another agent picks up.
+    try:
+        all_board = fetch_agent_leaderboard(limit=20, market="us-stock",
+                                              min_last_signal_hours=24)
+        # Find recently active agents NOT in current follow list
+        outside = [a for a in all_board if a.get("agent_name") not in follow_list]
+        # Filter: must have emitted in the last 4 hours (i.e., market hours)
+        cutoff = (hkt_now() - timedelta(hours=4)).timestamp()
+        def recent_enough(a) -> bool:
+            try:
+                t = datetime.fromisoformat(a.get("last_signal_at", "").replace("Z", "+00:00"))
+                return t.timestamp() >= cutoff
+            except Exception:
+                return False
+        recently_active_outside = [a["agent_name"] for a in outside
+                                    if recent_enough(a)
+                                    and a.get("agent_name")
+                                    and a.get("agent_name") not in BLACKLIST_AGENTS]
+        if recently_active_outside:
+            # Cap dynamic addition at 3 to avoid runaway expansion
+            to_add = recently_active_outside[:3]
+            new_list = sorted(set(follow_list) | set(to_add))
+            if new_list != follow_list:
+                log(f"Auto-expanding follow_list with active us-stock agents: {to_add}")
+                follow_list = new_list
+                # Persist expanded list for the day
+                _save_follow_list_cache(follow_list)
+    except Exception as e:
+        log(f"WARNING: follow-list auto-expand failed: {e}")
 
     for sig in signals:
         msg_type = sig.get("message_type", "")
