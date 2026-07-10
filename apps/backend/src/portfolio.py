@@ -132,7 +132,7 @@ def _legacy_settings(payload: dict[str, Any]) -> dict[str, Any]:
         return settings
 
     legacy: dict[str, Any] = {}
-    for key in ("host", "port", "clientId", "market", "apiKey", "testnet"):
+    for key in ("host", "port", "clientId", "market", "trdEnv", "apiKey", "testnet"):
         if key in payload and payload.get(key) is not None:
             legacy[key] = payload[key]
     return legacy
@@ -182,18 +182,22 @@ def fetch_ibkr_portfolio_snapshot(settings):
     return _fetch_ibkr_portfolio_snapshot(settings)
 
 
-def validate_futu_connection(host: str, port: int, market: str):
+def validate_futu_connection(
+    host: str, port: int, market: str, trd_env: str = "SIMULATE"
+):
     from src.futu_client import validate_futu_connection as _validate_futu_connection
 
-    return _validate_futu_connection(host, port, market)
+    return _validate_futu_connection(host, port, market, trd_env)
 
 
-def fetch_futu_portfolio_snapshot(host: str, port: int, market: str):
+def fetch_futu_portfolio_snapshot(
+    host: str, port: int, market: str, trd_env: str = "SIMULATE"
+):
     from src.futu_client import (
         fetch_futu_portfolio_snapshot as _fetch_futu_portfolio_snapshot,
     )
 
-    return _fetch_futu_portfolio_snapshot(host, port, market)
+    return _fetch_futu_portfolio_snapshot(host, port, market, trd_env)
 
 
 def validate_binance_connection(api_key: str, api_secret: str, *, testnet: bool):
@@ -324,6 +328,7 @@ def build_portfolio_snapshot(
                 host=str(connection.settings.get("host", "127.0.0.1")),
                 port=_safe_int(connection.settings.get("port"), 11111),
                 market=str(connection.settings.get("market", "US")),
+                trd_env=str(connection.settings.get("trdEnv", "SIMULATE")),
             )
         except RuntimeError as error:
             configured = BrokerConnection(
@@ -433,17 +438,22 @@ def validate_connection_request(payload: dict[str, Any]) -> dict[str, Any]:
         host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
         port = int(payload.get("port", 11111))
         market = str(payload.get("market", "US")).strip().upper() or "US"
+        trd_env = (
+            str(payload.get("trdEnv", "SIMULATE")).strip().upper() or "SIMULATE"
+        )
 
         if not 1 <= port <= 65535:
             raise ValueError("port must be between 1 and 65535")
         if market not in {"US", "HK", "CN", "SG", "JP"}:
             raise ValueError("market must be one of US, HK, CN, SG, or JP")
+        if trd_env not in {"REAL", "SIMULATE"}:
+            raise ValueError("trdEnv must be REAL or SIMULATE")
 
         _validate_futu_socket(host, port)
-        validated = validate_futu_connection(host, port, market)
+        validated = validate_futu_connection(host, port, market, trd_env)
         connection = _configured_broker_connection(
             "futu",
-            {"host": host, "port": port, "market": market},
+            {"host": host, "port": port, "market": market, "trdEnv": trd_env},
             account_id=validated.get("accountId"),
             status=str(validated.get("status", "connected")),
         )
@@ -576,6 +586,7 @@ def _broker_connection_payload(connection: BrokerConnection) -> dict[str, Any]:
         "port",
         "clientId",
         "market",
+        "trdEnv",
         "apiKey",
         "apiKeyPreview",
         "hasSecret",

@@ -102,6 +102,7 @@ interface PortfolioApiSnapshot {
     port?: number;
     clientId?: number;
     market?: string;
+    trdEnv?: string;
     testnet?: boolean;
     accountId?: string;
     syncedAt?: string;
@@ -748,6 +749,7 @@ function BrokerConnectionPanel({
   const [host, setHost] = useState('127.0.0.1');
   const [port, setPort] = useState('7497');
   const [market, setMarket] = useState('US');
+  const [trdEnv, setTrdEnv] = useState('SIMULATE');
   const [error, setError] = useState<string | null>(null);
   const selectedOption = getBrokerOption(selectedBrokerState);
 
@@ -766,6 +768,7 @@ function BrokerConnectionPanel({
         String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)),
       );
       setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
+      setTrdEnv(String(initialConnection?.trdEnv ?? settings.trdEnv ?? 'SIMULATE'));
       setError(initialConnection?.lastError ?? null);
     })();
   }, [initialConnection, selectedBroker]);
@@ -793,7 +796,13 @@ function BrokerConnectionPanel({
       const payload =
         selectedBrokerState === 'ibkr'
           ? { broker: selectedBrokerState, host, port: Number(port) }
-          : { broker: selectedBrokerState, host, port: Number(port), market };
+          : {
+              broker: selectedBrokerState,
+              host,
+              port: Number(port),
+              market,
+              trdEnv,
+            };
       const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -903,6 +912,17 @@ function BrokerConnectionPanel({
                 onChange={(event) => setMarket(event.target.value)}
                 className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
               />
+            </div>
+            <div className="space-y-1">
+              <div className="text-[10px] uppercase text-slate-400">Trading Env</div>
+              <select
+                value={trdEnv}
+                onChange={(event) => setTrdEnv(event.target.value)}
+                className="w-full border-b border-slate-200 bg-transparent py-1 text-xs outline-none focus:border-slate-900"
+              >
+                <option value="SIMULATE">SIMULATE</option>
+                <option value="REAL">REAL</option>
+              </select>
             </div>
           </div>
         )}

@@ -128,6 +128,7 @@ class PortfolioService:
                     host=str(connection["settings"].get("host", "127.0.0.1")),
                     port=self._safe_int(connection["settings"].get("port"), 11111),
                     market=str(connection["settings"].get("market", "US")),
+                    trd_env=str(connection["settings"].get("trdEnv", "SIMULATE")),
                 )
             except Exception as error:
                 self._write_broker_connection(
@@ -211,13 +212,23 @@ class PortfolioService:
             host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
             port = int(payload.get("port", 11111))
             market = str(payload.get("market", "US")).strip().upper() or "US"
+            trd_env = (
+                str(payload.get("trdEnv", "SIMULATE")).strip().upper() or "SIMULATE"
+            )
             portfolio_module._validate_futu_socket(host, port)
-            validated = portfolio_module.validate_futu_connection(host, port, market)
+            validated = portfolio_module.validate_futu_connection(
+                host, port, market, trd_env
+            )
             connection = self._broker_connection(
                 id="futu",
                 status=str(validated.get("status", "connected")),
                 broker="Futu",
-                settings={"host": host, "port": port, "market": market},
+                settings={
+                    "host": host,
+                    "port": port,
+                    "market": market,
+                    "trdEnv": trd_env,
+                },
                 account_id=validated.get("accountId"),
                 synced_at=validated.get("syncedAt"),
             )
@@ -406,7 +417,7 @@ class PortfolioService:
             "syncedAt": connection.get("syncedAt"),
             "lastError": connection.get("lastError"),
         }
-        for key in ("host", "port", "clientId", "market", "testnet"):
+        for key in ("host", "port", "clientId", "market", "trdEnv", "testnet"):
             if key in connection["settings"]:
                 payload[key] = connection["settings"][key]
         if connection["id"] == "binance":
