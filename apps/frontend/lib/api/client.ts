@@ -305,15 +305,17 @@ export async function getStockChartSupportResistance(
 
 export async function getPortfolioAnalysis(
   signal?: AbortSignal,
+  snapshot?: unknown,
 ): Promise<PortfolioAnalysisResponse> {
   return fetchWithErrorHandling<PortfolioAnalysisResponse>(
     `${BACKEND_URL}/api/ai/widget/portfolio`,
     {
-      method: 'GET',
+      method: snapshot ? 'POST' : 'GET',
       signal,
+      ...(snapshot ? { body: JSON.stringify(snapshot) } : {}),
     },
-    );
-  }
+  );
+}
 /**
  * Chart-pattern overlays and explanation from ``GET /api/ai/widget/stock-chart/patterns``
  * (same query shape as stock chart; ``OPENROUTER_API_KEY`` is optional on the server).

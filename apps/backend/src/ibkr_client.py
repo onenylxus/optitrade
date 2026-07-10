@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -13,11 +14,15 @@ except ImportError:  # pragma: no cover - dependency is optional until installed
     IB = None
 
 
+_IBKR_SESSION_LOCK = threading.Lock()
+
+
 @dataclass(frozen=True)
 class IbkrConnectionSettings:
     host: str
     port: int
     client_id: int = 1
+    account_id: str | None = None
 
 
 def ibkr_dependency_available() -> bool:
@@ -31,34 +36,35 @@ def validate_ibkr_connection(settings: IbkrConnectionSettings) -> dict[str, Any]
             "--name ib_insync` then `npx nx run @optitrade/backend:sync`."
         )
 
-    _ensure_event_loop()
-    ib = IB()
-    try:
-        ib.connect(
-            settings.host,
-            settings.port,
-            clientId=settings.client_id,
-            readonly=True,
-            timeout=5,
-        )
+    with _IBKR_SESSION_LOCK:
+        _ensure_event_loop()
+        ib = IB()
+        try:
+            ib.connect(
+                settings.host,
+                settings.port,
+                clientId=settings.client_id,
+                readonly=True,
+                timeout=5,
+            )
 
-        managed_accounts = list(ib.managedAccounts() or [])
-        account_id = managed_accounts[0] if managed_accounts else None
+            managed_accounts = list(ib.managedAccounts() or [])
+            account_id = _resolve_account_id(managed_accounts, settings.account_id)
 
-        return {
-            "status": "connected",
-            "broker": "IBKR",
-            "host": settings.host,
-            "port": settings.port,
-            "clientId": settings.client_id,
-            "accountId": account_id,
-            "syncedAt": datetime.now(UTC).isoformat(),
-        }
-    except Exception as error:  # pragma: no cover - depends on local IBKR runtime
-        raise RuntimeError(f"Unable to connect to IBKR TWS/Gateway: {error}") from error
-    finally:
-        if ib.isConnected():
-            ib.disconnect()
+            return {
+                "status": "connected",
+                "broker": "IBKR",
+                "host": settings.host,
+                "port": settings.port,
+                "clientId": settings.client_id,
+                "accountId": account_id,
+                "syncedAt": datetime.now(UTC).isoformat(),
+            }
+        except Exception as error:  # pragma: no cover - depends on local IBKR runtime
+            raise RuntimeError(f"Unable to connect to IBKR TWS/Gateway: {error}") from error
+        finally:
+            if ib.isConnected():
+                ib.disconnect()
 
 
 def fetch_ibkr_portfolio_snapshot(settings: IbkrConnectionSettings) -> dict[str, Any]:
@@ -68,74 +74,89 @@ def fetch_ibkr_portfolio_snapshot(settings: IbkrConnectionSettings) -> dict[str,
             "--name ib_insync` then `npx nx run @optitrade/backend:sync`."
         )
 
-    _ensure_event_loop()
-    ib = IB()
-    try:
-        ib.connect(
-            settings.host,
-            settings.port,
-            clientId=settings.client_id,
-            readonly=True,
-            timeout=5,
-        )
+    with _IBKR_SESSION_LOCK:
+        _ensure_event_loop()
+        ib = IB()
+        try:
+            ib.connect(
+                settings.host,
+                settings.port,
+                clientId=settings.client_id,
+                readonly=True,
+                timeout=5,
+            )
 
-        managed_accounts = list(ib.managedAccounts() or [])
-        account_id = managed_accounts[0] if managed_accounts else None
-        account_values = (
-            ib.accountSummary(account=account_id) if account_id else ib.accountSummary()
-        )
-        portfolio_items = (
-            ib.portfolio(account=account_id) if account_id else ib.portfolio()
-        )
+            managed_accounts = list(ib.managedAccounts() or [])
+            account_id = _resolve_account_id(managed_accounts, settings.account_id)
+            _prime_account_portfolio(ib, account_id)
+            account_values = (
+                ib.accountSummary(account=account_id) if account_id else ib.accountSummary()
+            )
+            portfolio_items = _portfolio_items(ib, account_id)
+            ticker_map = _snapshot_ticker_map(ib, portfolio_items)
 
-        account_summary = _account_summary_map(account_values)
-        position_payloads = [
-            _position_payload(item, index)
-            for index, item in enumerate(portfolio_items, start=1)
-        ]
-        total_value = sum(position["marketValue"] for position in position_payloads)
-        total_cost = sum(position["costBasis"] for position in position_payloads)
-        pnl = total_value - total_cost
-        pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
-        daily_pnl = _float_value(account_summary, "DailyPnL")
-        daily_pnl_percent = (daily_pnl / total_value) * 100 if total_value else 0.0
-        margin_usage = _float_value(account_summary, "MaintMarginReq")
-        buying_power = _float_value(account_summary, "BuyingPower")
+            account_summary = _account_summary_map(account_values)
+            position_payloads = [
+                _position_payload(item, index, ticker_map)
+                for index, item in enumerate(portfolio_items, start=1)
+            ]
+            total_value = sum(position["marketValue"] for position in position_payloads)
+            total_cost = sum(position["costBasis"] for position in position_payloads)
+            pnl = total_value - total_cost
+            pnl_percent = (pnl / total_cost) * 100 if total_cost else 0.0
+            computed_daily_pnl = sum(
+                float(position.get("dailyPnl", 0.0) or 0.0)
+                for position in position_payloads
+            )
+            daily_pnl = computed_daily_pnl or _float_value(account_summary, "DailyPnL")
+            daily_pnl_percent = (daily_pnl / total_value) * 100 if total_value else 0.0
+            margin_usage = _float_value(account_summary, "MaintMarginReq")
+            buying_power = _float_value(account_summary, "BuyingPower")
 
-        return {
-            "asOf": datetime.now(UTC).isoformat(),
-            "baseCurrency": account_summary.get("BaseCurrency", "USD"),
-            "source": "backend",
-            "broker": {
-                "id": "ibkr",
-                "status": "connected",
-                "broker": "IBKR",
-                "name": "IBKR",
-                "host": settings.host,
-                "port": settings.port,
-                "clientId": settings.client_id,
-                "accountId": account_id,
-                "syncedAt": datetime.now(UTC).isoformat(),
-            },
-            "positions": position_payloads,
-            "summary": {
-                "totalValue": round(total_value, 2),
-                "totalCost": round(total_cost, 2),
-                "pnl": round(pnl, 2),
-                "pnlPercent": round(pnl_percent, 4),
-                "dailyPnl": round(daily_pnl, 2),
-                "dailyPnlPercent": round(daily_pnl_percent, 4),
-                "marginUsage": round(margin_usage, 2),
-                "buyingPower": round(buying_power, 2),
-            },
-            "sectorValues": _sector_values(position_payloads, total_value),
-            "history": _build_history(total_value),
-        }
-    except Exception as error:  # pragma: no cover - depends on local IBKR runtime
-        raise RuntimeError(f"Unable to fetch IBKR portfolio: {error}") from error
-    finally:
-        if ib.isConnected():
-            ib.disconnect()
+            return {
+                "asOf": datetime.now(UTC).isoformat(),
+                "baseCurrency": account_summary.get("BaseCurrency", "USD"),
+                "source": "backend",
+                "broker": {
+                    "id": "ibkr",
+                    "status": "connected",
+                    "broker": "IBKR",
+                    "name": "IBKR",
+                    "host": settings.host,
+                    "port": settings.port,
+                    "clientId": settings.client_id,
+                    "accountId": account_id,
+                    "syncedAt": datetime.now(UTC).isoformat(),
+                },
+                "positions": position_payloads,
+                "summary": {
+                    "totalValue": round(total_value, 2),
+                    "totalCost": round(total_cost, 2),
+                    "pnl": round(pnl, 2),
+                    "pnlPercent": round(pnl_percent, 4),
+                    "dailyPnl": round(daily_pnl, 2),
+                    "dailyPnlPercent": round(daily_pnl_percent, 4),
+                    "marginUsage": round(margin_usage, 2),
+                    "buyingPower": round(buying_power, 2),
+                },
+                "sectorValues": _sector_values(position_payloads, total_value),
+                "history": _build_history(total_value),
+            }
+        except Exception as error:  # pragma: no cover - depends on local IBKR runtime
+            raise RuntimeError(f"Unable to fetch IBKR portfolio: {error}") from error
+        finally:
+            if ib.isConnected():
+                ib.disconnect()
+
+
+def _resolve_account_id(
+    managed_accounts: list[str],
+    preferred_account_id: str | None,
+) -> str | None:
+    preferred = (preferred_account_id or "").strip()
+    if preferred and preferred in managed_accounts:
+        return preferred
+    return managed_accounts[0] if managed_accounts else None
 
 
 def _account_summary_map(items: list[Any]) -> dict[str, str]:
@@ -155,21 +176,93 @@ def _float_value(summary: dict[str, str], key: str, fallback: float = 0.0) -> fl
         return fallback
 
 
-def _position_payload(item: Any, index: int) -> dict[str, Any]:
+def _prime_account_portfolio(ib: Any, account_id: str | None) -> None:
+    try:
+        ib.client.reqAccountUpdates(True, account_id or "")
+        ib.sleep(5)
+    except Exception:
+        # The snapshot can still fall back to positions and tickers below.
+        return
+
+
+def _portfolio_items(ib: Any, account_id: str | None) -> list[Any]:
+    items = ib.portfolio(account=account_id) if account_id else ib.portfolio()
+    if items:
+        return list(items)
+    return list(ib.positions(account=account_id) if account_id else ib.positions())
+
+
+def _item_quantity(item: Any) -> float:
+    return float(getattr(item, "position", 0.0) or 0.0)
+
+
+def _item_average_cost(item: Any) -> float:
+    avg_cost = getattr(item, "averageCost", None)
+    if avg_cost is None:
+        avg_cost = getattr(item, "avgCost", 0.0)
+    return float(avg_cost or 0.0)
+
+
+def _items_have_market_prices(items: list[Any]) -> bool:
+    return any(float(getattr(item, "marketPrice", 0.0) or 0.0) > 0.0 for item in items)
+
+
+def _ticker_previous_close(payload: dict[str, float] | None) -> float:
+    if not payload:
+        return 0.0
+    return float(payload.get("previousClose", 0.0) or 0.0)
+
+
+def _position_payload(
+    item: Any,
+    index: int,
+    ticker_map: dict[int, dict[str, float]] | None = None,
+) -> dict[str, Any]:
     contract = getattr(item, "contract", None)
-    avg_cost = float(getattr(item, "avgCost", getattr(item, "averageCost", 0.0)))
-    quantity = float(getattr(item, "position", 0.0))
-    market_price = float(getattr(item, "marketPrice", 0.0))
-    market_value = float(getattr(item, "marketValue", 0.0))
-    unrealized_pnl = float(getattr(item, "unrealizedPNL", 0.0))
+    avg_cost = _item_average_cost(item)
+    quantity = _item_quantity(item)
+    con_id = int(getattr(contract, "conId", 0) or 0)
+    ticker_payload = (ticker_map or {}).get(con_id)
+    mapped_price = float((ticker_payload or {}).get("price", 0.0) or 0.0)
+    previous_close = _ticker_previous_close(ticker_payload)
+    market_price = float(
+        getattr(
+            item,
+            "marketPrice",
+            getattr(contract, "marketPrice", 0.0),
+        )
+        or 0.0
+    )
+    if market_price == 0.0 and mapped_price > 0.0:
+        market_price = mapped_price
+    market_value = float(getattr(item, "marketValue", 0.0) or 0.0)
+    unrealized_pnl = float(
+        getattr(item, "unrealizedPNL", getattr(item, "unrealizedPnL", 0.0)) or 0.0
+    )
     symbol = str(getattr(contract, "symbol", f"POS-{index}"))
     sec_type = str(getattr(contract, "secType", "Unknown"))
     exchange = str(getattr(contract, "exchange", "Unknown"))
     sector = _instrument_sector_label(sec_type, symbol, exchange)
+    cost_basis = abs(quantity) * avg_cost
     if market_price == 0.0 and quantity != 0 and market_value != 0.0:
         market_price = market_value / quantity
-    cost_basis = abs(quantity) * avg_cost
+    elif market_value == 0.0 and market_price != 0.0:
+        market_value = quantity * market_price
+    elif market_value == 0.0 and avg_cost != 0.0:
+        market_value = quantity * avg_cost
+    if unrealized_pnl == 0.0 and market_value != 0.0:
+        unrealized_pnl = market_value - cost_basis
     unrealized_pnl_percent = (unrealized_pnl / cost_basis) * 100 if cost_basis else 0.0
+    daily_pnl = (
+        (market_price - previous_close) * quantity
+        if market_price > 0.0 and previous_close > 0.0
+        else 0.0
+    )
+    daily_pnl_percent = (
+        (market_price - previous_close) / previous_close * 100
+        if market_price > 0.0 and previous_close > 0.0
+        else 0.0
+    )
 
     return {
         "id": str(index),
@@ -182,7 +275,46 @@ def _position_payload(item: Any, index: int) -> dict[str, Any]:
         "costBasis": round(cost_basis, 2),
         "unrealizedPnl": round(unrealized_pnl, 2),
         "unrealizedPnlPercent": round(unrealized_pnl_percent, 4),
+        "previousClose": round(previous_close, 4),
+        "dailyPnl": round(daily_pnl, 2),
+        "dailyPnlPercent": round(daily_pnl_percent, 4),
     }
+
+
+def _snapshot_ticker_map(ib: Any, positions: list[Any]) -> dict[int, dict[str, float]]:
+    contracts: list[Any] = []
+    seen_con_ids: set[int] = set()
+    for item in positions:
+        contract = getattr(item, "contract", None)
+        con_id = int(getattr(contract, "conId", 0) or 0)
+        if contract is None or con_id <= 0 or con_id in seen_con_ids:
+            continue
+        seen_con_ids.add(con_id)
+        contracts.append(contract)
+
+    if not contracts:
+        return {}
+
+    try:
+        ib.reqMarketDataType(3)
+        tickers = ib.reqTickers(*contracts)
+    except Exception:
+        return {}
+
+    ticker_map: dict[int, dict[str, float]] = {}
+    for ticker in tickers:
+        contract = getattr(ticker, "contract", None)
+        con_id = int(getattr(contract, "conId", 0) or 0)
+        if con_id <= 0:
+            continue
+        price = float(getattr(ticker, "marketPrice")() or 0.0)
+        close = float(getattr(ticker, "close", 0.0) or 0.0)
+        if price > 0.0 or close > 0.0:
+            ticker_map[con_id] = {
+                "price": price,
+                "previousClose": close,
+            }
+    return ticker_map
 
 
 def _instrument_sector_label(sec_type: str, symbol: str, exchange: str) -> str:

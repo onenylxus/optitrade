@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from src.api.controllers.ai_recommendation_controller import AIRecommendationController
 from src.api.controllers.portfolio_ai_controller import PortfolioAIController
@@ -173,6 +173,22 @@ async def ai_widget_portfolio(
 ) -> PortfolioAnalysisResponse:
     """Portfolio widget AI commentary grounded in the current backend snapshot."""
     return await controller.analyze_portfolio()
+
+
+@router.post(
+    "/widget/portfolio",
+    response_model=PortfolioAnalysisResponse,
+    response_model_by_alias=True,
+)
+async def ai_widget_portfolio_for_snapshot(
+    controller: Annotated[
+        PortfolioAIController,
+        Depends(get_portfolio_ai_controller),
+    ],
+    snapshot: Annotated[dict, Body()],
+) -> PortfolioAnalysisResponse:
+    """Portfolio widget AI commentary grounded in a supplied widget snapshot."""
+    return await controller.analyze_portfolio(snapshot)
 
 
 @router.get(

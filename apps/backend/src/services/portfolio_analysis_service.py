@@ -675,12 +675,36 @@ def _fallback_analysis(
             "less comfortable than the headline P/L alone would suggest. "
         )
     insight += "This is educational commentary, not investment advice."
+    strategy: list[dict[str, Any]] = []
+    if top_pattern_label:
+        label = "trim" if _pattern_bias(top_pattern) < 0 else "review"
+        strategy.append(
+            {
+                "label": label,
+                "symbols": [top_symbol],
+                "reason": (
+                    f"{top_symbol} is the largest holding and pattern context shows "
+                    f"a {top_pattern_label} setup."
+                ),
+            }
+        )
+    if secondary_symbols:
+        strategy.append(
+            {
+                "label": "add candidate",
+                "symbols": secondary_symbols,
+                "reason": _candidate_reason_from_patterns(
+                    secondary_symbols,
+                    pattern_summaries,
+                ),
+            }
+        )
 
     return PortfolioAnalysisResponse(
         insight=insight,
         risk_label=risk_label,
         risk_tone=risk_tone,
-        strategy=[],
+        strategy=strategy,
         signals=_build_position_signals(ranked, pattern_summaries),
         model_id=model_id,
     )
@@ -726,7 +750,10 @@ class PortfolioAnalysisService:
 
         async def load_summary(symbol: str) -> tuple[str, dict[str, Any] | None]:
             async with semaphore:
-                return symbol, await self._fetch_pattern_summary_cached(symbol)
+                try:
+                    return symbol, await self._fetch_pattern_summary_cached(symbol)
+                except RuntimeError:
+                    return symbol, None
 
         results = await asyncio.gather(*(load_summary(symbol) for symbol in symbols))
         summaries: dict[str, dict[str, Any]] = {}
@@ -784,8 +811,11 @@ class PortfolioAnalysisService:
         chart = await self._charts.fetch_chart(params)
         return _summarize_patterns(detect_chart_patterns(chart.candles))
 
-    async def analyze(self) -> PortfolioAnalysisResponse:
-        snapshot = self._portfolio.build_portfolio_snapshot()
+    async def analyze(
+        self,
+        snapshot: dict[str, Any] | None = None,
+    ) -> PortfolioAnalysisResponse:
+        snapshot = snapshot or self._portfolio.build_portfolio_snapshot()
         pattern_summaries = await self._build_pattern_summaries(snapshot)
         raw = await self._chain.ainvoke(
             {"portfolio_json": _portfolio_payload(snapshot, pattern_summaries)}

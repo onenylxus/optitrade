@@ -17,6 +17,7 @@ from src.ibkr_client import (
 )
 from src.api.schemas.stock_chart import ChartInterval, ChartRange
 from src.services.stock_chart_service import StockChartService, resolve_stock_chart_params
+from src.api.routes.price_routes import _fetch_yfinance
 
 
 @dataclass(frozen=True)
@@ -100,12 +101,15 @@ class PortfolioService:
 
     def build_portfolio_snapshot(self) -> dict[str, Any]:
         connection = self._read_broker_connection()
+        if connection["id"] == "mock":
+            return self._editable_snapshot(connection)
+
         if connection["id"] == "ibkr" and connection["status"] == "connected":
             try:
                 return portfolio_module.fetch_ibkr_portfolio_snapshot(
                     self._ibkr_settings(connection)
                 )
-            except (RuntimeError, TypeError) as error:
+            except Exception as error:
                 self._write_broker_connection(
                     self._broker_connection(
                         id="ibkr",
@@ -125,7 +129,7 @@ class PortfolioService:
                     port=self._safe_int(connection["settings"].get("port"), 11111),
                     market=str(connection["settings"].get("market", "US")),
                 )
-            except (RuntimeError, TypeError) as error:
+            except Exception as error:
                 self._write_broker_connection(
                     self._broker_connection(
                         id="futu",
@@ -147,7 +151,7 @@ class PortfolioService:
                         connection["settings"].get("testnet", True)
                     ),
                 )
-            except (RuntimeError, TypeError) as error:
+            except Exception as error:
                 self._write_broker_connection(
                     self._broker_connection(
                         id="binance",
@@ -338,9 +342,7 @@ class PortfolioService:
         return {
             "asOf": datetime.now(UTC).isoformat(),
             "baseCurrency": "USD",
-            "source": "backend"
-            if connection["status"] == "connected" and connection["id"] != "mock"
-            else "paper",
+            "source": "paper",
             "broker": self._broker_connection_payload_dict(connection),
             "positions": [self._position_payload(position) for position in positions],
             "summary": {
@@ -555,7 +557,7 @@ class PortfolioService:
         ttl_seconds = PAPER_PRICE_CACHE_TTL_SECONDS
         try:
             price = self._fetch_latest_close(symbol)
-        except RuntimeError:
+        except Exception:
             price = None
             ttl_seconds = PAPER_PRICE_ERROR_TTL_SECONDS
 
@@ -563,6 +565,10 @@ class PortfolioService:
         return price
 
     def _fetch_latest_close(self, symbol: str) -> float | None:
+        quote = _fetch_yfinance(symbol)
+        if quote is not None and quote.price > 0:
+            return float(quote.price)
+
         if self._chart_service is None:
             return None
 
@@ -714,6 +720,7 @@ class PortfolioService:
             host=str(settings.get("host", "127.0.0.1")),
             port=self._safe_int(settings.get("port"), 7497),
             client_id=self._safe_int(settings.get("clientId"), 1),
+            account_id=str(connection.get("accountId", "")).strip() or None,
         )
 
     def _normalize_positions_payload(self, raw_positions: Any) -> tuple[Position, ...]:

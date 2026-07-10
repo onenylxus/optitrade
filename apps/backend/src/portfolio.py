@@ -159,7 +159,61 @@ def _ibkr_settings(connection: BrokerConnection):
     host = str(connection.settings.get("host", "127.0.0.1")).strip() or "127.0.0.1"
     port = _safe_int(connection.settings.get("port"), 7497)
     client_id = _safe_int(connection.settings.get("clientId"), 1)
-    return IbkrConnectionSettings(host=host, port=port, client_id=client_id)
+    account_id = str(connection.account_id or "").strip() or None
+    return IbkrConnectionSettings(
+        host=host,
+        port=port,
+        client_id=client_id,
+        account_id=account_id,
+    )
+
+
+def validate_ibkr_connection(settings):
+    from src.ibkr_client import validate_ibkr_connection as _validate_ibkr_connection
+
+    return _validate_ibkr_connection(settings)
+
+
+def fetch_ibkr_portfolio_snapshot(settings):
+    from src.ibkr_client import (
+        fetch_ibkr_portfolio_snapshot as _fetch_ibkr_portfolio_snapshot,
+    )
+
+    return _fetch_ibkr_portfolio_snapshot(settings)
+
+
+def validate_futu_connection(host: str, port: int, market: str):
+    from src.futu_client import validate_futu_connection as _validate_futu_connection
+
+    return _validate_futu_connection(host, port, market)
+
+
+def fetch_futu_portfolio_snapshot(host: str, port: int, market: str):
+    from src.futu_client import (
+        fetch_futu_portfolio_snapshot as _fetch_futu_portfolio_snapshot,
+    )
+
+    return _fetch_futu_portfolio_snapshot(host, port, market)
+
+
+def validate_binance_connection(api_key: str, api_secret: str, *, testnet: bool):
+    from src.binance_client import (
+        validate_binance_connection as _validate_binance_connection,
+    )
+
+    return _validate_binance_connection(api_key, api_secret, testnet=testnet)
+
+
+def fetch_binance_portfolio_snapshot(*, api_key: str, api_secret: str, testnet: bool):
+    from src.binance_client import (
+        fetch_binance_portfolio_snapshot as _fetch_binance_portfolio_snapshot,
+    )
+
+    return _fetch_binance_portfolio_snapshot(
+        api_key=api_key,
+        api_secret=api_secret,
+        testnet=testnet,
+    )
 
 
 def _validate_futu_socket(host: str, port: int) -> None:
