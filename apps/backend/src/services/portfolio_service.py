@@ -183,7 +183,11 @@ class PortfolioService:
         if broker == "ibkr":
             host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
             port = int(payload.get("port", 7497))
-            client_id = int(payload.get("clientId", 1))
+            client_id = (
+                int(payload["clientId"])
+                if payload.get("clientId") is not None
+                else None
+            )
             validated = portfolio_module.validate_ibkr_connection(
                 IbkrConnectionSettings(host=host, port=port, client_id=client_id)
             )
@@ -194,7 +198,7 @@ class PortfolioService:
                 settings={
                     "host": validated.get("host", host),
                     "port": validated.get("port", port),
-                    "clientId": validated.get("clientId", client_id),
+                    "clientId": validated.get("clientId"),
                 },
                 account_id=validated.get("accountId"),
                 synced_at=validated.get("syncedAt"),
@@ -719,7 +723,7 @@ class PortfolioService:
         return IbkrConnectionSettings(
             host=str(settings.get("host", "127.0.0.1")),
             port=self._safe_int(settings.get("port"), 7497),
-            client_id=self._safe_int(settings.get("clientId"), 1),
+            client_id=None,
             account_id=str(connection.get("accountId", "")).strip() or None,
         )
 

@@ -171,12 +171,11 @@ const SIGNAL_LENS_OPTIONS: SignalLensOption[] = [
 const BROKER_OPTIONS: BrokerOptionConfig[] = [
   { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
   { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
-  { id: 'binance', label: 'Binance', supported: true, description: 'API key + secret' },
   {
     id: 'mock',
     label: 'Paper Portfolio',
     supported: true,
-    description: 'Backend-stored editable positions',
+    description: 'Editable positions',
   },
 ];
 
@@ -748,28 +747,25 @@ function BrokerConnectionPanel({
     useState<PortfolioBrokerOption>(selectedBroker);
   const [host, setHost] = useState('127.0.0.1');
   const [port, setPort] = useState('7497');
-  const [clientId, setClientId] = useState('1');
   const [market, setMarket] = useState('US');
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
-  const [testnet, setTestnet] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const selectedOption = getBrokerOption(selectedBrokerState);
 
   useEffect(() => {
     void (async () => {
       const settings = initialConnection?.settings ?? {};
-      const brokerId = initialConnection?.id ?? selectedBroker;
+      const brokerId =
+        initialConnection?.id === 'ibkr' ||
+        initialConnection?.id === 'futu' ||
+        initialConnection?.id === 'mock'
+          ? initialConnection.id
+          : selectedBroker;
       setSelectedBrokerState(brokerId);
       setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
       setPort(
         String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)),
       );
-      setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
       setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
-      setApiKey('');
-      setApiSecret('');
-      setTestnet(Boolean(initialConnection?.testnet ?? settings.testnet ?? true));
       setError(initialConnection?.lastError ?? null);
     })();
   }, [initialConnection, selectedBroker]);
@@ -796,10 +792,8 @@ function BrokerConnectionPanel({
     try {
       const payload =
         selectedBrokerState === 'ibkr'
-          ? { broker: selectedBrokerState, host, port: Number(port), clientId: Number(clientId) }
-          : selectedBrokerState === 'futu'
-            ? { broker: selectedBrokerState, host, port: Number(port), market }
-            : { broker: selectedBrokerState, apiKey, apiSecret, testnet };
+          ? { broker: selectedBrokerState, host, port: Number(port) }
+          : { broker: selectedBrokerState, host, port: Number(port), market };
       const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -837,7 +831,7 @@ function BrokerConnectionPanel({
         </div>
       </div>
       <div className="flex-1 space-y-4 py-5">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {BROKER_OPTIONS.map((option) => (
             <button
               key={option.id}
@@ -859,7 +853,7 @@ function BrokerConnectionPanel({
         </div>
 
         {selectedBrokerState === 'ibkr' && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <div className="text-[10px] uppercase text-slate-400">Host</div>
               <input
@@ -875,15 +869,6 @@ function BrokerConnectionPanel({
                 type="text"
                 value={port}
                 onChange={(event) => setPort(event.target.value)}
-                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="text-[10px] uppercase text-slate-400">Client ID</div>
-              <input
-                type="text"
-                value={clientId}
-                onChange={(event) => setClientId(event.target.value)}
                 className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
               />
             </div>
@@ -919,37 +904,6 @@ function BrokerConnectionPanel({
                 className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
               />
             </div>
-          </div>
-        )}
-
-        {selectedBrokerState === 'binance' && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1">
-              <div className="text-[10px] uppercase text-slate-400">API Key</div>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-              />
-            </div>
-            <div className="col-span-2 space-y-1">
-              <div className="text-[10px] uppercase text-slate-400">API Secret</div>
-              <input
-                type="password"
-                value={apiSecret}
-                onChange={(event) => setApiSecret(event.target.value)}
-                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-              />
-            </div>
-            <label className="col-span-2 flex items-center gap-2 text-[11px] text-slate-500">
-              <input
-                type="checkbox"
-                checked={testnet}
-                onChange={(event) => setTestnet(event.target.checked)}
-              />
-              Testnet
-            </label>
           </div>
         )}
 
