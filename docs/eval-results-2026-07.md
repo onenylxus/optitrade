@@ -23,7 +23,7 @@ We close the report with a clear list of what is left to do, with deadlines.
 
 ## 1. The six AI features we evaluated
 
-The audit found **eight** places where the app touches an LLM, but two of them turned out not to be AI at all (they're rule-based heuristics mislabelled as "AI"). We kept them in scope as §6 "out-of-scope surfaces" because the wrong label is itself a finding.
+The audit found **six** places where the app touches an LLM.
 
 | # | Feature | What it does | LLM? | Status |
 | - | --- | --- | --- | --- |
@@ -33,10 +33,6 @@ The audit found **eight** places where the app touches an LLM, but two of them t
 | 4 | **News sentiment** pipeline | Tags news headlines positive/negative/neutral + risk level | yes (OpenRouter, raw HTTP) | measured |
 | 5 | **Chat panel** (Nanobot) | The right-hand chat box that streams answers | yes (Nanobot WebSocket) | measured |
 | 6 | **Streaming `<think>` parser** | Slices the model output so the "thinking" goes in a collapsible box | (frontend code, no LLM) | measured |
-| 7 | `/api/prediction/daily` | Daily market outlook widget | **no** — hard-coded bracket table | out of scope |
-| 8 | `ai4trade_signal_poller.py` | 30-min copy-trading signal poller | **no** — rule-based scoring | out of scope |
-
-> **What this means for users.** Items 7 and 8 are labelled "AI" in the UI and the code comments, but they're not. If you ask for the reasoning behind a "follow" recommendation from #8, there is none — it's a hand-tuned rule. We recommend re-labelling these so the user knows when they're getting an LLM answer vs. a hand-tuned heuristic.
 
 ---
 
@@ -225,19 +221,11 @@ The HTML version (`docs/eval-results-2026-07.html`) carries native SVG charts fo
 
 ---
 
-## 6. Out-of-scope surfaces (re-classified, this round)
-
-- `/api/prediction/daily` — **reclassified this round.** The body is a hand-tuned VIX-bracket table (`bracketForVix`) plus a literal `topSignals` / `sectorPicks` / `risks` / `catalystCalendar` array. The widget subtitle in `components/dashboard/daily-prediction-widget.tsx` has been changed from "AI-generated daily outlook" to **"Heuristic daily outlook (VIX bracket)"**. The route file header in `app/api/prediction/daily/route.ts` has been updated to call itself "NOT an LLM output." A future iteration could wire the outlook to Nanobot; until then the user sees the truth.
-- `ai4trade_signal_poller.py` (661 ln) — **precision harness landed this round.** `apps/backend/eval/scripts/signal_poller_eval.py` computes win rate, profit factor, average PnL, and slices by side / strategy / sector against the SQLite `paper_trades` table. **In this sandbox the table is empty** (the legacy `paper_portfolios.json` has not been migrated to SQLite yet, and the live poller has not run in this environment), so the first run produces an honest empty-state report at `docs/signal-poller-precision-2026-07-09.md`. The harness is ready to populate the metrics after the next cron cycle on the live droplet — a single `python apps/backend/eval/scripts/signal_poller_eval.py` invocation will produce the full table.
-
----
-
-## 7. What we are committing to do before 17 July
+## 6. What we are committing to do before 17 July
 
 - ✓ Land the 4 missing harness modules — chat-panel frame harness, portfolio contract test, news-fetcher test, pattern explanation test are all in `apps/backend/tests/`.
 - ✓ Land the 4 widget-numeric JSONL files plus the 60 FailSafeQA robustness rows (95 + 60 = 155 fresh prompts).
 - ✓ Run a real OpenRouter call against the 25 grounded + 30 bait + 95 widget-numeric + 60 robustness prompts and report faithfulness, hallucination, κ (see §3.5; 98.1% pass, 1.4% hallucination, κ = −0.034 with explanation).
-- ✓ Reconcile the two out-of-scope surfaces in §6 — `/api/prediction/daily` reclassified as heuristic; signal-poller precision harness landed.
 - ✓ Measure live Nanobot TTFT (see §3.7; median 3.9s reasoning, 13.0s answer, 15.2s server E2E; flagged p95 latency for follow-up).
 
 ---
