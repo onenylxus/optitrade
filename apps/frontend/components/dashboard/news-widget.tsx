@@ -84,7 +84,7 @@ export const NewsWidget: React.FC<NewsWidgetProps> = ({
   }, [portfolio]);
 
   const portfolioSymbols = useMemo(
-    () => portfolioPositions.map((pos) => String(pos.symbol || '').toUpperCase()).filter(Boolean),
+    () => portfolioPositions.map((pos) => String(pos.symbol || '').trim().toUpperCase()).filter(Boolean),
     [portfolioPositions],
   );
 
@@ -176,32 +176,30 @@ useEffect(() => {
       console.log("⚠️ [Note] The current Portfolio is empty; the front-end will switch to a pre-emptive mechanism.");
     }
   }, [portfolioSymbols]);
-const matchesPortfolio = useCallback(
-  (item: NewsItem): boolean => {
-    if (portfolioSymbols.length === 0) {
-      return true;
-    }
 
-  if (item.related_symbols && Array.isArray(item.related_symbols)) {
+const matchesPortfolio = useCallback(
+    (item: NewsItem): boolean => {
+      if (portfolioSymbols.length === 0) {
+        return true;
+      }
+
+      if (item.related_symbols && Array.isArray(item.related_symbols)) {
         const hasMatch = item.related_symbols.some((sym: string) =>
           portfolioSymbols.includes(sym.toUpperCase())
         );
         if (hasMatch) return true;
       }
 
-    const itemHeadline = item.headline || "";
-    const itemSummary = item.summary || "";
-    const text = `${itemHeadline} ${itemSummary}`.toLowerCase();
+      const itemHeadline = item.headline || "";
+      const itemSummary = item.summary || "";
+      const text = `${itemHeadline} ${itemSummary}`.toLowerCase();
 
-    return portfolioSymbols.some((symbol) =>{
-      // text.includes(symbol.toLowerCase())
-        const lowerSymbol = symbol.toLowerCase();
-        const regex = new RegExp(`\\b${lowerSymbol}\\b`, 'i');
-        return regex.test(text);
+      return portfolioSymbols.some((symbol) => {
+        return text.includes(symbol.toLowerCase());
       });
-  },
-  [portfolioSymbols],
-);
+    },
+    [portfolioSymbols],
+  );
   const getFilteredNews = useCallback(() => {
     let filtered = [...newsData];
     if (currentFilter === 'watchlist') {
