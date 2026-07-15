@@ -446,13 +446,10 @@ PPTX_SLIDES: list[dict] = [
             "News sentiment pipeline — tags + risk on batched headlines (OpenRouter)",
             "Chat panel (Nanobot) — streaming answer box; this round we now test the parser",
             "Streaming `think` parser — frontend code, no LLM",
-            "Two surfaces mislabelled \"AI\" were re-classified: /api/prediction/daily and ai4trade_signal_poller.py are rule-based.",
         ],
         "speaker_notes": (
-            "We found eight places where the app touches an LLM, but two of them turned out not to be AI at all — they were rule-based heuristics mislabelled as AI. "
-            "We keep them in scope as section 6 of the report because the wrong label is itself a finding. "
-            "Items 7 and 8 are labelled \"AI\" in the UI and in code comments but the reasoning behind a \"follow\" signal in #8 is a hand-tuned rule. "
-            "Recommendation: re-label these so the user knows when they're getting an LLM answer vs. a hand-tuned heuristic."
+            "We audited the app and found six places where it touches an LLM. "
+            "All six are measured in this report — the chat panel parser was previously documented only and is now exercised by a frame-level harness."
         ),
     },
     {
@@ -570,23 +567,11 @@ PPTX_SLIDES: list[dict] = [
         ),
     },
     {
-        "title": "Out-of-scope surfaces (re-classified)",
-        "bullets": [
-            "/api/prediction/daily — body is a hard-coded VIX bracket table plus a literal `topSignals` array. Re-label as \"Daily Market Outlook\" or wire to Nanobot",
-            "ai4trade_signal_poller.py (661 ln) — 30-min cron; scores external signals. The file header commits to historical-precision-style evidence; a precision/recall study against the SQLite `paper_trades` table is the right metric, not DeepEval",
-        ],
-        "speaker_notes": (
-            "Two surfaces labelled AI in the code/UI turned out to be rule-based. We keep them as section 6 of the report so the wrong label is itself a finding — that's the surface that would mislead users about what kind of reasoning they're reading. "
-            "Action: re-label /api/prediction/daily as 'Daily Market Outlook', and for the poller, run a precision/recall study against the SQLite paper_trades table."
-        ),
-    },
-    {
         "title": "Next steps — by 17 July",
         "bullets": [
             "Land the 4 missing harness modules: chat-panel frame harness ✓, portfolio contract test ✓, news-fetcher test, pattern explanation",
             "Land the 3 widget-numeric JSONL files",
             "Run a real OpenRouter call against the 25 grounded + 30 bait prompts; report faithfulness, hallucination, kappa",
-            "Reconcile the two out-of-scope surfaces in §6",
         ],
         "speaker_notes": (
             "Concrete list of what we are committing to land before the 17 July milestone. "

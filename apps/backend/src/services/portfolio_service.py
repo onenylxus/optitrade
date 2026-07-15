@@ -17,6 +17,7 @@ from src.ibkr_client import (
 )
 from src.api.schemas.stock_chart import ChartInterval, ChartRange
 from src.services.stock_chart_service import StockChartService, resolve_stock_chart_params
+from src.api.routes.price_routes import _fetch_yfinance
 
 
 @dataclass(frozen=True)
@@ -100,22 +101,17 @@ class PortfolioService:
 
     def build_portfolio_snapshot(self) -> dict[str, Any]:
         connection = self._read_broker_connection()
+        if connection["id"] == "mock":
+            return self._editable_snapshot(connection)
+
         if connection["id"] == "ibkr" and connection["status"] == "connected":
             try:
                 return portfolio_module.fetch_ibkr_portfolio_snapshot(
                     self._ibkr_settings(connection)
                 )
-            except (RuntimeError, TypeError) as error:
+            except Exception as error:
                 self._write_broker_connection(
-                    self._broker_connection(
-                        id="ibkr",
-                        status="configured",
-                        broker="IBKR",
-                        settings=dict(connection["settings"]),
-                        account_id=connection.get("accountId"),
-                        synced_at=connection.get("syncedAt"),
-                        last_error=str(error),
-                    )
+                    self._live_broker_fallback_connection(connection, error)
                 )
                 connection = self._read_broker_connection()
         elif connection["id"] == "futu" and connection["status"] == "connected":
@@ -124,18 +120,11 @@ class PortfolioService:
                     host=str(connection["settings"].get("host", "127.0.0.1")),
                     port=self._safe_int(connection["settings"].get("port"), 11111),
                     market=str(connection["settings"].get("market", "US")),
+                    trd_env=str(connection["settings"].get("trdEnv", "SIMULATE")),
                 )
-            except (RuntimeError, TypeError) as error:
+            except Exception as error:
                 self._write_broker_connection(
-                    self._broker_connection(
-                        id="futu",
-                        status="configured",
-                        broker="Futu",
-                        settings=dict(connection["settings"]),
-                        account_id=connection.get("accountId"),
-                        synced_at=connection.get("syncedAt"),
-                        last_error=str(error),
-                    )
+                    self._live_broker_fallback_connection(connection, error)
                 )
                 connection = self._read_broker_connection()
         elif connection["id"] == "binance" and connection["status"] == "connected":
@@ -147,17 +136,9 @@ class PortfolioService:
                         connection["settings"].get("testnet", True)
                     ),
                 )
-            except (RuntimeError, TypeError) as error:
+            except Exception as error:
                 self._write_broker_connection(
-                    self._broker_connection(
-                        id="binance",
-                        status="configured",
-                        broker="Binance",
-                        settings=dict(connection["settings"]),
-                        account_id=connection.get("accountId"),
-                        synced_at=connection.get("syncedAt"),
-                        last_error=str(error),
-                    )
+                    self._live_broker_fallback_connection(connection, error)
                 )
                 connection = self._read_broker_connection()
 
@@ -179,7 +160,11 @@ class PortfolioService:
         if broker == "ibkr":
             host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
             port = int(payload.get("port", 7497))
-            client_id = int(payload.get("clientId", 1))
+            client_id = (
+                int(payload["clientId"])
+                if payload.get("clientId") is not None
+                else None
+            )
             validated = portfolio_module.validate_ibkr_connection(
                 IbkrConnectionSettings(host=host, port=port, client_id=client_id)
             )
@@ -190,7 +175,7 @@ class PortfolioService:
                 settings={
                     "host": validated.get("host", host),
                     "port": validated.get("port", port),
-                    "clientId": validated.get("clientId", client_id),
+                    "clientId": validated.get("clientId"),
                 },
                 account_id=validated.get("accountId"),
                 synced_at=validated.get("syncedAt"),
@@ -203,13 +188,23 @@ class PortfolioService:
             host = str(payload.get("host", "127.0.0.1")).strip() or "127.0.0.1"
             port = int(payload.get("port", 11111))
             market = str(payload.get("market", "US")).strip().upper() or "US"
+            trd_env = (
+                str(payload.get("trdEnv", "SIMULATE")).strip().upper() or "SIMULATE"
+            )
             portfolio_module._validate_futu_socket(host, port)
-            validated = portfolio_module.validate_futu_connection(host, port, market)
+            validated = portfolio_module.validate_futu_connection(
+                host, port, market, trd_env
+            )
             connection = self._broker_connection(
                 id="futu",
                 status=str(validated.get("status", "connected")),
                 broker="Futu",
-                settings={"host": host, "port": port, "market": market},
+                settings={
+                    "host": host,
+                    "port": port,
+                    "market": market,
+                    "trdEnv": trd_env,
+                },
                 account_id=validated.get("accountId"),
                 synced_at=validated.get("syncedAt"),
             )
@@ -338,9 +333,7 @@ class PortfolioService:
         return {
             "asOf": datetime.now(UTC).isoformat(),
             "baseCurrency": "USD",
-            "source": "backend"
-            if connection["status"] == "connected" and connection["id"] != "mock"
-            else "paper",
+            "source": "paper",
             "broker": self._broker_connection_payload_dict(connection),
             "positions": [self._position_payload(position) for position in positions],
             "summary": {
@@ -389,6 +382,21 @@ class PortfolioService:
             "lastError": last_error,
         }
 
+    def _live_broker_fallback_connection(
+        self, connection: dict[str, Any], error: Exception
+    ) -> dict[str, Any]:
+        """Persist an unreachable live broker as disconnected so the app
+        immediately falls back to the editable paper portfolio."""
+        return self._broker_connection(
+            id=str(connection.get("id") or "mock"),
+            status="disconnected",
+            broker=str(connection.get("broker") or connection.get("name") or "Mock Data"),
+            settings=dict(connection.get("settings") or {}),
+            account_id=connection.get("accountId"),
+            synced_at=connection.get("syncedAt"),
+            last_error=str(error),
+        )
+
     def _broker_connection_payload(self, connection: dict[str, Any]) -> dict[str, Any]:
         payload = {
             "id": connection["id"],
@@ -400,7 +408,7 @@ class PortfolioService:
             "syncedAt": connection.get("syncedAt"),
             "lastError": connection.get("lastError"),
         }
-        for key in ("host", "port", "clientId", "market", "testnet"):
+        for key in ("host", "port", "clientId", "market", "trdEnv", "testnet"):
             if key in connection["settings"]:
                 payload[key] = connection["settings"][key]
         if connection["id"] == "binance":
@@ -555,7 +563,7 @@ class PortfolioService:
         ttl_seconds = PAPER_PRICE_CACHE_TTL_SECONDS
         try:
             price = self._fetch_latest_close(symbol)
-        except RuntimeError:
+        except Exception:
             price = None
             ttl_seconds = PAPER_PRICE_ERROR_TTL_SECONDS
 
@@ -563,6 +571,10 @@ class PortfolioService:
         return price
 
     def _fetch_latest_close(self, symbol: str) -> float | None:
+        quote = _fetch_yfinance(symbol)
+        if quote is not None and quote.price > 0:
+            return float(quote.price)
+
         if self._chart_service is None:
             return None
 
@@ -713,7 +725,8 @@ class PortfolioService:
         return IbkrConnectionSettings(
             host=str(settings.get("host", "127.0.0.1")),
             port=self._safe_int(settings.get("port"), 7497),
-            client_id=self._safe_int(settings.get("clientId"), 1),
+            client_id=None,
+            account_id=str(connection.get("accountId", "")).strip() or None,
         )
 
     def _normalize_positions_payload(self, raw_positions: Any) -> tuple[Position, ...]:

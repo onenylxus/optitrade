@@ -226,6 +226,7 @@ class PortfolioTests(unittest.TestCase):
                     "host": "127.0.0.1",
                     "port": 11111,
                     "market": "HK",
+                    "trdEnv": "SIMULATE",
                     "syncedAt": "2026-05-10T00:00:00+00:00",
                 },
             ) as validate_futu_connection,
@@ -237,21 +238,26 @@ class PortfolioTests(unittest.TestCase):
                     "host": "127.0.0.1",
                     "port": 11111,
                     "market": "HK",
+                    "trdEnv": "SIMULATE",
                 },
             )
             payload = response.json()
 
         self.assertEqual(response.status_code, 200)
         validate_futu_socket.assert_called_once_with("127.0.0.1", 11111)
-        validate_futu_connection.assert_called_once_with("127.0.0.1", 11111, "HK")
+        validate_futu_connection.assert_called_once_with(
+            "127.0.0.1", 11111, "HK", "SIMULATE"
+        )
         self.assertEqual(payload["id"], "futu")
         self.assertEqual(payload["status"], "connected")
         self.assertEqual(payload["host"], "127.0.0.1")
         self.assertEqual(payload["market"], "HK")
+        self.assertEqual(payload["trdEnv"], "SIMULATE")
 
         status_payload = self.client.get("/api/portfolio/connection").json()
         self.assertEqual(status_payload["id"], "futu")
         self.assertEqual(status_payload["settings"]["market"], "HK")
+        self.assertEqual(status_payload["settings"]["trdEnv"], "SIMULATE")
 
     def test_futu_connection_rejects_unreachable_host(self):
         with patch(

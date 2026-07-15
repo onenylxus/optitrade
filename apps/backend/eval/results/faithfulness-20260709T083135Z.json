@@ -1,0 +1,30 @@
+[
+  {
+    "id": "grounded-A01",
+    "surface": "chatbot",
+    "prompt": "What's my portfolio's biggest concentration risk right now?",
+    "variant": null,
+    "reference": "Technology exposure dominates the book — AAPL+MSFT+NVDA together are the largest single-sector position. The natural risk-hedge framing would be: if reducing concentration, Energy (XOM) and Financials (JPM) are the most under-weighted relative to a balanced sector mix. Numbers above are illustrative; check the pinned Portfolio widget for live values. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA",
+      "portfolio:JPM",
+      "portfolio:XOM"
+    ],
+    "context_card_count": 5,
+    "generator_answer": "Your portfolio's biggest concentration risk is in the Technology sector, which includes AAPL, MSFT, and NVDA. The combined market value of these positions is $74,026.50, representing approximately 72.6% of your total portfolio value of $101,963.00. Among individual holdings, NVDA has the highest current market value at $27,168.00, followed closely by AAPL at $27,900.00.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies Technology as the biggest concentration risk, accurately calculates combined value and percentage from pinned context, and includes the required disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies Technology as the biggest concentration risk, accurately calculates combined value and percentage from pinned context, and includes the required disclaimer.\"}"
+    },
+    "elapsed_s": 6.026242499996442
+  }
+]

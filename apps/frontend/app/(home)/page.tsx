@@ -13,9 +13,12 @@ import { loadBackendAuthProfile } from '@/lib/api/auth';
 import type { AuthenticatedUserResponse } from '@/lib/api/types';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { isFirebaseConfigReady } from '@/lib/firebase/config';
+import type { WidgetType } from '@/app/(home)/fixtures';
 
 export default function HomePage() {
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDraggingWidget, setIsDraggingWidget] = useState(false);
+  const [draggedSidebarWidgetType, setDraggedSidebarWidgetType] = useState<WidgetType | null>(null);
   const [firebaseAuth] = useState<ReturnType<typeof getFirebaseAuth> | null>(() => {
     if (!isFirebaseConfigReady()) {
       return null;
@@ -77,9 +80,23 @@ export default function HomePage() {
               onSignOut={handleSignOut}
             />
             <main className="relative flex-1 overflow-hidden">
-              <WidgetCanvas isEditMode={isEditMode} />
+              <WidgetCanvas
+                isEditMode={isEditMode}
+                externalDraggedWidgetType={draggedSidebarWidgetType}
+              />
 
-              <EditWidgetDrawer open={isEditMode} />
+              <EditWidgetDrawer
+                open={isEditMode}
+                isDraggingWidget={isDraggingWidget}
+                onWidgetDragStart={(widgetType) => {
+                  setDraggedSidebarWidgetType(widgetType);
+                  setIsDraggingWidget(true);
+                }}
+                onWidgetDragEnd={() => {
+                  setDraggedSidebarWidgetType(null);
+                  setIsDraggingWidget(false);
+                }}
+              />
             </main>
 
             {!isEditMode && <FloatingChat />}

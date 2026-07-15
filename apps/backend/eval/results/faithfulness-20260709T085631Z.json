@@ -1,0 +1,578 @@
+[
+  {
+    "id": "cpn-01",
+    "surface": "chart_pattern",
+    "prompt": "What's the breakout level on NVDA's Ascending Triangle?",
+    "variant": null,
+    "reference": "Pinned pattern on NVDA: Ascending Triangle (direction=bullish, status=forming, confidence=0.78. Breakout level: $920.00. Invalidation level: $860.00. Rationale: Higher lows since Apr; Resistance ~920. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The breakout level on NVDA's Ascending Triangle is $920.0. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly states breakout level $920.0 from pinned context, adds appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly states breakout level $920.0 from pinned context, adds appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 4.379745332989842
+  },
+  {
+    "id": "cpn-02",
+    "surface": "chart_pattern",
+    "prompt": "What's the invalidation level on TSLA's Descending Channel?",
+    "variant": null,
+    "reference": "Pinned pattern on TSLA: Descending Channel (direction=bearish, status=confirmed, confidence=0.82. Breakout level: $192.00. Invalidation level: $170.00. Rationale: Lower highs; Lower lows. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:TSLA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The invalidation level on TSLA's Descending Channel is $170.00. This level marks the point below which the pattern would be considered invalidated. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states the invalidation level as $170.00 per the pinned context, with appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states the invalidation level as $170.00 per the pinned context, with appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 4.360380750003969
+  },
+  {
+    "id": "cpn-03",
+    "surface": "chart_pattern",
+    "prompt": "Is the pattern on JPM confirmed or forming?",
+    "variant": null,
+    "reference": "Pinned pattern on JPM: Cup with Handle (direction=bullish, status=confirmed, confidence=0.74. Breakout level: $202.00. Invalidation level: $188.00. Rationale: Rounded base; Handle pullback to 192. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The Cup with Handle pattern on JPM is confirmed, with a breakout level at 202.0 and a confidence of 74%. The pattern is considered bullish, supported by a rounded base and handle pullback to 192.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer matches pinned context: confirmed, bullish, breakout 202, confidence 0.74, rounded base, handle pullback 192.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer matches pinned context: confirmed, bullish, breakout 202, confidence 0.74, rounded base, handle pullback 192.\"}"
+    },
+    "elapsed_s": 9.072408209001878
+  },
+  {
+    "id": "cpn-04",
+    "surface": "chart_pattern",
+    "prompt": "What's the confidence score on the PYPL pattern?",
+    "variant": null,
+    "reference": "Pinned pattern on PYPL: Head and Shoulders (direction=bearish, status=confirmed, confidence=0.81. Breakout level: not yet triggered. Invalidation level: $72.00. Rationale: Head at 78; Neckline break at 68. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:PYPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The confidence score on the PYPL Head and Shoulders pattern is 0.81.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly states confidence score 0.81 from pinned context; adds appropriate disclaimer; no hallucinations.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly states confidence score 0.81 from pinned context; adds appropriate disclaimer; no hallucinations.\"}"
+    },
+    "elapsed_s": 2.6285081659734715
+  },
+  {
+    "id": "cpn-05",
+    "surface": "chart_pattern",
+    "prompt": "Is AAPL's pattern bullish or bearish?",
+    "variant": null,
+    "reference": "Pinned pattern on AAPL: Symmetrical Triangle (direction=neutral, status=forming, confidence=0.62. Breakout level: $240.00. Invalidation level: $220.00. Rationale: Converging highs and lows. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "AAPL's pattern is currently neutral, as a symmetrical triangle is forming with a confidence of 0.62. This pattern does not indicate a bullish or bearish bias until a confirmed breakout above $240.0 or invalidation below $220.0. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies the neutral symmetrical triangle pattern with accurate details from pinned context, matching the reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly identifies the neutral symmetrical triangle pattern with accurate details from pinned context, matching the reference.\"}"
+    },
+    "elapsed_s": 3.36929683299968
+  },
+  {
+    "id": "cpn-06",
+    "surface": "chart_pattern",
+    "prompt": "List the rationale for MSFT's pattern detection.",
+    "variant": null,
+    "reference": "Pinned pattern on MSFT: Ascending Triangle (direction=bullish, status=forming, confidence=0.71. Breakout level: $430.00. Invalidation level: $410.00. Rationale: Flat resistance at 430; Higher lows. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:MSFT"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The rationale for MSFT's ascending triangle pattern detection is: flat resistance at 430 and higher lows. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate accurately reports the rationale from the pinned context and includes the educational disclaimer as expected.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate accurately reports the rationale from the pinned context and includes the educational disclaimer as expected.\"}"
+    },
+    "elapsed_s": 24.14329683300457
+  },
+  {
+    "id": "cpn-07",
+    "surface": "chart_pattern",
+    "prompt": "What's the direction of JNJ's identified pattern?",
+    "variant": null,
+    "reference": "Pinned pattern on JNJ: Falling Wedge (direction=bullish, status=forming, confidence=0.65. Breakout level: $162.00. Invalidation level: $148.00. Rationale: Converging trendlines; Slope flattening. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:JNJ"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The identified pattern for JNJ is a \"Falling Wedge,\" which has a bullish direction and is currently forming. The breakout level is at 162.0, with an invalidation level at 148.0.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies Falling Wedge with bullish direction, forming status, and matching breakout/invalidation levels from context.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly identifies Falling Wedge with bullish direction, forming status, and matching breakout/invalidation levels from context.\"\n}"
+    },
+    "elapsed_s": 4.29474250000203
+  },
+  {
+    "id": "cpn-08",
+    "surface": "chart_pattern",
+    "prompt": "Where is the breakout level for DIS's Falling Wedge?",
+    "variant": null,
+    "reference": "Pinned pattern on DIS: Falling Wedge (direction=bullish, status=forming, confidence=0.66. Breakout level: $100.00. Invalidation level: $88.00. Rationale: Converging trendlines. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:DIS"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The breakout level for DIS's Falling Wedge is $100.00.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states breakout level of $100.00 matching the pinned context, with appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states breakout level of $100.00 matching the pinned context, with appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 3.183108875004109
+  },
+  {
+    "id": "cpn-09",
+    "surface": "chart_pattern",
+    "prompt": "Summarize the XOM pattern detection.",
+    "variant": null,
+    "reference": "Pinned pattern on XOM: Double Bottom (direction=bullish, status=confirmed, confidence=0.79. Breakout level: $118.00. Invalidation level: $105.00. Rationale: Two equal lows near 105; Neckline at 118. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:XOM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "XOM shows a confirmed bullish Double Bottom pattern on the 1d timeframe over the last 3 months, with a confidence level of 79%. The pattern has two equal lows near $105 and a breakout level at $118, with an invalidation level at $105. This suggests potential upward momentum if price holds above the breakout.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Accurately summarizes all key details from the pinned context card with no contradictions or fabrications.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Accurately summarizes all key details from the pinned context card with no contradictions or fabrications.\"}"
+    },
+    "elapsed_s": 4.733285708003677
+  },
+  {
+    "id": "cpn-10",
+    "surface": "chart_pattern",
+    "prompt": "Is the NVDA pattern forming or confirmed?",
+    "variant": null,
+    "reference": "Pinned pattern on NVDA: Symmetrical Triangle (direction=neutral, status=forming, confidence=0.58. Breakout level: $950.00. Invalidation level: $870.00. Rationale: Converging highs and lows. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The NVDA pattern is currently forming a symmetrical triangle with a confidence level of 0.58, but it is not yet confirmed. The breakout level is at $950.00, and the invalidation level is at $870.00.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context details and matches the gold reference.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Answer accurately reflects all pinned context details and matches the gold reference.\"}"
+    },
+    "elapsed_s": 4.37409050000133
+  },
+  {
+    "id": "cpn-11",
+    "surface": "chart_pattern",
+    "prompt": "What's the highest-confidence pattern currently on TSLA?",
+    "variant": null,
+    "reference": "Pinned pattern on TSLA: Head and Shoulders (direction=bearish, status=confirmed, confidence=0.85. Breakout level: not yet triggered. Invalidation level: $190.00. Rationale: Head at 195; Neckline break at 180. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:TSLA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The highest-confidence pattern currently on TSLA is the \"Head and Shoulders,\" with a confidence level of 0.85. It is a bearish, confirmed pattern with an invalidation level at 190.0.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies the Head and Shoulders pattern with confidence 0.85, bearish direction, confirmed status, and invalidation level 190.0, matching pinned context and reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly identifies the Head and Shoulders pattern with confidence 0.85, bearish direction, confirmed status, and invalidation level 190.0, matching pinned context and reference.\"}"
+    },
+    "elapsed_s": 3.5421527920116205
+  },
+  {
+    "id": "cpn-12",
+    "surface": "chart_pattern",
+    "prompt": "What's the breakout level on JPM's Cup with Handle?",
+    "variant": null,
+    "reference": "Pinned pattern on JPM: Cup with Handle (direction=bullish, status=confirmed, confidence=0.74. Breakout level: $202.00. Invalidation level: $188.00. Rationale: Rounded base. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The breakout level on JPM's Cup with Handle pattern is $202.00.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states breakout level of $202.00 from pinned context and includes appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states breakout level of $202.00 from pinned context and includes appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 4.466541500005405
+  },
+  {
+    "id": "cpn-13",
+    "surface": "chart_pattern",
+    "prompt": "What PYPL pattern signals a confirmed bearish reversal?",
+    "variant": null,
+    "reference": "Pinned pattern on PYPL: Head and Shoulders (direction=bearish, status=confirmed, confidence=0.81. Breakout level: not yet triggered. Invalidation level: $72.00. Rationale: Neckline break. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:PYPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The confirmed bearish reversal pattern for PYPL is a Head and Shoulders formation, with a neckline break as the rationale for confirmation. The pattern has a confidence level of 81% and an invalidation level at 72.0.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects the pinned context: Head and Shoulders, bearish, confirmed, 0.81 confidence, invalidation at 72.0, neckline break rationale, and includes disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects the pinned context: Head and Shoulders, bearish, confirmed, 0.81 confidence, invalidation at 72.0, neckline break rationale, and includes disclaimer.\"}"
+    },
+    "elapsed_s": 5.097565250005573
+  },
+  {
+    "id": "cpn-14",
+    "surface": "chart_pattern",
+    "prompt": "Is AAPL's pattern invalidated yet?",
+    "variant": null,
+    "reference": "Pinned pattern on AAPL: Ascending Triangle (direction=bullish, status=forming, confidence=0.68. Breakout level: $240.00. Invalidation level: $224.00. Rationale: Higher lows. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "AAPL's ascending triangle pattern is still forming and has not been invalidated yet. The pattern remains active as long as the price stays above the invalidation level of 224.0. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pattern status as forming with invalidation level 224.0, consistent with pinned context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pattern status as forming with invalidation level 224.0, consistent with pinned context.\"}"
+    },
+    "elapsed_s": 6.442401417007204
+  },
+  {
+    "id": "cpn-15",
+    "surface": "chart_pattern",
+    "prompt": "Tell me about the MSFT Ascending Triangle.",
+    "variant": null,
+    "reference": "Pinned pattern on MSFT: Ascending Triangle (direction=bullish, status=forming, confidence=0.71. Breakout level: $430.00. Invalidation level: $410.00. Rationale: Flat resistance; Higher lows. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:MSFT"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The MSFT Ascending Triangle is a bullish pattern currently forming on the 1-day chart over the past 3 months. It has a confidence level of 71%, with a breakout level at 430.0 and an invalidation level at 410.0. The pattern is characterized by a flat resistance and higher lows. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context details and matches the gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context details and matches the gold reference.\"}"
+    },
+    "elapsed_s": 4.805303000001004
+  },
+  {
+    "id": "cpn-16",
+    "surface": "chart_pattern",
+    "prompt": "What does JNJ's Detected Pattern card say?",
+    "variant": null,
+    "reference": "Pinned pattern on JNJ: Double Bottom (direction=bullish, status=forming, confidence=0.55. Breakout level: $162.00. Invalidation level: $148.00. Rationale: Approaching neckline. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:JNJ"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "JNJ's Detected Pattern card shows a \"Double Bottom\" pattern forming on the 1d chart over the past 3 months. The pattern is bullish with a confidence of 0.55, a breakout level at 162.0, and an invalidation level at 148.0. It is currently approaching the neckline.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all details from pinned context and matches gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all details from pinned context and matches gold reference.\"}"
+    },
+    "elapsed_s": 6.078100417013047
+  },
+  {
+    "id": "cpn-17",
+    "surface": "chart_pattern",
+    "prompt": "Where is DIS's chart pattern invalidated?",
+    "variant": null,
+    "reference": "Pinned pattern on DIS: Falling Wedge (direction=bullish, status=forming, confidence=0.66. Breakout level: $100.00. Invalidation level: $88.00. Rationale: Converging trendlines. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:DIS"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "DIS's chart pattern is invalidated below 88.0, as this is the invalidation level for the forming falling wedge pattern. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies invalidation level at 88.0 from pinned context, includes educational disclaimer matching reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies invalidation level at 88.0 from pinned context, includes educational disclaimer matching reference.\"}"
+    },
+    "elapsed_s": 3.2638547910028137
+  },
+  {
+    "id": "cpn-18",
+    "surface": "chart_pattern",
+    "prompt": "What's the direction on XOM's pattern card?",
+    "variant": null,
+    "reference": "Pinned pattern on XOM: Cup with Handle (direction=bullish, status=confirmed, confidence=0.77. Breakout level: $118.00. Invalidation level: $108.00. Rationale: Rounded base. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:XOM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The direction on XOM's pattern card is bullish, as the \"Cup with Handle\" pattern is confirmed with a confidence of 0.77. The breakout level is at 118.0, and the invalidation level is at 108.0. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all details from the pinned context card and matches the gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all details from the pinned context card and matches the gold reference.\"}"
+    },
+    "elapsed_s": 4.877377500000875
+  },
+  {
+    "id": "cpn-19",
+    "surface": "chart_pattern",
+    "prompt": "What's the rationale on NVDA's pattern?",
+    "variant": null,
+    "reference": "Pinned pattern on NVDA: Double Bottom (direction=bullish, status=confirmed, confidence=0.83. Breakout level: $950.00. Invalidation level: $880.00. Rationale: Two equal lows near 880; Neckline at 950. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "NVDA's pattern is a confirmed bullish double bottom with 83% confidence. The two equal lows near 880 and a neckline breakout level at 950 support the upward momentum. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context: bullish double bottom, 83% confidence, levels 880/950, and disclaimer.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer accurately reflects pinned context: bullish double bottom, 83% confidence, levels 880/950, and disclaimer.\"\n}"
+    },
+    "elapsed_s": 5.3663685000210535
+  },
+  {
+    "id": "cpn-20",
+    "surface": "chart_pattern",
+    "prompt": "What's the confidence score for the TSLA pattern?",
+    "variant": null,
+    "reference": "Pinned pattern on TSLA: Descending Channel (direction=bearish, status=confirmed, confidence=0.82. Breakout level: $192.00. Invalidation level: $170.00. Rationale: Lower highs. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:TSLA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The confidence score for the TSLA descending channel pattern is 0.82.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly states confidence of 0.82 per pinned context, no fabricated info, includes disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly states confidence of 0.82 per pinned context, no fabricated info, includes disclaimer.\"}"
+    },
+    "elapsed_s": 5.940284457989037
+  },
+  {
+    "id": "cpn-21",
+    "surface": "chart_pattern",
+    "prompt": "Is the JPM pattern bullish, bearish, or neutral?",
+    "variant": null,
+    "reference": "Pinned pattern on JPM: Symmetrical Triangle (direction=neutral, status=forming, confidence=0.60. Breakout level: $210.00. Invalidation level: $188.00. Rationale: Converging. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The JPM pattern is neutral, as the pinned context identifies a forming symmetrical triangle with neutral direction and 60% confidence. The pattern suggests potential breakout above $210 or invalidation below $188, but no inherent bullish or bearish bias at this stage. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states neutral direction, confidence 0.60, breakout $210, invalidation $188, all matching pinned context.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly states neutral direction, confidence 0.60, breakout $210, invalidation $188, all matching pinned context.\"\n}"
+    },
+    "elapsed_s": 4.538843000016641
+  },
+  {
+    "id": "cpn-23",
+    "surface": "chart_pattern",
+    "prompt": "Has the AAPL pattern triggered yet?",
+    "variant": null,
+    "reference": "Pinned pattern on AAPL: Head and Shoulders (direction=bearish, status=forming, confidence=0.64. Breakout level: not yet triggered. Invalidation level: $220.00. Rationale: Approaching neckline. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The AAPL head and shoulders pattern has not yet triggered; it is currently in a \"forming\" status with no breakout level identified. The pattern remains valid as long as the price stays below the invalidation level of 220.0. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context: forming status, no breakout, invalidation at $220, includes disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context: forming status, no breakout, invalidation at $220, includes disclaimer.\"}"
+    },
+    "elapsed_s": 5.066840792016592
+  },
+  {
+    "id": "cpn-24",
+    "surface": "chart_pattern",
+    "prompt": "Describe the MSFT pattern's display name.",
+    "variant": null,
+    "reference": "Pinned pattern on MSFT: Falling Wedge (direction=bullish, status=forming, confidence=0.69. Breakout level: $432.00. Invalidation level: $415.00. Rationale: Converging trendlines. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:MSFT"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The MSFT pattern's display name is \"Falling Wedge\". Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies display name as 'Falling Wedge' consistent with pinned context; includes appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies display name as 'Falling Wedge' consistent with pinned context; includes appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 3.3762052499805577
+  },
+  {
+    "id": "cpn-25",
+    "surface": "chart_pattern",
+    "prompt": "Read out the JNJ pattern card.",
+    "variant": null,
+    "reference": "Pinned pattern on JNJ: Ascending Triangle (direction=bullish, status=forming, confidence=0.65. Breakout level: $160.00. Invalidation level: $150.00. Rationale: Flat resistance. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "chart_pattern:JNJ"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The JNJ pattern card shows an ascending triangle forming on the 1-day chart over the last 3 months. It has a bullish direction with a confidence level of 65%, a breakout level at $160.00, and an invalidation level at $150.00. The pattern is supported by a flat resistance. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all fields in the pinned context card and matches the gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all fields in the pinned context card and matches the gold reference.\"}"
+    },
+    "elapsed_s": 2.7595052090182435
+  }
+]

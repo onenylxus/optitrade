@@ -1,0 +1,635 @@
+[
+  {
+    "id": "port-01",
+    "surface": "portfolio",
+    "prompt": "What is the unrealized PnL of AAPL?",
+    "variant": null,
+    "reference": "Pinned `AAPL` position: quantity 100, avgPrice $150.00, currentPrice $232.50, marketValue $23250.00, costBasis $15000.00, unrealizedPnl $8250.00 (+55.00%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The unrealized PnL of AAPL is $8,250.00.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states unrealized PnL of $8,250.00, matching pinned context and gold reference, with appropriate disclaimer.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly states unrealized PnL of $8,250.00, matching pinned context and gold reference, with appropriate disclaimer.\"\n}"
+    },
+    "elapsed_s": 2.9285722089989576
+  },
+  {
+    "id": "port-02",
+    "surface": "portfolio",
+    "prompt": "What is the unrealized PnL percentage of MSFT?",
+    "variant": null,
+    "reference": "Pinned `MSFT` position: quantity 50, avgPrice $290.00, currentPrice $421.30, marketValue $21065.00, costBasis $14500.00, unrealizedPnl $6565.00 (+45.28%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:MSFT"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The unrealized PnL percentage of MSFT is 45.28%.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states 45.28% matching pinned context, with appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states 45.28% matching pinned context, with appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 2.4576898340019397
+  },
+  {
+    "id": "port-03",
+    "surface": "portfolio",
+    "prompt": "What is the current market value of my NVDA holding?",
+    "variant": null,
+    "reference": "Pinned `NVDA` position: quantity 25, avgPrice $420.00, currentPrice $905.60, marketValue $22640.00, costBasis $10500.00, unrealizedPnl $12140.00 (+115.62%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The current market value of your NVDA holding is $22,640.00.  \nThis is based on 25 shares at the current price of $905.60 per share.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states market value $22,640.00 based on 25 shares at $905.60, matching the pinned context.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly states market value $22,640.00 based on 25 shares at $905.60, matching the pinned context.\"\n}"
+    },
+    "elapsed_s": 4.019977459014626
+  },
+  {
+    "id": "port-04",
+    "surface": "portfolio",
+    "prompt": "What is the cost basis of my JPM position?",
+    "variant": null,
+    "reference": "Pinned `JPM` position: quantity 60, avgPrice $145.00, currentPrice $198.20, marketValue $11892.00, costBasis $8700.00, unrealizedPnl $3192.00 (+36.69%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The cost basis of your JPM position is $8,700.00.  \nThis is calculated as 60 shares × $145.0 average price per share.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states cost basis $8700, matches pinned context, and includes disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states cost basis $8700, matches pinned context, and includes disclaimer.\"}"
+    },
+    "elapsed_s": 3.4964553330210038
+  },
+  {
+    "id": "port-05",
+    "surface": "portfolio",
+    "prompt": "Which of my holdings has the largest market value?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\n  - NVDA: qty=25, avg=$420.00, cur=$905.60, PnL $12140.00 (+115.62%)\nTotal marketValue $66955.00, total costBasis $40000.00, total unrealizedPnl $26955.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "AAPL has the largest market value at $23,250.00, compared to MSFT at $21,065.00 and NVDA at $22,640.00.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies AAPL as largest market value with accurate figures from pinned context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies AAPL as largest market value with accurate figures from pinned context.\"}"
+    },
+    "elapsed_s": 41.632279082987225
+  },
+  {
+    "id": "port-06",
+    "surface": "portfolio",
+    "prompt": "Which of my holdings has the deepest drawdown vs. cost?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - TSLA: qty=30, avg=$250.00, cur=$178.40, PnL $-2148.00 (-28.64%)\n  - PYPL: qty=80, avg=$195.00, cur=$62.10, PnL $-10632.00 (-68.15%)\nTotal marketValue $33570.00, total costBasis $38100.00, total unrealizedPnl $-4530.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:TSLA",
+      "portfolio:PYPL"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "PYPL has the deepest drawdown versus cost with an unrealized PnL percentage of -68.15%, compared to TSLA at -28.64% and AAPL at +55.0%.  \nThis is based on the lowest unrealized PnL percent among the holdings.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies PYPL as deepest drawdown with accurate percentages matching pinned context.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly identifies PYPL as deepest drawdown with accurate percentages matching pinned context.\"\n}"
+    },
+    "elapsed_s": 4.100355875008972
+  },
+  {
+    "id": "port-07",
+    "surface": "portfolio",
+    "prompt": "What's my total sector exposure to Technology?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\n  - NVDA: qty=25, avg=$420.00, cur=$905.60, PnL $12140.00 (+115.62%)\n  - JPM: qty=60, avg=$145.00, cur=$198.20, PnL $3192.00 (+36.69%)\nTotal marketValue $78847.00, total costBasis $48700.00, total unrealizedPnl $30147.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA",
+      "portfolio:JPM"
+    ],
+    "context_card_count": 4,
+    "generator_answer": "Your total sector exposure to Technology is $66,955, calculated by summing the market values of AAPL ($23,250), MSFT ($21,065), and NVDA ($22,640), all of which are in the Technology sector.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly sums Technology sector market values (AAPL+MSFT+NVDA) to $66,955, consistent with pinned context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly sums Technology sector market values (AAPL+MSFT+NVDA) to $66,955, consistent with pinned context.\"}"
+    },
+    "elapsed_s": 4.6809494589979295
+  },
+  {
+    "id": "port-08",
+    "surface": "portfolio",
+    "prompt": "Which holding is my largest unrealized gain?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\n  - XOM: qty=200, avg=$95.00, cur=$110.80, PnL $3160.00 (+16.63%)\nTotal marketValue $66475.00, total costBasis $48500.00, total unrealizedPnl $17975.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:XOM"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "Your largest unrealized gain is in AAPL, with an unrealized PnL of $8,250.00.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies AAPL as largest unrealized gain at $8,250, matching pinned context and reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies AAPL as largest unrealized gain at $8,250, matching pinned context and reference.\"}"
+    },
+    "elapsed_s": 3.5080964580120053
+  },
+  {
+    "id": "port-09",
+    "surface": "portfolio",
+    "prompt": "Which holding is my largest unrealized loss?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - TSLA: qty=30, avg=$250.00, cur=$178.40, PnL $-2148.00 (-28.64%)\n  - PYPL: qty=80, avg=$195.00, cur=$62.10, PnL $-10632.00 (-68.15%)\nTotal marketValue $33570.00, total costBasis $38100.00, total unrealizedPnl $-4530.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:TSLA",
+      "portfolio:PYPL"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "Your largest unrealized loss is in PYPL, with an unrealized PnL of -$10,632.00.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies PYPL as the largest unrealized loss with accurate PnL figure from context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies PYPL as the largest unrealized loss with accurate PnL figure from context.\"}"
+    },
+    "elapsed_s": 3.8742064999823924
+  },
+  {
+    "id": "port-10",
+    "surface": "portfolio",
+    "prompt": "What is the average price of my JPM position?",
+    "variant": null,
+    "reference": "Pinned `JPM` position: quantity 60, avgPrice $145.00, currentPrice $198.20, marketValue $11892.00, costBasis $8700.00, unrealizedPnl $3192.00 (+36.69%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:JPM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The average price of your JPM position is $145.00.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly states avgPrice $145.00 matching pinned context, with appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly states avgPrice $145.00 matching pinned context, with appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 3.702697625005385
+  },
+  {
+    "id": "port-11",
+    "surface": "portfolio",
+    "prompt": "Sum the market value of my Technology positions.",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\n  - NVDA: qty=25, avg=$420.00, cur=$905.60, PnL $12140.00 (+115.62%)\nTotal marketValue $66955.00, total costBasis $40000.00, total unrealizedPnl $26955.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "The total market value of your Technology positions is $66,955.00, calculated as follows:  \n- AAPL: $23,250.00  \n- MSFT: $21,065.00  \n- NVDA: $22,640.00  \n\nSum: $23,250.00 + $21,065.00 + $22,640.00 = $66,955.00.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly sums market values of all three Technology positions, matching the gold reference total of $66,955.00.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly sums market values of all three Technology positions, matching the gold reference total of $66,955.00.\"}"
+    },
+    "elapsed_s": 4.437940125004388
+  },
+  {
+    "id": "port-12",
+    "surface": "portfolio",
+    "prompt": "How many positions do I currently hold?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - JPM: qty=60, avg=$145.00, cur=$198.20, PnL $3192.00 (+36.69%)\n  - XOM: qty=200, avg=$95.00, cur=$110.80, PnL $3160.00 (+16.63%)\n  - JNJ: qty=70, avg=$165.00, cur=$152.40, PnL $-882.00 (-7.64%)\nTotal marketValue $67970.00, total costBasis $54250.00, total unrealizedPnl $13720.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:JPM",
+      "portfolio:XOM",
+      "portfolio:JNJ"
+    ],
+    "context_card_count": 4,
+    "generator_answer": "You currently hold 4 positions: AAPL, JPM, XOM, and JNJ.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly states 4 positions matching pinned context, no extra facts, includes disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly states 4 positions matching pinned context, no extra facts, includes disclaimer.\"}"
+    },
+    "elapsed_s": 4.543297333992086
+  },
+  {
+    "id": "port-13",
+    "surface": "portfolio",
+    "prompt": "What's the percentage gain on my AAPL position?",
+    "variant": null,
+    "reference": "Pinned `AAPL` position: quantity 100, avgPrice $150.00, currentPrice $232.50, marketValue $23250.00, costBasis $15000.00, unrealizedPnl $8250.00 (+55.00%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The percentage gain on your AAPL position is 55.0%. This is based on the unrealized profit and loss percentage from your current holdings.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states 55.0% gain consistent with pinned context, includes appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states 55.0% gain consistent with pinned context, includes appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 5.457178832992213
+  },
+  {
+    "id": "port-14",
+    "surface": "portfolio",
+    "prompt": "What's the percentage loss on my TSLA position?",
+    "variant": null,
+    "reference": "Pinned `TSLA` position: quantity 30, avgPrice $250.00, currentPrice $178.40, marketValue $5352.00, costBasis $7500.00, unrealizedPnl $-2148.00 (-28.64%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:TSLA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The percentage loss on your TSLA position is -28.64%. This is based on the unrealized P&L percentage from your portfolio data.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states -28.64% loss matching pinned context and includes appropriate disclaimer.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly states -28.64% loss matching pinned context and includes appropriate disclaimer.\"\n}"
+    },
+    "elapsed_s": 5.054273624991765
+  },
+  {
+    "id": "port-15",
+    "surface": "portfolio",
+    "prompt": "What is the average market value per position?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - JPM: qty=60, avg=$145.00, cur=$198.20, PnL $3192.00 (+36.69%)\n  - XOM: qty=200, avg=$95.00, cur=$110.80, PnL $3160.00 (+16.63%)\nTotal marketValue $57302.00, total costBasis $42700.00, total unrealizedPnl $14602.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:JPM",
+      "portfolio:XOM"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "The total market value of all positions is $23,250 + $11,892 + $22,160 = $57,302.  \nThere are 3 positions, so the average market value per position is $57,302 / 3 = $19,100.67.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly computes average market value per position using pinned context data, matching the reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly computes average market value per position using pinned context data, matching the reference.\"}"
+    },
+    "elapsed_s": 4.338180291990284
+  },
+  {
+    "id": "port-16",
+    "surface": "portfolio",
+    "prompt": "Which sector has the largest market value?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\n  - JPM: qty=60, avg=$145.00, cur=$198.20, PnL $3192.00 (+36.69%)\n  - XOM: qty=200, avg=$95.00, cur=$110.80, PnL $3160.00 (+16.63%)\nTotal marketValue $78367.00, total costBasis $57200.00, total unrealizedPnl $21167.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:JPM",
+      "portfolio:XOM"
+    ],
+    "context_card_count": 4,
+    "generator_answer": "The Technology sector has the largest market value, with a total of $44,315 (AAPL: $23,250 + MSFT: $21,065). This exceeds the Financials sector ($11,892) and Energy sector ($22,160).  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies Technology as the largest sector with accurate market value sum of $44,315, consistent with pinned context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies Technology as the largest sector with accurate market value sum of $44,315, consistent with pinned context.\"}"
+    },
+    "elapsed_s": 2.994017332996009
+  },
+  {
+    "id": "port-17",
+    "surface": "portfolio",
+    "prompt": "List my positions that are currently underwater.",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - TSLA: qty=30, avg=$250.00, cur=$178.40, PnL $-2148.00 (-28.64%)\n  - PYPL: qty=80, avg=$195.00, cur=$62.10, PnL $-10632.00 (-68.15%)\n  - JPM: qty=60, avg=$145.00, cur=$198.20, PnL $3192.00 (+36.69%)\nTotal marketValue $45462.00, total costBasis $46800.00, total unrealizedPnl $-1338.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:TSLA",
+      "portfolio:PYPL",
+      "portfolio:JPM"
+    ],
+    "context_card_count": 4,
+    "generator_answer": "Your positions that are currently underwater are:\n\n- **TSLA**: 30 shares, average price $250.00, current price $178.40, unrealized P&L of -$2,148.00 (-28.64%)\n- **PYPL**: 80 shares, average price $195.00, current price $62.10, unrealized P&L of -$10,632.00 (-68.15%)\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies TSLA and PYPL as underwater positions with accurate figures matching pinned context.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly identifies TSLA and PYPL as underwater positions with accurate figures matching pinned context.\"\n}"
+    },
+    "elapsed_s": 7.908422084001359
+  },
+  {
+    "id": "port-18",
+    "surface": "portfolio",
+    "prompt": "What is the unrealized PnL percentage of DIS?",
+    "variant": null,
+    "reference": "Pinned `DIS` position: quantity 50, avgPrice $155.00, currentPrice $92.30, marketValue $4615.00, costBasis $7750.00, unrealizedPnl $-3135.00 (-40.45%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:DIS"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The unrealized PnL percentage of DIS is -40.45%.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states -40.45% per pinned context, includes disclaimer, no hallucination.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly states -40.45% per pinned context, includes disclaimer, no hallucination.\"}"
+    },
+    "elapsed_s": 4.785885791992769
+  },
+  {
+    "id": "port-19",
+    "surface": "portfolio",
+    "prompt": "Compare the market value of AAPL and MSFT.",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\nTotal marketValue $44315.00, total costBasis $29500.00, total unrealizedPnl $14815.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT"
+    ],
+    "context_card_count": 2,
+    "generator_answer": "AAPL has a market value of $23,250.00, while MSFT has a market value of $21,065.00. Therefore, AAPL has a higher market value than MSFT based on the current holdings.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly compares AAPL and MSFT market values from pinned context, matches reference data, includes educational disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly compares AAPL and MSFT market values from pinned context, matches reference data, includes educational disclaimer.\"}"
+    },
+    "elapsed_s": 6.152074499987066
+  },
+  {
+    "id": "port-20",
+    "surface": "portfolio",
+    "prompt": "What's the cost basis of my PYPL holding?",
+    "variant": null,
+    "reference": "Pinned `PYPL` position: quantity 80, avgPrice $195.00, currentPrice $62.10, marketValue $4968.00, costBasis $15600.00, unrealizedPnl $-10632.00 (-68.15%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:PYPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The cost basis of your PYPL holding is $15,600.00.  \nThis is based on 80 shares with an average purchase price of $195.00 per share.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly states cost basis $15,600.00 with 80 shares at $195.00 avg price, matching pinned context.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Answer correctly states cost basis $15,600.00 with 80 shares at $195.00 avg price, matching pinned context.\"}"
+    },
+    "elapsed_s": 5.530157374974806
+  },
+  {
+    "id": "port-21",
+    "surface": "portfolio",
+    "prompt": "Compute my total cost basis across all positions.",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - JPM: qty=60, avg=$145.00, cur=$198.20, PnL $3192.00 (+36.69%)\n  - XOM: qty=200, avg=$95.00, cur=$110.80, PnL $3160.00 (+16.63%)\nTotal marketValue $57302.00, total costBasis $42700.00, total unrealizedPnl $14602.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:JPM",
+      "portfolio:XOM"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "Total cost basis = $15,000 (AAPL) + $8,700 (JPM) + $19,000 (XOM) = **$42,700.00**\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly sums cost basis values from all three positions to $42,700.00, matching the gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly sums cost basis values from all three positions to $42,700.00, matching the gold reference.\"}"
+    },
+    "elapsed_s": 4.649729834025493
+  },
+  {
+    "id": "port-22",
+    "surface": "portfolio",
+    "prompt": "Compute my total unrealized PnL across all positions.",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - TSLA: qty=30, avg=$250.00, cur=$178.40, PnL $-2148.00 (-28.64%)\nTotal marketValue $28602.00, total costBasis $22500.00, total unrealizedPnl $6102.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:TSLA"
+    ],
+    "context_card_count": 2,
+    "generator_answer": "Total unrealized PnL = $8,250.00 (AAPL) + (-$2,148.00) (TSLA) = **$6,102.00**.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly computes total unrealized PnL as $6,102.00, matching the gold reference exactly.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly computes total unrealized PnL as $6,102.00, matching the gold reference exactly.\"}"
+    },
+    "elapsed_s": 7.637994542019442
+  },
+  {
+    "id": "port-23",
+    "surface": "portfolio",
+    "prompt": "Which position has the highest average price (avgPrice)?",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\n  - NVDA: qty=25, avg=$420.00, cur=$905.60, PnL $12140.00 (+115.62%)\nTotal marketValue $66955.00, total costBasis $40000.00, total unrealizedPnl $26955.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "The position with the highest average price (avgPrice) is NVDA at $420.00.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies NVDA as having the highest avgPrice of $420.00, consistent with pinned context.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly identifies NVDA as having the highest avgPrice of $420.00, consistent with pinned context.\"}"
+    },
+    "elapsed_s": 3.3070168750127777
+  },
+  {
+    "id": "port-24",
+    "surface": "portfolio",
+    "prompt": "What's the unrealized PnL percentage of XOM?",
+    "variant": null,
+    "reference": "Pinned `XOM` position: quantity 200, avgPrice $95.00, currentPrice $110.80, marketValue $22160.00, costBasis $19000.00, unrealizedPnl $3160.00 (+16.63%). Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:XOM"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The unrealized PnL percentage of XOM is 16.63%.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly states 16.63% unrealized PnL percentage matching pinned context, includes disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly states 16.63% unrealized PnL percentage matching pinned context, includes disclaimer.\"}"
+    },
+    "elapsed_s": 5.495798916992499
+  },
+  {
+    "id": "port-25",
+    "surface": "portfolio",
+    "prompt": "Compute the percentage of my book in Technology.",
+    "variant": null,
+    "reference": "Pinned portfolio:\n  - AAPL: qty=100, avg=$150.00, cur=$232.50, PnL $8250.00 (+55.00%)\n  - MSFT: qty=50, avg=$290.00, cur=$421.30, PnL $6565.00 (+45.28%)\n  - NVDA: qty=25, avg=$420.00, cur=$905.60, PnL $12140.00 (+115.62%)\n  - JPM: qty=60, avg=$145.00, cur=$198.20, PnL $3192.00 (+36.69%)\nTotal marketValue $78847.00, total costBasis $48700.00, total unrealizedPnl $30147.00. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA",
+      "portfolio:JPM"
+    ],
+    "context_card_count": 4,
+    "generator_answer": "Total market value in Technology:  \nAAPL $23,250 + MSFT $21,065 + NVDA $22,640 = **$66,955**\n\nTotal portfolio market value:  \n$23,250 + $21,065 + $22,640 + $11,892 = **$78,847**\n\nPercentage in Technology:  \n($66,955 / $78,847) × 100 ≈ **84.9%**\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Math is correct: Technology market value $66,955 / total $78,847 ≈ 84.9%. All figures match pinned context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Math is correct: Technology market value $66,955 / total $78,847 ≈ 84.9%. All figures match pinned context.\"}"
+    },
+    "elapsed_s": 7.887363834015559
+  }
+]

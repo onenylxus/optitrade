@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -95,12 +95,14 @@ interface PortfolioApiSnapshot {
   broker?: {
     id?: PortfolioBrokerOption;
     status: 'connected' | 'configured' | 'disconnected';
+    broker?: string;
     name: string;
     settings?: Record<string, unknown>;
     host?: string;
     port?: number;
     clientId?: number;
     market?: string;
+    trdEnv?: string;
     testnet?: boolean;
     accountId?: string;
     syncedAt?: string;
@@ -130,6 +132,7 @@ interface PortfolioMappedSnapshot {
   stocks: Stock[];
   data: PortfolioDerivedData;
   chatContext: PortfolioChatContextValue;
+  snapshot: PortfolioApiSnapshot;
 }
 
 interface BrokerOptionConfig {
@@ -169,12 +172,11 @@ const SIGNAL_LENS_OPTIONS: SignalLensOption[] = [
 const BROKER_OPTIONS: BrokerOptionConfig[] = [
   { id: 'ibkr', label: 'IBKR', supported: true, description: 'TWS / Gateway' },
   { id: 'futu', label: 'Futu', supported: true, description: 'OpenAPI host + market' },
-  { id: 'binance', label: 'Binance', supported: true, description: 'API key + secret' },
   {
     id: 'mock',
     label: 'Paper Portfolio',
     supported: true,
-    description: 'Backend-stored editable positions',
+    description: 'Editable positions',
   },
 ];
 
@@ -314,7 +316,11 @@ function mapPositionsToStocks(positions: PortfolioApiPosition[]): Stock[] {
     symbol: position.symbol,
     quantity: position.quantity,
     avgPrice: position.avgPrice,
-    currentPrice: position.currentPrice,
+    currentPrice:
+      position.currentPrice ||
+      (position.marketValue != null && position.quantity !== 0
+        ? position.marketValue / position.quantity
+        : position.avgPrice),
     sector: position.sector,
   }));
 }
@@ -547,20 +553,27 @@ function PortfolioInsightCard({
   );
 }
 
-function buildPaperChatContext(
-  stocks: Stock[],
-  broker?: PortfolioApiSnapshot['broker'],
-): PortfolioChatContextValue {
+const PAPER_BROKER: NonNullable<PortfolioApiSnapshot['broker']> = {
+  id: 'mock',
+  status: 'disconnected',
+  broker: 'Paper Portfolio',
+  name: 'Paper Portfolio',
+  settings: {},
+};
+
+const PAPER_CHAT_BROKER: PortfolioChatContextValue['broker'] = {
+  id: 'mock',
+  status: 'disconnected',
+  name: 'Paper Portfolio',
+};
+
+function buildPaperChatContext(stocks: Stock[]): PortfolioChatContextValue {
   const data = buildPortfolioData(stocks);
   return {
     asOf: new Date().toISOString(),
     baseCurrency: 'USD',
     source: 'paper',
-    broker: broker ?? {
-      id: 'mock',
-      status: 'disconnected',
-      name: 'Paper Portfolio',
-    },
+    broker: PAPER_CHAT_BROKER,
     summary: {
       totalValue: data.totalValue,
       pnl: data.pnl,
@@ -586,11 +599,43 @@ function buildPaperChatContext(
 
 function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSnapshot {
   const source = snapshot.source === 'backend' ? 'backend' : 'paper';
+  const stocks = mapPositionsToStocks(snapshot.positions);
+  const positions = snapshot.positions.map((position, index) => {
+    const stock = stocks[index];
+    const currentPrice = stock?.currentPrice ?? position.currentPrice;
+    return {
+      ...position,
+      currentPrice,
+      marketValue: position.marketValue ?? currentPrice * position.quantity,
+      unrealizedPnl:
+        position.unrealizedPnl ?? (currentPrice - position.avgPrice) * position.quantity,
+      unrealizedPnlPercent:
+        position.unrealizedPnlPercent ??
+        (position.avgPrice === 0
+          ? 0
+          : ((currentPrice - position.avgPrice) / position.avgPrice) * 100),
+    };
+  });
+  const broker =
+    source === 'backend'
+      ? snapshot.broker ?? PAPER_BROKER
+      : {
+          ...PAPER_BROKER,
+          syncedAt: snapshot.broker?.syncedAt,
+          lastError: snapshot.broker?.lastError,
+        };
   const sectorValues = snapshot.sectorValues.filter(
     (sector) => sector.sector.trim() && sector.sector !== 'Uncategorized',
   );
+  const normalizedSnapshot: PortfolioApiSnapshot = {
+    ...snapshot,
+    source,
+    broker,
+    positions,
+    sectorValues,
+  };
   return {
-    stocks: mapPositionsToStocks(snapshot.positions),
+    stocks,
     data: {
       totalValue: snapshot.summary.totalValue,
       pnl: snapshot.summary.pnl,
@@ -605,13 +650,9 @@ function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSn
       asOf: snapshot.asOf ?? new Date().toISOString(),
       baseCurrency: snapshot.baseCurrency ?? 'USD',
       source,
-      broker: snapshot.broker ?? {
-        id: 'mock',
-        status: 'disconnected',
-        name: 'Paper Portfolio',
-      },
+      broker,
       summary: snapshot.summary,
-      positions: snapshot.positions.map((position) => ({
+      positions: positions.map((position) => ({
         symbol: position.symbol,
         quantity: position.quantity,
         avgPrice: position.avgPrice,
@@ -628,6 +669,7 @@ function mapPortfolioSnapshot(snapshot: PortfolioApiSnapshot): PortfolioMappedSn
       })),
       sectorValues,
     },
+    snapshot: normalizedSnapshot,
   };
 }
 
@@ -706,28 +748,27 @@ function BrokerConnectionPanel({
     useState<PortfolioBrokerOption>(selectedBroker);
   const [host, setHost] = useState('127.0.0.1');
   const [port, setPort] = useState('7497');
-  const [clientId, setClientId] = useState('1');
   const [market, setMarket] = useState('US');
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
-  const [testnet, setTestnet] = useState(true);
+  const [trdEnv, setTrdEnv] = useState('SIMULATE');
   const [error, setError] = useState<string | null>(null);
   const selectedOption = getBrokerOption(selectedBrokerState);
 
   useEffect(() => {
     void (async () => {
       const settings = initialConnection?.settings ?? {};
-      const brokerId = initialConnection?.id ?? selectedBroker;
+      const brokerId =
+        initialConnection?.id === 'ibkr' ||
+        initialConnection?.id === 'futu' ||
+        initialConnection?.id === 'mock'
+          ? initialConnection.id
+          : selectedBroker;
       setSelectedBrokerState(brokerId);
       setHost(String(initialConnection?.host ?? settings.host ?? '127.0.0.1'));
       setPort(
         String(initialConnection?.port ?? settings.port ?? (brokerId === 'futu' ? 11111 : 7497)),
       );
-      setClientId(String(initialConnection?.clientId ?? settings.clientId ?? 1));
       setMarket(String(initialConnection?.market ?? settings.market ?? 'US'));
-      setApiKey('');
-      setApiSecret('');
-      setTestnet(Boolean(initialConnection?.testnet ?? settings.testnet ?? true));
+      setTrdEnv(String(initialConnection?.trdEnv ?? settings.trdEnv ?? 'SIMULATE'));
       setError(initialConnection?.lastError ?? null);
     })();
   }, [initialConnection, selectedBroker]);
@@ -754,10 +795,14 @@ function BrokerConnectionPanel({
     try {
       const payload =
         selectedBrokerState === 'ibkr'
-          ? { broker: selectedBrokerState, host, port: Number(port), clientId: Number(clientId) }
-          : selectedBrokerState === 'futu'
-            ? { broker: selectedBrokerState, host, port: Number(port), market }
-            : { broker: selectedBrokerState, apiKey, apiSecret, testnet };
+          ? { broker: selectedBrokerState, host, port: Number(port) }
+          : {
+              broker: selectedBrokerState,
+              host,
+              port: Number(port),
+              market,
+              trdEnv,
+            };
       const response = await fetch(portfolioApiUrl('/api/portfolio/connect'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -795,7 +840,7 @@ function BrokerConnectionPanel({
         </div>
       </div>
       <div className="flex-1 space-y-4 py-5">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {BROKER_OPTIONS.map((option) => (
             <button
               key={option.id}
@@ -817,7 +862,7 @@ function BrokerConnectionPanel({
         </div>
 
         {selectedBrokerState === 'ibkr' && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <div className="text-[10px] uppercase text-slate-400">Host</div>
               <input
@@ -833,15 +878,6 @@ function BrokerConnectionPanel({
                 type="text"
                 value={port}
                 onChange={(event) => setPort(event.target.value)}
-                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="text-[10px] uppercase text-slate-400">Client ID</div>
-              <input
-                type="text"
-                value={clientId}
-                onChange={(event) => setClientId(event.target.value)}
                 className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
               />
             </div>
@@ -877,37 +913,17 @@ function BrokerConnectionPanel({
                 className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
               />
             </div>
-          </div>
-        )}
-
-        {selectedBrokerState === 'binance' && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1">
-              <div className="text-[10px] uppercase text-slate-400">API Key</div>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-              />
+            <div className="space-y-1">
+              <div className="text-[10px] uppercase text-slate-400">Trading Env</div>
+              <select
+                value={trdEnv}
+                onChange={(event) => setTrdEnv(event.target.value)}
+                className="w-full border-b border-slate-200 bg-transparent py-1 text-xs outline-none focus:border-slate-900"
+              >
+                <option value="SIMULATE">SIMULATE</option>
+                <option value="REAL">REAL</option>
+              </select>
             </div>
-            <div className="col-span-2 space-y-1">
-              <div className="text-[10px] uppercase text-slate-400">API Secret</div>
-              <input
-                type="password"
-                value={apiSecret}
-                onChange={(event) => setApiSecret(event.target.value)}
-                className="w-full border-b border-slate-200 py-1 text-xs outline-none focus:border-slate-900"
-              />
-            </div>
-            <label className="col-span-2 flex items-center gap-2 text-[11px] text-slate-500">
-              <input
-                type="checkbox"
-                checked={testnet}
-                onChange={(event) => setTestnet(event.target.checked)}
-              />
-              Testnet
-            </label>
           </div>
         )}
 
@@ -1538,6 +1554,7 @@ const PortfolioWidgetRoot = ({
 }: PortfolioWidgetProps) => {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [backendData, setBackendData] = useState<PortfolioDerivedData | null>(null);
+  const [portfolioSnapshot, setPortfolioSnapshot] = useState<PortfolioApiSnapshot | null>(null);
   const [editablePortfolioName, setEditablePortfolioName] = useState('Portfolio Widget Portfolio');
   const [editableStocks, setEditableStocks] = useState<Stock[]>([]);
   const [editableHistory, setEditableHistory] = useState<PortfolioDerivedData['history']>([]);
@@ -1547,17 +1564,17 @@ const PortfolioWidgetRoot = ({
   const [panelMode, setPanelMode] = useState<PortfolioPanelMode>(null);
   const [selectedBroker, setSelectedBroker] = useState<PortfolioBrokerOption>('mock');
   const [brokerConnection, setBrokerConnection] = useState<PortfolioApiSnapshot['broker']>({
-    id: 'mock',
-    status: 'disconnected',
-    name: 'Paper Portfolio',
+    ...PAPER_BROKER,
   });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [signalLens, setSignalLens] = useState<SignalLens>('technical');
   const { setPortfolio } = usePortfolioContext();
+  const loadRequestIdRef = useRef(0);
 
   const resolvedVariant = variant ?? size ?? 'medium';
 
   const loadPortfolio = useCallback(async () => {
+    const requestId = ++loadRequestIdRef.current;
     try {
       setLoading(true);
       const [snapshotResponse, editableResponse] = await Promise.all([
@@ -1576,10 +1593,15 @@ const PortfolioWidgetRoot = ({
       const broker = mappedSnapshot.chatContext.broker;
       const isLiveBroker = snapshot.source === 'backend' && broker.status === 'connected';
 
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
+
       setStocks(mappedSnapshot.stocks);
       setBackendData(mappedSnapshot.data);
+      setPortfolioSnapshot(mappedSnapshot.snapshot);
       setBrokerConnection(broker);
-      setSelectedBroker(broker.id ?? 'mock');
+      setSelectedBroker(isLiveBroker ? (broker.id ?? 'mock') : 'mock');
 
       if (isLiveBroker) {
         setSource('backend');
@@ -1589,7 +1611,7 @@ const PortfolioWidgetRoot = ({
         setSource('paper');
         setSourceLabel('Paper Portfolio');
         setPortfolio({
-          ...buildPaperChatContext(mappedSnapshot.stocks, broker),
+          ...buildPaperChatContext(mappedSnapshot.stocks),
           asOf: mappedSnapshot.chatContext.asOf,
           baseCurrency: mappedSnapshot.chatContext.baseCurrency,
         });
@@ -1597,6 +1619,9 @@ const PortfolioWidgetRoot = ({
 
       if (editableResponse.ok) {
         const editable = (await editableResponse.json()) as PortfolioEditableResponse;
+        if (requestId !== loadRequestIdRef.current) {
+          return;
+        }
         setEditablePortfolioName(editable.name);
         setEditableStocks(mapPositionsToStocks(editable.positions));
         setEditableHistory(editable.history);
@@ -1606,9 +1631,13 @@ const PortfolioWidgetRoot = ({
         setEditableHistory(mappedSnapshot.data.history);
       }
     } catch {
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
       const emptyData = buildPortfolioData([]);
       setStocks([]);
       setBackendData(emptyData);
+      setPortfolioSnapshot(null);
       setEditablePortfolioName('Portfolio Widget Portfolio');
       setEditableStocks([]);
       setEditableHistory([]);
@@ -1622,7 +1651,9 @@ const PortfolioWidgetRoot = ({
       setSourceLabel('Paper Portfolio');
       setPortfolio(buildPaperChatContext([]));
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [setPortfolio]);
 
@@ -1723,7 +1754,7 @@ const PortfolioWidgetRoot = ({
 
     setIsAiLoading(true);
     const controller = new AbortController();
-    void getPortfolioAnalysis(controller.signal)
+    void getPortfolioAnalysis(controller.signal, portfolioSnapshot)
       .then((response) => {
         setAiSignals({
           insight: response.insight,
@@ -1740,7 +1771,7 @@ const PortfolioWidgetRoot = ({
       });
 
     return () => controller.abort();
-  }, [fallbackAiSignals, stocks.length, portfolioData.totalValue]);
+  }, [fallbackAiSignals, portfolioData.totalValue, portfolioSnapshot, stocks.length]);
 
   const variantProps: PortfolioVariantProps = {
     stocks,

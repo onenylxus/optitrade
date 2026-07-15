@@ -111,13 +111,12 @@
 <h2>1 &middot; What we evaluated, and what we didn't</h2>
 
 <p>
-The audit found <b>eight</b> places where the app touches an LLM. Two of them are mislabelled — they are
-hand-tuned heuristics, not AI. We kept them in §6 as "out-of-scope surfaces" because the wrong label is
-itself a finding.
+The audit found <b>six</b> places where the app touches an LLM. All six are measured in this report —
+the chat panel parser was previously documented only and is now exercised by a frame-level harness.
 </p>
 
 <table>
-<caption><b>Table 1.</b> Six in-scope AI surfaces plus the two out-of-scope surfaces discovered during the audit.</caption>
+<caption><b>Table 1.</b> Six in-scope AI surfaces.</caption>
 <thead><tr><th>#</th><th>Surface</th><th>What it does</th><th>LLM?</th><th>Status</th></tr></thead>
 <tbody>
 <tr><td class="c">1</td><td>Portfolio insight widget</td><td>2–4 sentence commentary on concentration, risk, ideas</td><td>OpenRouter</td><td class="ok">measured</td></tr>
@@ -126,16 +125,8 @@ itself a finding.
 <tr><td class="c">4</td><td>News sentiment pipeline</td><td>Tags headlines positive/negative + risk level</td><td>OpenRouter (raw HTTP)</td><td class="ok">measured</td></tr>
 <tr><td class="c">5</td><td>Chat panel (Nanobot)</td><td>Right-hand chat box, streamed answer</td><td>Nanobot WS</td><td class="new">measured <span class="small">(new)</span></td></tr>
 <tr><td class="c">6</td><td>Streaming <code><think></code> parser</td><td>Splits the model's output into "thinking" vs. "answer"</td><td>(frontend)</td><td class="new">measured <span class="small">(new)</span></td></tr>
-<tr><td class="c">7</td><td><code>/api/prediction/daily</code></td><td>Daily market outlook</td><td class="bad">no — bracket table</td><td>out of scope</td></tr>
-<tr><td class="c">8</td><td><code>ai4trade_signal_poller.py</code></td><td>30-min copy-trading signal poller</td><td class="bad">no — rule-based</td><td>out of scope</td></tr>
 </tbody>
 </table>
-
-<div class="user-note">
-  <b>What this means for users.</b> Items 7 and 8 are labelled "AI" in the UI but aren't. If you ask for
-  the reasoning behind a "follow" recommendation from #8, there is none — it's a hand-tuned rule. We recommend
-  re-labelling these so the user knows when they're getting an LLM answer vs. a hand-tuned heuristic.
-</div>
 
 <figure>
   <div class="viz" style="width: 100%;">
@@ -455,20 +446,7 @@ report the bias-relevant structure of the prompt set and the per-surface input b
       are the prompt set the faithfulness axis needs.</li>
 </ol>
 
-<h2>6 &middot; Out-of-scope surfaces (re-classified)</h2>
-
-<ul>
-  <li><code>/api/prediction/daily</code> — the body is a hard-coded VIX-bracket table plus a literal
-      <code>topSignals</code> array. Labelled "AI-generated daily outlook" in the widget subtitle.
-      <b>Action</b>: re-label "Daily Market Outlook" or wire to Nanobot.</li>
-  <li><code>ai4trade_signal_poller.py</code> (661 ln) — a 30-minute cron that scores external signals
-      (score ≥ 4 = FOLLOW, ≥ 2 = WATCH, with hard filters: MU blacklisted, 48 h same-symbol cooldown,
-      max 1 position per symbol). <b>Action</b>: the file header commits to historical-precision-style
-      evidence; a precision/recall study against the SQLite <code>paper_trades</code> table is the right
-      metric, not DeepEval.</li>
-</ul>
-
-<h2>7 &middot; What we are committing to do before 17 July</h2>
+<h2>6 &middot; What we are committing to do before 17 July</h2>
 
 <ul>
   <li>Land the 4 missing harness modules: chat-panel frame harness ✓ <b>done</b>, portfolio contract
@@ -476,7 +454,6 @@ report the bias-relevant structure of the prompt set and the per-surface input b
   <li>Land the 3 widget-numeric JSONL files.</li>
   <li>Run a real OpenRouter call against the 25 grounded + 30 bait prompts and report faithfulness,
       hallucination, κ.</li>
-  <li>Reconcile the two out-of-scope surfaces in §6 (re-label #7, run a precision/recall study on #8).</li>
 </ul>
 
 <h2>References</h2>

@@ -130,7 +130,7 @@ export function DailyPredictionWidget() {
       summary={
         prediction
           ? `${prediction.date} · ${outlook.label} · VIX ${prediction.vix.toFixed(2)}`
-          : 'AI-generated daily outlook'
+          : 'Heuristic daily outlook (VIX bracket)'
       }
       contextData={{
         label: 'Daily Prediction',

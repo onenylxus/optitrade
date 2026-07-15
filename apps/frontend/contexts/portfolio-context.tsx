@@ -35,6 +35,7 @@ export interface PortfolioChatContextValue {
     port?: number;
     clientId?: number;
     market?: string;
+    trdEnv?: string;
     testnet?: boolean;
     accountId?: string;
     syncedAt?: string;
@@ -45,7 +46,7 @@ export interface PortfolioChatContextValue {
   sectorValues: Array<{ sector: string; value: number; percent: number }>;
 }
 
-export type PortfolioBrokerOption = 'ibkr' | 'futu' | 'binance' | 'mock';
+export type PortfolioBrokerOption = 'ibkr' | 'futu' | 'mock';
 
 interface PortfolioContextState {
   portfolio: PortfolioChatContextValue | null;
@@ -83,6 +84,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
               port: data.broker?.port,
               clientId: data.broker?.clientId,
               market: data.broker?.market,
+              trdEnv: data.broker?.trdEnv,
               testnet: data.broker?.testnet,
               accountId: data.broker?.accountId,
               syncedAt: data.broker?.syncedAt,

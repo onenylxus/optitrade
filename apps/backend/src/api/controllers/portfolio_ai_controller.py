@@ -14,9 +14,12 @@ class PortfolioAIController:
     def __init__(self, analysis_service: PortfolioAnalysisService) -> None:
         self._analysis = analysis_service
 
-    async def analyze_portfolio(self) -> PortfolioAnalysisResponse:
+    async def analyze_portfolio(
+        self,
+        snapshot: dict | None = None,
+    ) -> PortfolioAnalysisResponse:
         try:
-            return await self._analysis.analyze()
+            return await self._analysis.analyze(snapshot)
         except RuntimeError as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,

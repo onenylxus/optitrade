@@ -1,5 +1,10 @@
 // apps/frontend/app/api/prediction/daily/route.ts
-// AI-generated daily market prediction — computed server-side.
+// Heuristic daily market outlook — computed server-side. NOT an LLM output.
+//
+// The body is a hand-tuned VIX-bracket table (`bracketForVix`) plus a literal
+// `topSignals` / `sectorPicks` / `risks` / `catalystCalendar` array. The widget
+// subtitle reads "Heuristic daily outlook (VIX bracket)" to make this explicit.
+//
 // Fetches live SPY, QQQ, ^VIX prices from the FastAPI backend's /api/price route
 // (which itself uses FMP first and yfinance as a fallback).
 //

@@ -42,6 +42,7 @@ class PortfolioBrokerSettings(BaseModel):
     port: int | None = None
     clientId: int | None = None
     market: str | None = None
+    trdEnv: str | None = None
     testnet: bool | None = None
     apiKeyPreview: str | None = None
     hasSecret: bool | None = None
@@ -57,6 +58,7 @@ class PortfolioBroker(BaseModel):
     port: int | None = None
     clientId: int | None = None
     market: str | None = None
+    trdEnv: str | None = None
     testnet: bool | None = None
     accountId: str | None = None
     syncedAt: str | None = None
@@ -104,6 +106,7 @@ class PortfolioConnectRequest(BaseModel):
     port: int | None = None
     clientId: int | None = None
     market: str | None = None
+    trdEnv: str | None = None
     apiKey: str | None = None
     apiSecret: str | None = None
     testnet: bool | None = None

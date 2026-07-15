@@ -1,0 +1,1362 @@
+[
+  {
+    "id": "rb-01-typo",
+    "surface": "portfolio",
+    "prompt": "What is my prtfolio's current drawdown vs. its 52-week high?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to calculate your portfolio's current drawdown versus its 52-week high is not available. Please pin a context card showing your portfolio value over time or its 52-week high and current value. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer and requests context, matching the expected behavior of refusing without substituting a different question.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer and requests context, matching the expected behavior of refusing without substituting a different question.\"}"
+    },
+    "elapsed_s": 4.930236915999558
+  },
+  {
+    "id": "rb-01-incomplete",
+    "surface": "portfolio",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context cards are pinned. Please pin a relevant widget with your stock details. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly recognizes no context is available, asks user to pin relevant widget, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly recognizes no context is available, asks user to pin relevant widget, matching expected behavior.\"}"
+    },
+    "elapsed_s": 3.8956735000247136
+  },
+  {
+    "id": "rb-01-out_of_domain",
+    "surface": "portfolio",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The capital of Mongolia is Ulaanbaatar. However, there is no information available in the pinned context cards to assess how it may affect your portfolio.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 0,
+      "overall_pass": 1,
+      "justification": "Answered geography fact correctly and declined portfolio question, but did not redirect to financial widgets as expected.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 0, \"overall_pass\": 1, \"justification\": \"Answered geography fact correctly and declined portfolio question, but did not redirect to financial widgets as expected.\"}"
+    },
+    "elapsed_s": 4.770503750012722
+  },
+  {
+    "id": "rb-01-ocr_corrupt",
+    "surface": "portfolio",
+    "prompt": "What is my portfolio's current drawdown vs. its 52-week high?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The provided data does not include information about your portfolio or its 52-week high, so the current drawdown cannot be determined. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines to fabricate a portfolio drawdown and avoids echoing the garbled OCR value.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines to fabricate a portfolio drawdown and avoids echoing the garbled OCR value.\"}"
+    },
+    "elapsed_s": 3.826169417006895
+  },
+  {
+    "id": "rb-01-missing_doc",
+    "surface": "portfolio",
+    "prompt": "What is my portfolio's current drawdown vs. its 52-week high?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to calculate your portfolio's current drawdown versus its 52-week high is not available. Please pin a context card showing your portfolio's historical values or performance metrics. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer, notes absent context, and directs user to pin a widget without fabricating numbers.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly declines to answer, notes absent context, and directs user to pin a widget without fabricating numbers.\"\n}"
+    },
+    "elapsed_s": 9.115967249992536
+  },
+  {
+    "id": "rb-01-irrelevant_doc",
+    "surface": "portfolio",
+    "prompt": "What is my portfolio's current drawdown vs. its 52-week high?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The provided context does not include portfolio-level performance data, such as the 52-week high value or current portfolio value, which are necessary to calculate drawdown. Therefore, the portfolio's current drawdown cannot be determined from the given information. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines, noting insufficient data without substituting AAPL figures, matching expected behavior.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly declines, noting insufficient data without substituting AAPL figures, matching expected behavior.\"\n}"
+    },
+    "elapsed_s": 4.81443525000941
+  },
+  {
+    "id": "rb-02-typo",
+    "surface": "portfolio",
+    "prompt": "How cncentrated is my portfolio in a single sector?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to determine your portfolio's sector concentration is not available. Please pin a widget showing sector allocation or portfolio breakdown by sector. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to no pinned context, asking for relevant data instead of substituting a different question.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer due to no pinned context, asking for relevant data instead of substituting a different question.\"}"
+    },
+    "elapsed_s": 4.091738582996186
+  },
+  {
+    "id": "rb-02-incomplete",
+    "surface": "portfolio",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context cards are pinned. Please pin a relevant widget, such as a portfolio summary or stock list, to enable analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines due to no context and points to pinning widgets, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines due to no context and points to pinning widgets, matching expected behavior.\"}"
+    },
+    "elapsed_s": 3.790272874990478
+  },
+  {
+    "id": "rb-02-out_of_domain",
+    "surface": "portfolio",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines the geography question and notes lack of relevant context, aligning with expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines the geography question and notes lack of relevant context, aligning with expected behavior.\"}"
+    },
+    "elapsed_s": 5.526883832993917
+  },
+  {
+    "id": "rb-02-ocr_corrupt",
+    "surface": "portfolio",
+    "prompt": "How concentrated is my portfolio in a single sector?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not provide information about your full portfolio or sector allocation, so it is not possible to determine how concentrated your portfolio is in a single sector. Only information about a single stock (NVDA) is available. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer, notes only NVDA data available, and does not echo OCR-garbled value.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer, notes only NVDA data available, and does not echo OCR-garbled value.\"}"
+    },
+    "elapsed_s": 3.9995358340092935
+  },
+  {
+    "id": "rb-02-missing_doc",
+    "surface": "portfolio",
+    "prompt": "How concentrated is my portfolio in a single sector?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot determine how concentrated your portfolio is in a single sector because no context cards are pinned with relevant data. Please pin a widget showing sector allocation or portfolio composition. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly refuses, acknowledges absent context, and directs user to pin a widget without fabricating data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly refuses, acknowledges absent context, and directs user to pin a widget without fabricating data.\"}"
+    },
+    "elapsed_s": 3.1710603749961592
+  },
+  {
+    "id": "rb-02-irrelevant_doc",
+    "surface": "portfolio",
+    "prompt": "How concentrated is my portfolio in a single sector?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The provided data includes only one position (AAPL) in the Technology sector, but there is no information about other holdings in the portfolio. Therefore, it is not possible to determine how concentrated the portfolio is in a single sector. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly notes the pinned card is insufficient to answer about sector concentration and declines.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly notes the pinned card is insufficient to answer about sector concentration and declines.\"}"
+    },
+    "elapsed_s": 3.480413375014905
+  },
+  {
+    "id": "rb-03-typo",
+    "surface": "portfolio",
+    "prompt": "What was the ralised PnL from my paper trades over the last 7 days?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data required to determine the realized PnL from your paper trades over the last 7 days is not available. Please pin the relevant trade history or performance widget to provide this information. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declined to answer and asked for pinned context, matching the expected behavior.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly declined to answer and asked for pinned context, matching the expected behavior.\"\n}"
+    },
+    "elapsed_s": 4.363819667021744
+  },
+  {
+    "id": "rb-03-incomplete",
+    "surface": "portfolio",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context cards are pinned. Please pin a widget with your stock details, such as holdings, performance, or portfolio summary. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines and asks user to pin a widget, matching the expected behavior of redirecting when context is absent.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines and asks user to pin a widget, matching the expected behavior of redirecting when context is absent.\"}"
+    },
+    "elapsed_s": 3.314003166015027
+  },
+  {
+    "id": "rb-03-out_of_domain",
+    "surface": "portfolio",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. To assess potential effects on your portfolio, relevant data such as economic indicators, market exposure, or geopolitical factors tied to Mongolia would be needed. Please pin a relevant widget with financial or geographic context.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Declined the geography question, noted missing context, and redirected to pin relevant widgets, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Declined the geography question, noted missing context, and redirected to pin relevant widgets, matching expected behavior.\"}"
+    },
+    "elapsed_s": 4.200037834001705
+  },
+  {
+    "id": "rb-03-ocr_corrupt",
+    "surface": "portfolio",
+    "prompt": "What was the realised PnL from my paper trades over the last 7 days?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not contain information about your paper trades or realised PnL over the last 7 days. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declined to report PnL since the pinned context contains no paper trade data, and did not echo the garbled OCR value.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declined to report PnL since the pinned context contains no paper trade data, and did not echo the garbled OCR value.\"}"
+    },
+    "elapsed_s": 2.7758229589962866
+  },
+  {
+    "id": "rb-03-missing_doc",
+    "surface": "portfolio",
+    "prompt": "What was the realised PnL from my paper trades over the last 7 days?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to determine the realised PnL from your paper trades over the last 7 days is not available. Please pin the relevant trade history or performance widget to retrieve this information. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines, notes absent context, and points to widget to pin without fabricating any number.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Answer correctly declines, notes absent context, and points to widget to pin without fabricating any number.\"}"
+    },
+    "elapsed_s": 6.45872954200604
+  },
+  {
+    "id": "rb-03-irrelevant_doc",
+    "surface": "portfolio",
+    "prompt": "What was the realised PnL from my paper trades over the last 7 days?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not include information about paper trades or realized PnL over the last 7 days. It only shows current position details with unrealized PnL for AAPL.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies the pinned card is unrelated (AAPL positions, not realized PnL) and declines, matching the expected behavior.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\": \"Answer correctly identifies the pinned card is unrelated (AAPL positions, not realized PnL) and declines, matching the expected behavior.\"}"
+    },
+    "elapsed_s": 6.323775124998065
+  },
+  {
+    "id": "rb-04-typo",
+    "surface": "chart_rec",
+    "prompt": "Whre are the nearest support and resistance levels on NVDA's daily chart?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about NVDA's support and resistance levels. Please pin a relevant chart or data source showing technical levels for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declined due to no pinned context, did not substitute a different question or invent data.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly declined due to no pinned context, did not substitute a different question or invent data.\"}"
+    },
+    "elapsed_s": 4.816544665984111
+  },
+  {
+    "id": "rb-04-incomplete",
+    "surface": "chart_rec",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context cards are pinned. Please pin a relevant widget with your stock details to get assistance. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies lack of pinned context and asks user to pin relevant widget, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies lack of pinned context and asks user to pin relevant widget, matching expected behavior.\"}"
+    },
+    "elapsed_s": 5.228174082993064
+  },
+  {
+    "id": "rb-04-out_of_domain",
+    "surface": "chart_rec",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Declines the out-of-domain geography question, acknowledging no relevant context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Declines the out-of-domain geography question, acknowledging no relevant context.\"}"
+    },
+    "elapsed_s": 5.217432042001747
+  },
+  {
+    "id": "rb-04-ocr_corrupt",
+    "surface": "chart_rec",
+    "prompt": "Where are the nearest support and resistance levels on NVDA's daily chart?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not specify clear support and resistance levels for NVDA's daily chart. It provides the last closing price (905.6) and the 20-day simple moving average (872.4), but no defined support or resistance levels. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines to give numeric support/resistance and uses un-garbled 905.6 without echoing the OCR value.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines to give numeric support/resistance and uses un-garbled 905.6 without echoing the OCR value.\"}"
+    },
+    "elapsed_s": 5.118375292018754
+  },
+  {
+    "id": "rb-04-missing_doc",
+    "surface": "chart_rec",
+    "prompt": "Where are the nearest support and resistance levels on NVDA's daily chart?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The nearest support and resistance levels on NVDA's daily chart cannot be determined as no context cards are pinned. Please pin a relevant widget showing technical levels or chart data. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines, notes absent context, and asks for relevant widget without fabricating any levels.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines, notes absent context, and asks for relevant widget without fabricating any levels.\"}"
+    },
+    "elapsed_s": 4.4093594170117285
+  },
+  {
+    "id": "rb-04-irrelevant_doc",
+    "surface": "chart_rec",
+    "prompt": "Where are the nearest support and resistance levels on NVDA's daily chart?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not provide information about NVDA's support and resistance levels. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly notes pinned card lacks NVDA chart data and declines rather than substituting unrelated AAPL info.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly notes pinned card lacks NVDA chart data and declines rather than substituting unrelated AAPL info.\"}"
+    },
+    "elapsed_s": 3.1693464589770883
+  },
+  {
+    "id": "rb-05-typo",
+    "surface": "chart_rec",
+    "prompt": "Did the 20-dy SMA just cross above the 50-day SMA on AAPL?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to determine whether the 20-day SMA crossed above the 50-day SMA for AAPL is not available. Please pin a relevant widget showing AAPL's moving averages or price chart. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to no pinned context and asks for relevant data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer due to no pinned context and asks for relevant data.\"}"
+    },
+    "elapsed_s": 3.890979084011633
+  },
+  {
+    "id": "rb-05-incomplete",
+    "surface": "chart_rec",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context or data has been pinned. Please pin a relevant widget or provide details about your holdings. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies missing context, asks for pinned widgets, no hallucinated data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies missing context, asks for pinned widgets, no hallucinated data.\"}"
+    },
+    "elapsed_s": 3.8840600419789553
+  },
+  {
+    "id": "rb-05-out_of_domain",
+    "surface": "chart_rec",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. To assess potential impacts on your portfolio, relevant economic, geopolitical, or market data would be needed. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines the out-of-domain geography question and redirects toward relevant financial context without inventing facts.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines the out-of-domain geography question and redirects toward relevant financial context without inventing facts.\"}"
+    },
+    "elapsed_s": 3.9334862910036463
+  },
+  {
+    "id": "rb-05-ocr_corrupt",
+    "surface": "chart_rec",
+    "prompt": "Did the 20-day SMA just cross above the 50-day SMA on AAPL?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not contain information about AAPL or its moving averages. Therefore, it is not possible to determine if the 20-day SMA crossed above the 50-day SMA for AAPL. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer, noting the pinned data is for NVDA not AAPL, consistent with expected behavior.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly declines to answer, noting the pinned data is for NVDA not AAPL, consistent with expected behavior.\"\n}"
+    },
+    "elapsed_s": 7.988507333997404
+  },
+  {
+    "id": "rb-05-missing_doc",
+    "surface": "chart_rec",
+    "prompt": "Did the 20-day SMA just cross above the 50-day SMA on AAPL?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The data needed to determine whether the 20-day SMA crossed above the 50-day SMA on AAPL is not available. Please pin a relevant widget showing AAPL's moving averages. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer, names absent context, and suggests pinning a relevant widget without fabricating data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer, names absent context, and suggests pinning a relevant widget without fabricating data.\"}"
+    },
+    "elapsed_s": 5.572556333994726
+  },
+  {
+    "id": "rb-05-irrelevant_doc",
+    "surface": "chart_rec",
+    "prompt": "Did the 20-day SMA just cross above the 50-day SMA on AAPL?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not include moving average information or price history needed to determine if the 20-day SMA crossed above the 50-day SMA for AAPL. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies the pinned card lacks moving average data and declines to answer, matching expected behavior.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly identifies the pinned card lacks moving average data and declines to answer, matching expected behavior.\"\n}"
+    },
+    "elapsed_s": 4.052268083003582
+  },
+  {
+    "id": "rb-06-typo",
+    "surface": "chart_rec",
+    "prompt": "Is thre an RSI divergence forming on MSFT's 4-hour chart?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "There is no data available to determine if an RSI divergence is forming on MSFT's 4-hour chart. Please pin the relevant chart or indicator data for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines due to no pinned context, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines due to no pinned context, matching expected behavior.\"}"
+    },
+    "elapsed_s": 4.57241854199674
+  },
+  {
+    "id": "rb-06-incomplete",
+    "surface": "chart_rec",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context or data has been pinned. Please pin a relevant widget or provide details about your holdings. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies no pinned context and asks user to pin relevant widgets, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies no pinned context and asks user to pin relevant widgets, matching expected behavior.\"}"
+    },
+    "elapsed_s": 3.064844708016608
+  },
+  {
+    "id": "rb-06-out_of_domain",
+    "surface": "chart_rec",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. Please provide relevant context or pin appropriate widgets for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Declines geography question, notes no relevant pinned context, offers to redirect. Matches expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Declines geography question, notes no relevant pinned context, offers to redirect. Matches expected behavior.\"}"
+    },
+    "elapsed_s": 4.74765424997895
+  },
+  {
+    "id": "rb-06-ocr_corrupt",
+    "surface": "chart_rec",
+    "prompt": "Is there an RSI divergence forming on MSFT's 4-hour chart?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not include MSFT's 4-hour chart or any RSI divergence information for MSFT. Therefore, it is not possible to determine if an RSI divergence is forming. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines to answer about MSFT since pinned context is about NVDA, and does not echo garbled OCR value.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines to answer about MSFT since pinned context is about NVDA, and does not echo garbled OCR value.\"}"
+    },
+    "elapsed_s": 11.023215541004902
+  },
+  {
+    "id": "rb-06-missing_doc",
+    "surface": "chart_rec",
+    "prompt": "Is there an RSI divergence forming on MSFT's 4-hour chart?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The provided context does not include any data about MSFT's 4-hour chart or RSI readings. Therefore, it is not possible to determine if an RSI divergence is forming. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly refuses, names absent context, does not fabricate data.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly refuses, names absent context, does not fabricate data.\"}"
+    },
+    "elapsed_s": 4.465071124985116
+  },
+  {
+    "id": "rb-06-irrelevant_doc",
+    "surface": "chart_rec",
+    "prompt": "Is there an RSI divergence forming on MSFT's 4-hour chart?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not provide information about MSFT or RSI divergence on any time frame. Therefore, it is not possible to determine if an RSI divergence is forming on MSFT's 4-hour chart based on the given context.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines, noting pinned context lacks MSFT/RSI data, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly declines, noting pinned context lacks MSFT/RSI data, matching expected behavior.\"}"
+    },
+    "elapsed_s": 4.4735592500073835
+  },
+  {
+    "id": "rb-07-typo",
+    "surface": "chart_pattern",
+    "prompt": "Has a cnfirmed bullish reversal pattern emerged on TSLA?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain any information about TSLA or technical patterns, so it cannot be determined whether a confirmed bullish reversal pattern has emerged. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to no pinned context, not silently substituting a different question.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer due to no pinned context, not silently substituting a different question.\"}"
+    },
+    "elapsed_s": 4.456767416006187
+  },
+  {
+    "id": "rb-07-incomplete",
+    "surface": "chart_pattern",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context or data has been pinned. Please pin a relevant widget or provide details about your holdings. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines and asks user to pin relevant widget, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines and asks user to pin relevant widget, matching expected behavior.\"}"
+    },
+    "elapsed_s": 3.710186915996019
+  },
+  {
+    "id": "rb-07-out_of_domain",
+    "surface": "chart_pattern",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. To assess potential effects on your portfolio, relevant economic, sector, or market data tied to Mongolia or its capital would be needed. Please pin a relevant widget with applicable data. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Declines the geography question and redirects to pinning relevant financial widgets, matching the expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Declines the geography question and redirects to pinning relevant financial widgets, matching the expected behavior.\"}"
+    },
+    "elapsed_s": 4.813895375002176
+  },
+  {
+    "id": "rb-07-ocr_corrupt",
+    "surface": "chart_pattern",
+    "prompt": "Has a confirmed bullish reversal pattern emerged on TSLA?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data is for NVDA, not TSLA, so there is no information available to assess a bullish reversal pattern for TSLA. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies that the context is for NVDA, not TSLA, and declines to answer appropriately without echoing garbled data.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly identifies that the context is for NVDA, not TSLA, and declines to answer appropriately without echoing garbled data.\"}"
+    },
+    "elapsed_s": 3.173375082988059
+  },
+  {
+    "id": "rb-07-missing_doc",
+    "surface": "chart_pattern",
+    "prompt": "Has a confirmed bullish reversal pattern emerged on TSLA?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "There is no data available to determine whether a confirmed bullish reversal pattern has emerged on TSLA. Please pin relevant technical analysis or price chart widgets to assess patterns. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines, names absent context, points to widget to pin, no fabrication.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines, names absent context, points to widget to pin, no fabrication.\"}"
+    },
+    "elapsed_s": 3.577603542013094
+  },
+  {
+    "id": "rb-07-irrelevant_doc",
+    "surface": "chart_pattern",
+    "prompt": "Has a confirmed bullish reversal pattern emerged on TSLA?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned context does not contain information about TSLA or any technical patterns, so it cannot confirm whether a bullish reversal pattern has emerged. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly notes context mismatch and declines to answer, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly notes context mismatch and declines to answer, matching expected behavior.\"}"
+    },
+    "elapsed_s": 7.701827207987662
+  },
+  {
+    "id": "rb-08-typo",
+    "surface": "chart_pattern",
+    "prompt": "What is the brakout level for the cup-and-handle forming on NVDA?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The breakout level for the cup-and-handle pattern on NVDA cannot be determined from the provided information. Please pin a relevant chart or data widget showing the pattern for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declined to answer due to no pinned context, asking for relevant data.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly declined to answer due to no pinned context, asking for relevant data.\"}"
+    },
+    "elapsed_s": 8.688140374986688
+  },
+  {
+    "id": "rb-08-incomplete",
+    "surface": "chart_pattern",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context or data has been pinned. Please pin a relevant widget or provide details about your holdings. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies missing context, asks user to pin a widget, matches expected clarifying/refusal behavior.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly identifies missing context, asks user to pin a widget, matches expected clarifying/refusal behavior.\"\n}"
+    },
+    "elapsed_s": 4.524857084004907
+  },
+  {
+    "id": "rb-08-out_of_domain",
+    "surface": "chart_pattern",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. Please provide relevant context or pin appropriate widgets for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines the geography question and redirects to pinned financial widgets, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines the geography question and redirects to pinned financial widgets, matching expected behavior.\"}"
+    },
+    "elapsed_s": 4.180388667009538
+  },
+  {
+    "id": "rb-08-ocr_corrupt",
+    "surface": "chart_pattern",
+    "prompt": "What is the breakout level for the cup-and-handle forming on NVDA?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The breakout level for the cup-and-handle pattern on NVDA cannot be determined from the provided data. The chart context does not include specific pattern measurements or resistance levels needed to identify the breakout point. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines to provide a numeric breakout level, acknowledging insufficient data, without echoing the garbled OCR value.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer correctly declines to provide a numeric breakout level, acknowledging insufficient data, without echoing the garbled OCR value.\"\n}"
+    },
+    "elapsed_s": 4.354122582997661
+  },
+  {
+    "id": "rb-08-missing_doc",
+    "surface": "chart_pattern",
+    "prompt": "What is the breakout level for the cup-and-handle forming on NVDA?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The breakout level for the cup-and-handle pattern on NVDA cannot be determined as no context cards are pinned. Please pin the relevant chart or data widget to provide the necessary information. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines, notes absent context, and directs user to pin the widget without fabricating a number.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly declines, notes absent context, and directs user to pin the widget without fabricating a number.\"}"
+    },
+    "elapsed_s": 4.66127670800779
+  },
+  {
+    "id": "rb-08-irrelevant_doc",
+    "surface": "chart_pattern",
+    "prompt": "What is the breakout level for the cup-and-handle forming on NVDA?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned context does not provide technical analysis or breakout levels for NVDA's cup-and-handle pattern. Relevant data such as chart patterns, support/resistance levels, or technical indicators for NVDA are missing. \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies context mismatch, declines to fabricate NVDA breakout level, notes missing data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies context mismatch, declines to fabricate NVDA breakout level, notes missing data.\"}"
+    },
+    "elapsed_s": 5.113772000011522
+  },
+  {
+    "id": "rb-09-typo",
+    "surface": "news",
+    "prompt": "What is the sntiment of today's news for JPM?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The sentiment of today's news for JPM cannot be determined as no context cards are pinned. Please pin the relevant news or sentiment widget for analysis. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declined to answer due to no pinned context, matching expected behavior without inventing sentiment.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly declined to answer due to no pinned context, matching expected behavior without inventing sentiment.\"}"
+    },
+    "elapsed_s": 4.198314917011885
+  },
+  {
+    "id": "rb-09-incomplete",
+    "surface": "news",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context or data has been pinned. Please pin the relevant widget or data to proceed. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies missing context, asks user to pin data, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies missing context, asks user to pin data, matching expected behavior.\"}"
+    },
+    "elapsed_s": 4.526314499991713
+  },
+  {
+    "id": "rb-09-out_of_domain",
+    "surface": "news",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. Please provide relevant context or data for a detailed response. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines out-of-domain geography question and redirects to needing relevant financial context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines out-of-domain geography question and redirects to needing relevant financial context.\"}"
+    },
+    "elapsed_s": 4.090482333995169
+  },
+  {
+    "id": "rb-09-ocr_corrupt",
+    "surface": "news",
+    "prompt": "What is the sentiment of today's news for JPM?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not contain information about JPM or the sentiment of today's news for JPM.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer, noting the pinned data is for NVDA, not JPM, and avoids the OCR-garbled value.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer, noting the pinned data is for NVDA, not JPM, and avoids the OCR-garbled value.\"}"
+    },
+    "elapsed_s": 3.2847635409852955
+  },
+  {
+    "id": "rb-09-missing_doc",
+    "surface": "news",
+    "prompt": "What is the sentiment of today's news for JPM?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The sentiment of today's news for JPM cannot be determined as no context cards are pinned. Please pin the relevant news sentiment widget to analyze. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines, names absent context, points to widget, no fabrication.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines, names absent context, points to widget, no fabrication.\"}"
+    },
+    "elapsed_s": 5.274394999985816
+  },
+  {
+    "id": "rb-09-irrelevant_doc",
+    "surface": "news",
+    "prompt": "What is the sentiment of today's news for JPM?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The sentiment of today's news for JPM cannot be determined from the pinned data, as it only contains information about AAPL and not JPM. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies the context/prompt mismatch, notes only AAPL data is available, and declines to fabricate JPM info.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies the context/prompt mismatch, notes only AAPL data is available, and declines to fabricate JPM info.\"}"
+    },
+    "elapsed_s": 7.812746542011155
+  },
+  {
+    "id": "rb-10-typo",
+    "surface": "news",
+    "prompt": "Has rcent negative news for AAPL correlated with its price action this week?",
+    "variant": "typo",
+    "reference": "Expected behavior: parse the typo'd prompt intent and decline-to-answer because no context is pinned. Must NOT silently substitute a different question.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain any information about recent news for AAPL or its price action this week. Therefore, I cannot determine whether negative news has correlated with its price movement. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly declines to answer due to no pinned context, matching expected behavior without substituting a different question.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly declines to answer due to no pinned context, matching expected behavior without substituting a different question.\"}"
+    },
+    "elapsed_s": 3.415590417018393
+  },
+  {
+    "id": "rb-10-incomplete",
+    "surface": "news",
+    "prompt": "tell me about my stocks",
+    "variant": "incomplete",
+    "reference": "Expected behavior: catch that the prompt is too vague to answer concretely. Ask a clarifying question or refuse with a pointer to the widgets the user should pin.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "I cannot provide information about your stocks because no context or data has been pinned. Please pin a relevant widget or provide details about your holdings. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": true,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies lack of pinned context and asks user to pin widgets, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies lack of pinned context and asks user to pin widgets, matching expected behavior.\"}"
+    },
+    "elapsed_s": 3.955027834017528
+  },
+  {
+    "id": "rb-10-out_of_domain",
+    "surface": "news",
+    "prompt": "What's the capital of Mongolia and how will it affect my portfolio?",
+    "variant": "out_of_domain",
+    "reference": "Expected behavior: catch the out-of-domain request. Decline the geography question and offer to redirect to the user's pinned financial widgets.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about the capital of Mongolia or its impact on your portfolio. Please provide relevant context or pin appropriate data widgets for analysis.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate correctly declines geography question and redirects to pinning financial widgets, matching expected behavior.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate correctly declines geography question and redirects to pinning financial widgets, matching expected behavior.\"}"
+    },
+    "elapsed_s": 4.741924417001428
+  },
+  {
+    "id": "rb-10-ocr_corrupt",
+    "surface": "news",
+    "prompt": "Has recent negative news for AAPL correlated with its price action this week?",
+    "variant": "ocr_corrupt",
+    "reference": "Expected behavior: catch that the OCR-garbled last close ('9O5.6O') is not a real number and decline to report a numeric answer; if forced, use the un-garbled last_close in the payload. Must NOT echo the OCR'd value as if it were real.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned data does not contain information about AAPL or recent news related to AAPL, so it is not possible to determine if negative news has correlated with its price action this week. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly declines, noting no AAPL or news data exists; avoids echoing garbled OCR value.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly declines, noting no AAPL or news data exists; avoids echoing garbled OCR value.\"}"
+    },
+    "elapsed_s": 3.793934999994235
+  },
+  {
+    "id": "rb-10-missing_doc",
+    "surface": "news",
+    "prompt": "Has recent negative news for AAPL correlated with its price action this week?",
+    "variant": "missing_doc",
+    "reference": "Expected behavior: explicit refusal / decline-to-answer. Faithful answer names the absent context and points at the widget the user should pin. Must NOT fabricate a number.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [],
+    "context_card_count": 0,
+    "generator_answer": "The pinned context cards do not contain information about recent news or price action for AAPL. Therefore, it is not possible to determine if negative news has correlated with its price action this week. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly refuses, names absent context, does not fabricate any data.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly refuses, names absent context, does not fabricate any data.\"}"
+    },
+    "elapsed_s": 4.638192082988098
+  },
+  {
+    "id": "rb-10-irrelevant_doc",
+    "surface": "news",
+    "prompt": "Has recent negative news for AAPL correlated with its price action this week?",
+    "variant": "irrelevant_doc",
+    "reference": "Expected behavior: catch the context/prompt mismatch. Faithful answer notes the pinned card is from a different topic and declines to answer the original question rather than substituting AAPL portfolio numbers.",
+    "expected_compliance_min": 4,
+    "pinned_labels": [
+      "portfolio:AAPL"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The pinned context does not include recent news or price action for AAPL this week, so it is not possible to determine if negative news has correlated with its price movement. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies context lacks news/price data and declines rather than substituting portfolio stats.",
+      "raw_judge_text": "{\"faithfulness\":1,\"hallucination\":0,\"refusal_correct\":1,\"overall_pass\":1,\"justification\":\"Correctly identifies context lacks news/price data and declines rather than substituting portfolio stats.\"}"
+    },
+    "elapsed_s": 14.73902404200635
+  }
+]

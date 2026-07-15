@@ -1,0 +1,659 @@
+[
+  {
+    "id": "grounded-A01",
+    "surface": "chatbot",
+    "prompt": "What's my portfolio's biggest concentration risk right now?",
+    "variant": null,
+    "reference": "Technology exposure dominates the book — AAPL+MSFT+NVDA together are the largest single-sector position. The natural risk-hedge framing would be: if reducing concentration, Energy (XOM) and Financials (JPM) are the most under-weighted relative to a balanced sector mix. Numbers above are illustrative; check the pinned Portfolio widget for live values. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA",
+      "portfolio:JPM",
+      "portfolio:XOM"
+    ],
+    "context_card_count": 5,
+    "generator_answer": "Your portfolio's biggest concentration risk is in the Technology sector, which includes AAPL, MSFT, and NVDA. The combined market value of these positions is $74,026.50, representing approximately 72.6% of your total portfolio value of $101,962.50. Within this, NVDA has the highest individual unrealized gain at 120.88%, but AAPL has the largest market value at $27,900.00.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies Technology as the biggest concentration risk, accurately computes the 72.6% figure, and includes the required disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly identifies Technology as the biggest concentration risk, accurately computes the 72.6% figure, and includes the required disclaimer.\"}"
+    },
+    "elapsed_s": 5.1314760409877636
+  },
+  {
+    "id": "grounded-A02",
+    "surface": "chatbot",
+    "prompt": "Which holding looks most vulnerable right now?",
+    "variant": null,
+    "reference": "PYPL shows the deepest drawdown vs. cost basis among the three pinned holdings (illustrative: cost $195 vs. current $62). TSLA is also deep underwater. DIS is roughly 40% off cost. Vulnerability here is being measured against your average cost, not against fundamentals or technicals — for the technical read pin a chart widget too. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:TSLA",
+      "portfolio:PYPL",
+      "portfolio:DIS"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "PYPL appears most vulnerable with an unrealized loss of -68.15%, the largest decline among the holdings.  \nIt has the highest cost basis ($11,700) and the greatest dollar loss ($7,974), indicating significant depreciation.  \nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies PYPL as most vulnerable with accurate figures from pinned context, includes appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies PYPL as most vulnerable with accurate figures from pinned context, includes appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 6.084432834002655
+  },
+  {
+    "id": "grounded-A03",
+    "surface": "chatbot",
+    "prompt": "If I'm trying to reduce risk, what should I trim first?",
+    "variant": null,
+    "reference": "Risk-trim candidates from the pinned snapshot are the two largest Technology winners (NVDA and MSFT) — both have meaningful unrealized gains and contribute the most to single-sector concentration. Trimming one or both would diversify the book without crystallizing losses. JNJ is roughly flat and adds defensive balance, so it would not be the natural trim target. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:NVDA",
+      "portfolio:MSFT",
+      "portfolio:JPM",
+      "portfolio:JNJ"
+    ],
+    "context_card_count": 4,
+    "generator_answer": "To reduce risk, consider trimming the position with the highest unrealized gain percentage, as it may represent the most overextended appreciation. NVDA has the highest unrealized P&L at 120.88%, followed by MSFT at 47.82%. Reducing NVDA first could help lock in gains and lower concentration risk. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies NVDA and MSFT as primary trim candidates based on pinned data; adds no fabricated facts.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Correctly identifies NVDA and MSFT as primary trim candidates based on pinned data; adds no fabricated facts.\"\n}"
+    },
+    "elapsed_s": 8.396910584007856
+  },
+  {
+    "id": "grounded-A04",
+    "surface": "chatbot",
+    "prompt": "How diversified am I across sectors?",
+    "variant": null,
+    "reference": "You hold five positions across five sectors (Technology, Financials, Energy, Healthcare, Consumer Staples) — one name per sector. That is well-diversified at the sector level but concentrated within each sector. For finer granularity, look at the Portfolio widget's `sectorValues` field for the live percentage breakdown. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:JPM",
+      "portfolio:XOM",
+      "portfolio:JNJ",
+      "portfolio:PG"
+    ],
+    "context_card_count": 5,
+    "generator_answer": "Your portfolio is diversified across five sectors: Technology (AAPL), Financials (JPM), Energy (XOM), Healthcare (JNJ), and Consumer Staples (PG). Each sector represents a distinct area of the market, indicating moderate diversification.\n\nTotal market value is $80,669, with the largest exposure in Technology (34.6%) and the smallest in Healthcare (13.2%).\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies five sectors with one position each, and percentages are consistent with pinned context values.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly identifies five sectors with one position each, and percentages are consistent with pinned context values.\"}"
+    },
+    "elapsed_s": 6.560109790996648
+  },
+  {
+    "id": "grounded-A05",
+    "surface": "chatbot",
+    "prompt": "What's my overall unrealized P/L?",
+    "variant": null,
+    "reference": "Across the three pinned Technology positions, the combined unrealized P/L is the sum of (marketValue − costBasis) per row in the pinned snapshot. The Portfolio widget renders the total live; the chat does not compute the arithmetic to avoid drift — read the widget. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:AAPL",
+      "portfolio:MSFT",
+      "portfolio:NVDA"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "Your overall unrealized P/L is $31,501.50, calculated by summing the unrealized P/L from each position:  \n- AAPL: $10,500.00  \n- MSFT: $6,133.50  \n- NVDA: $14,868.00  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 0,
+      "overall_pass": 0,
+      "justification": "Answer is faithful but reference expects redirect to widget, not direct arithmetic computation.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 0, \"overall_pass\": 0, \"justification\": \"Answer is faithful but reference expects redirect to widget, not direct arithmetic computation.\"}"
+    },
+    "elapsed_s": 5.2800693749741185
+  },
+  {
+    "id": "grounded-B01",
+    "surface": "chatbot",
+    "prompt": "Does my top holding's chart support keeping the position?",
+    "variant": null,
+    "reference": "The pinned chart shows NVDA above its 20-day SMA, with an RSI(14) at 72 (approaching overbought but not extreme) and a forming Ascending Triangle pattern with breakout level near 920 and invalidation near 860. The technical setup is supportive but tightly wound — a close below 860 would invalidate the pattern. Position sizing remains a portfolio-decision question, not a technical one. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:NVDA",
+      "stock_chart:NVDA",
+      "chart_pattern:NVDA"
+    ],
+    "context_card_count": 3,
+    "generator_answer": "Your top holding, NVDA, shows a forming bullish ascending triangle pattern with a confidence of 0.78, supported by higher lows since April and resistance near $920. The stock is trading above its 20-day SMA ($872.4) with strong positive momentum (11.2% return over 20 days), though RSI at 72.3 suggests overbought conditions. The chart supports holding, as a breakout above $920 could signal further upside, but watch for confirmation and potential pullback near resistance.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Accurately reflects pinned context data on NVDA's pattern, SMA, RSI, momentum, and breakout levels; no invented facts.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Accurately reflects pinned context data on NVDA's pattern, SMA, RSI, momentum, and breakout levels; no invented facts.\"\n}"
+    },
+    "elapsed_s": 5.2336656659899745
+  },
+  {
+    "id": "grounded-B02",
+    "surface": "chatbot",
+    "prompt": "Which of my holdings has technicals working against it?",
+    "variant": null,
+    "reference": "TSLA is the working-against position. Last close ~178 is below the 20-day SMA (~186), RSI(14) at 38 sits in the lower half, and a confirmed Descending Channel is in place with breakout ~192 / invalidation ~170. AAPL by contrast is above its SMA20 with neutral RSI — no headwind from technicals there. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:TSLA",
+      "stock_chart:TSLA",
+      "chart_pattern:TSLA",
+      "portfolio:AAPL",
+      "stock_chart:AAPL"
+    ],
+    "context_card_count": 5,
+    "generator_answer": "TSLA has technicals working against it. It is in a confirmed bearish descending channel pattern with lower highs and lower lows, trading below its 20-day SMA by 3.88%, and showing negative momentum over 1-day, 5-day, and 20-day periods. AAPL, in contrast, shows positive momentum and is trading above its 20-day SMA.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately identifies TSLA's bearish technicals from context and contrasts with AAPL, matching the gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately identifies TSLA's bearish technicals from context and contrasts with AAPL, matching the gold reference.\"}"
+    },
+    "elapsed_s": 5.659315083001275
+  },
+  {
+    "id": "grounded-B03",
+    "surface": "chatbot",
+    "prompt": "Among my holdings, which looks technically strongest?",
+    "variant": null,
+    "reference": "Both NVDA and JPM show constructive technicals. NVDA leads on magnitude (20-bar return +11.2%) but sits at overbought-adjacent RSI(14)=72 with a forming pattern. JPM is in a confirmed Cup with Handle, RSI(14)=61 in healthy territory, 20-bar return +5.1%. If 'strongest' means highest conviction with the least stretched entry, JPM is the cleaner read; if it means strongest trend, NVDA. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:NVDA",
+      "stock_chart:NVDA",
+      "chart_pattern:NVDA",
+      "portfolio:JPM",
+      "stock_chart:JPM",
+      "chart_pattern:JPM"
+    ],
+    "context_card_count": 6,
+    "generator_answer": "Among your holdings, NVDA appears technically stronger based on higher momentum (11.2% return over 20 days vs JPM's 5.1%), a tighter bullish pattern (ascending triangle forming with 78% confidence), and a higher RSI (72.3 vs 61.0), indicating stronger upward price pressure. While JPM has a confirmed cup-with-handle pattern, NVDA's technicals show greater strength and acceleration. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Candidate accurately cites all technical data from context (returns, RSI, pattern confidence) and offers a reasonable interpretation, though it favors NVDA over the reference's more balanced view.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Candidate accurately cites all technical data from context (returns, RSI, pattern confidence) and offers a reasonable interpretation, though it favors NVDA over the reference's more balanced view.\"}"
+    },
+    "elapsed_s": 7.987764791992959
+  },
+  {
+    "id": "grounded-B04",
+    "surface": "chatbot",
+    "prompt": "Are any of my holdings in a confirmed bearish pattern?",
+    "variant": null,
+    "reference": "Yes — PYPL has a confirmed Head and Shoulders top pattern with neckline break at 68 (last close 62.10, now below the neckline) and invalidation level 72. RSI(14)=29.5 sits in oversold territory, which can accompany but does not contradict a confirmed bearish structure. AAPL has no bearish pattern pinned. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:PYPL",
+      "stock_chart:PYPL",
+      "chart_pattern:PYPL",
+      "portfolio:AAPL",
+      "stock_chart:AAPL"
+    ],
+    "context_card_count": 5,
+    "generator_answer": "Yes, your holding in PYPL is in a confirmed bearish pattern. The \"Head and Shoulders\" pattern on the 1D chart over the 3M range has been confirmed with a confidence of 81%, indicating bearish sentiment. The neckline break occurred at 68, and the current price is below that level at 62.1.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately identifies PYPL's confirmed Head and Shoulders bearish pattern, confidence 0.81, neckline break at 68, and current price 62.1, consistent with context.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately identifies PYPL's confirmed Head and Shoulders bearish pattern, confidence 0.81, neckline break at 68, and current price 62.1, consistent with context.\"}"
+    },
+    "elapsed_s": 5.42904954199912
+  },
+  {
+    "id": "grounded-B05",
+    "surface": "chatbot",
+    "prompt": "If I wanted to add exposure, which holding's chart supports it?",
+    "variant": null,
+    "reference": "JPM's chart supports adding more — confirmed Cup with Handle (breakout 202, invalidation 188), price above the 20-day SMA, RSI(14)=61 (constructive, not overbought). XOM is the opposite: below SMA20, mild negative 20-bar return, no bullish pattern pinned. Adding is a sizing decision; the chart only supports which direction is technically cleaner. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:JPM",
+      "stock_chart:JPM",
+      "chart_pattern:JPM",
+      "portfolio:XOM",
+      "stock_chart:XOM"
+    ],
+    "context_card_count": 5,
+    "generator_answer": "The chart for JPM supports adding exposure, as it shows a confirmed bullish \"Cup with Handle\" pattern with a confidence of 0.74, recent momentum (5.1% return over 20 days), and the price trading above the 20-day SMA (3.23% above). In contrast, XOM shows negative momentum and is trading below its 20-day SMA.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer correctly identifies JPM's bullish pattern and XOM's weakness, consistent with pinned context and gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer correctly identifies JPM's bullish pattern and XOM's weakness, consistent with pinned context and gold reference.\"}"
+    },
+    "elapsed_s": 4.684169207990635
+  },
+  {
+    "id": "grounded-C01",
+    "surface": "chatbot",
+    "prompt": "What's {{TICKER}}'s technical setup right now?",
+    "variant": null,
+    "reference": "**Overview:** Pinned last close ~906 sits above the 20-day SMA (~895), with positive momentum across 1/5/20-bar windows.\n**Momentum:** 1-bar +2.4%, 5-bar +6.1%, 20-bar +12.5% — trend is up.\n**Indicators:** RSI(14)=74.8 is in overbought territory; mean-reversion risk elevated; SMA20 slope positive.\n**Levels / Risks:** Overbought RSI is the main short-term risk; any sustained close back below SMA20 would weaken the trend read. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "{{TICKER}} is trading at $905.60, above its 20-day simple moving average (SMA) of $895.00, indicating a positive short-term trend. The RSI (14-day) is at 74.8, suggesting the stock may be overbought. Momentum is strong, with a 12.5% return over the past 20 trading days. The 50-day SMA is not available in the current data. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Accurately reflects all data points from context card, includes educational disclaimer, no inventions or contradictions.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Accurately reflects all data points from context card, includes educational disclaimer, no inventions or contradictions.\"}"
+    },
+    "elapsed_s": 5.223563584004296
+  },
+  {
+    "id": "grounded-C02",
+    "surface": "chatbot",
+    "prompt": "Is {{TICKER}} in a downtrend?",
+    "variant": null,
+    "reference": "**Overview:** Pinned price below the 20-day SMA with negative returns across all three windows.\n**Momentum:** 1-bar −1.1%, 5-bar −3.2%, 20-bar −9.4% — all negative.\n**Indicators:** RSI(14)=36.8 in the lower half (approaching oversold but not extreme); SMA20 slope negative.\n**Levels / Risks:** Structure is consistent with a downtrend. A sustained reclaim of SMA20 would be the first sign of trend change. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Yes, {{TICKER}} is in a downtrend. The stock's last close (178.4) is below its 20-day simple moving average (190.0) by 6.11%, and momentum indicators show negative returns over 1, 5, and 20 bars, with a 20-bar return of -9.4%. The RSI of 36.8 also suggests weakening momentum. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context data and aligns with the gold reference's downtrend conclusion.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context data and aligns with the gold reference's downtrend conclusion.\"}"
+    },
+    "elapsed_s": 6.061700666992692
+  },
+  {
+    "id": "grounded-C03",
+    "surface": "chatbot",
+    "prompt": "Give me a quick read on {{TICKER}}.",
+    "variant": null,
+    "reference": "**Overview:** Price marginally above the 20-day SMA, with mildly positive momentum — neutral-to-mildly-bullish setup.\n**Momentum:** 1-bar +0.4%, 5-bar +1.6%, 20-bar +3.0% — all positive but small in magnitude.\n**Indicators:** RSI(14)=52.4 sits near the midline — no overbought/oversold signal.\n**Levels / Risks:** Trend is constructive but not strong; risk is a choppy, range-bound tape rather than a directional move. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "{{TICKER}} closed at $232.50, up 0.4% today, with a 3.0% return over the past 20 trading days. The stock is trading slightly above its 20-day simple moving average ($230.00), with a neutral RSI of 52.4. Momentum indicators show positive short-term performance. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context data: price, returns, SMA, RSI, and includes disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context data: price, returns, SMA, RSI, and includes disclaimer.\"}"
+    },
+    "elapsed_s": 4.049635917006526
+  },
+  {
+    "id": "grounded-C04",
+    "surface": "chatbot",
+    "prompt": "What's the momentum picture on {{TICKER}}?",
+    "variant": null,
+    "reference": "**Overview:** Uptrend with above-trend momentum.\n**Momentum:** 1-bar +1.8%, 5-bar +5.0%, 20-bar +8.4% — consistent upward slope, no deceleration yet.\n**Indicators:** RSI(14)=68.1 — bullish but below the conventional 70 overbought threshold.\n**Levels / Risks:** Watch for RSI crossing 70 (overbought) or a 1-bar reversal that breaks the recent rhythm. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The momentum picture for {{TICKER}} shows positive performance, with a 1.8% return over the last day, 5.0% over the past 5 days, and 8.4% over the last 20 days. The stock is trading above its 20-day simple moving average (SMA20) by 2.76%, and the 14-day RSI is at 68.1, indicating strong upward momentum but approaching overbought territory. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects all pinned context data and aligns with the gold reference's momentum, indicator, and risk characterization.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects all pinned context data and aligns with the gold reference's momentum, indicator, and risk characterization.\"}"
+    },
+    "elapsed_s": 7.1420188329939265
+  },
+  {
+    "id": "grounded-C05",
+    "surface": "chatbot",
+    "prompt": "Should I be cautious on {{TICKER}}?",
+    "variant": null,
+    "reference": "**Overview:** Price well below the 20-day SMA with negative momentum across all windows.\n**Momentum:** 1-bar −1.6%, 5-bar −4.8%, 20-bar −11.5% — sustained decline.\n**Indicators:** RSI(14)=33.0 in oversold territory; SMA20 slope negative.\n**Levels / Risks:** Cautious is the natural posture — oversold RSI sometimes marks short-term bounces, but does not by itself reverse a downtrend. Risk is asymmetric to the downside until price reclaims SMA20. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Yes, you should be cautious on {{TICKER}}. The stock has shown negative momentum over the past 1, 5, and 20 trading days (-1.6%, -4.8%, -11.5% respectively), and the last close is 13.75% below the 20-day simple moving average. The RSI of 33.0 suggests the stock may be approaching oversold conditions, but downtrend risks remain. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context data and matches gold reference's cautious stance with correct metrics.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context data and matches gold reference's cautious stance with correct metrics.\"}"
+    },
+    "elapsed_s": 5.8711911250138655
+  },
+  {
+    "id": "grounded-D01",
+    "surface": "chatbot",
+    "prompt": "Which of my positions has both weak technicals AND high portfolio weight?",
+    "variant": null,
+    "reference": "TSLA is the cleanest match — the descending channel with invalidation 170, RSI(14)=38.4 below 50, and a 20-bar return of −8.7% all read as weak technicals, and the position is meaningful in size. NVDA has the largest weight but its technicals are strong (RSI 72, +11.2% 20-bar). AAPL is mid-weight with neutral technicals. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:TSLA",
+      "stock_chart:TSLA",
+      "chart_pattern:TSLA",
+      "portfolio:AAPL",
+      "stock_chart:AAPL",
+      "portfolio:NVDA",
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 7,
+    "generator_answer": "TSLA has both weak technicals and high portfolio weight. It shows bearish momentum (negative returns across 1, 5, and 20 bars), an RSI of 38.4 (near oversold), trading below its 20-day SMA by 3.88%, and a confirmed bearish descending channel pattern. Additionally, with a market value of $4,460.00, it represents a significant portfolio position.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies TSLA as having weak technicals and meaningful weight, with all data points matching pinned context. Includes appropriate disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies TSLA as having weak technicals and meaningful weight, with all data points matching pinned context. Includes appropriate disclaimer.\"}"
+    },
+    "elapsed_s": 7.615849207999418
+  },
+  {
+    "id": "grounded-D02",
+    "surface": "chatbot",
+    "prompt": "Is there a conflict between my portfolio's top holding and its chart?",
+    "variant": null,
+    "reference": "There is a tension, not a hard conflict. Your top holding is NVDA with strong +11.2% 20-bar momentum (supportive), but the 1-bar return is now −3.2% and RSI(14)=78.4 is overbought. The chart is telling you the trend is intact but momentum is stretched in the short term — different signals, not contradictory. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:NVDA",
+      "stock_chart:NVDA"
+    ],
+    "context_card_count": 2,
+    "generator_answer": "There is no conflict between your portfolio's top holding and its chart. Both the portfolio and chart confirm NVDA as the holding, with a current price of $905.60, and the chart data aligns with the portfolio's unrealized gain and market value. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 0,
+      "hallucination": 1,
+      "refusal_correct": 0,
+      "overall_pass": 0,
+      "justification": "Candidate falsely says 'no conflict' and omits key signals (overbought RSI, negative 1-bar return), contradicting the nuanced reference.",
+      "raw_judge_text": "{\"faithfulness\": 0, \"hallucination\": 1, \"refusal_correct\": 0, \"overall_pass\": 0, \"justification\": \"Candidate falsely says 'no conflict' and omits key signals (overbought RSI, negative 1-bar return), contradicting the nuanced reference.\"}"
+    },
+    "elapsed_s": 8.396771999978228
+  },
+  {
+    "id": "grounded-D03",
+    "surface": "chatbot",
+    "prompt": "Across my whole portfolio, what's the technical picture?",
+    "variant": null,
+    "reference": "Mixed. NVDA: uptrend, RSI overbought-adjacent (72). JPM: uptrend, healthy RSI (61). TSLA: downtrend, RSI 38. JNJ: sideways, RSI ~48. Two of four names lean bullish on technicals, one bearish, one neutral — the book is not uniformly exposed to one direction. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:NVDA",
+      "stock_chart:NVDA",
+      "portfolio:JPM",
+      "stock_chart:JPM",
+      "portfolio:TSLA",
+      "stock_chart:TSLA",
+      "portfolio:JNJ",
+      "stock_chart:JNJ"
+    ],
+    "context_card_count": 8,
+    "generator_answer": "Your portfolio shows mixed technical signals. NVDA and JPM are outperforming with strong momentum and trading above their 20-day SMAs, though NVDA's RSI at 72.3 indicates overbought conditions. TSLA and JNJ are underperforming, with TSLA showing bearish momentum and trading below its 20-day SMA, while JNJ is nearly flat with neutral technicals.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately summarizes technical picture for all four holdings consistent with pinned context and gold reference, with correct disclaimer.",
+      "raw_judge_text": "{\n  \"faithfulness\": 1,\n  \"hallucination\": 0,\n  \"refusal_correct\": 1,\n  \"overall_pass\": 1,\n  \"justification\": \"Answer accurately summarizes technical picture for all four holdings consistent with pinned context and gold reference, with correct disclaimer.\"\n}"
+    },
+    "elapsed_s": 14.17708920800942
+  },
+  {
+    "id": "grounded-D04",
+    "surface": "chatbot",
+    "prompt": "Where in my book does position sizing disagree with technical conviction?",
+    "variant": null,
+    "reference": "If 'conviction' follows technicals: TSLA is your largest disagreement — bearish confirmed channel, RSI 38, deep underwater. JPM is your largest agreement — bullish confirmed Cup with Handle, RSI 61, modest unrealized gain. Rebalancing toward JPM (or trimming TSLA) would align sizing with technical conviction. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:TSLA",
+      "stock_chart:TSLA",
+      "chart_pattern:TSLA",
+      "portfolio:JPM",
+      "stock_chart:JPM",
+      "chart_pattern:JPM"
+    ],
+    "context_card_count": 6,
+    "generator_answer": "In your book, the TSLA position shows a disagreement between position sizing and technical conviction. The technical analysis indicates a bearish descending channel pattern with confirmed status and high confidence (0.82), suggesting a cautious or short bias, yet the position size (25 shares) represents a relatively large exposure given the stock's underperformance and negative momentum (RSI at 38.4, trading below SMA20). In contrast, JPM aligns better: bullish pattern (cup with handle) and positive momentum support the larger position size.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Correctly identifies TSLA as the main disagreement and JPM as the main agreement, consistent with pinned context and gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Correctly identifies TSLA as the main disagreement and JPM as the main agreement, consistent with pinned context and gold reference.\"}"
+    },
+    "elapsed_s": 8.042975999996997
+  },
+  {
+    "id": "grounded-D05",
+    "surface": "chatbot",
+    "prompt": "Give me a one-paragraph portfolio + technicals summary.",
+    "variant": null,
+    "reference": "Two-name read: NVDA is a strong technical setup (above SMA20, RSI 72, +11.2% 20-bar) with a meaningful unrealized gain. TSLA is the opposite (below SMA20, RSI 38, −8.7% 20-bar, descending channel). The portfolio's beta to Tech is dominated by NVDA's strength; the book's drag comes from TSLA's drawdown. Sizing decisions are yours — this is the read, not the prescription. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:NVDA",
+      "stock_chart:NVDA",
+      "portfolio:TSLA",
+      "stock_chart:TSLA"
+    ],
+    "context_card_count": 4,
+    "generator_answer": "The portfolio holds 30 shares of NVDA and 25 shares of TSLA, with a combined market value of $31,628. NVDA is up 120.88% unrealized, trading above its 20-day SMA (872.4) at 905.6 with strong momentum and RSI at 72.3, indicating overbought but bullish conditions. TSLA is down 28.64% unrealized, trading below its 20-day SMA (185.6) at 178.4 with negative momentum and RSI at 38.4, suggesting weakness. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Accurately summarizes both positions with correct prices, technicals, and disclaimers consistent with pinned context and gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Accurately summarizes both positions with correct prices, technicals, and disclaimers consistent with pinned context and gold reference.\"}"
+    },
+    "elapsed_s": 9.327690290985629
+  },
+  {
+    "id": "grounded-E01",
+    "surface": "chatbot",
+    "prompt": "What does the chart say about a stock that has been sideways for a month?",
+    "variant": null,
+    "reference": "**Overview:** Price hugging the 20-day SMA — consolidation.\n**Momentum:** All three returns within ±0.5% — no trend.\n**Indicators:** RSI(14)=50.2 sitting on the midline — neutral.\n**Levels / Risks:** Sideways tape means volatility is compressed; expect a directional move eventually, direction unknown until SMA20 breaks one way. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The chart shows the stock has been trading near its 20-day simple moving average (SMA 20), with the last close only 0.22% above it, and the RSI at 50.2, indicating neutral momentum. This suggests the stock has been consolidating or moving sideways over the past month. The 1-day return is slightly positive (0.1%), but the 5-day return is negative (-0.3%), reflecting mixed short-term price action. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context data: SMA20 proximity, RSI 50.2, returns, and includes educational disclaimer as expected.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context data: SMA20 proximity, RSI 50.2, returns, and includes educational disclaimer as expected.\"}"
+    },
+    "elapsed_s": 6.669234375003725
+  },
+  {
+    "id": "grounded-E02",
+    "surface": "chatbot",
+    "prompt": "How should I read a stock that just gapped up 8%?",
+    "variant": null,
+    "reference": "**Overview:** Sharp single-bar gap-up; last close well above SMA20.\n**Momentum:** 1-bar +8.0% is dominant; 5-bar +9.2%, 20-bar +4.1%.\n**Indicators:** RSI(14)=78.5 in overbought territory immediately after a gap.\n**Levels / Risks:** Gaps often fill partially; the natural risk is mean reversion toward SMA20 (180). Without seeing volume and the fundamental catalyst, the chart alone says momentum strong but stretched. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "The stock gapped up 8% in one day, closing well above its 20-day moving average (SMA20) by 8%, indicating strong short-term momentum. However, the RSI of 78.5 suggests the stock is overbought, which could signal a pullback risk. While the 5-day return of 9.2% shows continued strength, the lack of a 50-day SMA and elevated RSI warrant caution. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context values and provides appropriate educational disclaimer, consistent with gold reference.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context values and provides appropriate educational disclaimer, consistent with gold reference.\"}"
+    },
+    "elapsed_s": 5.448751209012698
+  },
+  {
+    "id": "grounded-E03",
+    "surface": "chatbot",
+    "prompt": "What does RSI > 70 actually mean here?",
+    "variant": null,
+    "reference": "RSI(14) > 70 is the conventional overbought threshold. It signals that the recent up-move has been strong relative to the prior 14 bars; it does NOT by itself mean price will fall. In strong trends RSI can stay above 70 for weeks. Practical read: momentum is stretched, mean-reversion risk is elevated, but trend-following remains valid until price action breaks. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "RSI > 70 indicates that the stock is in overbought territory, suggesting strong upward momentum that could lead to a pullback or consolidation. In this case, the 14-day RSI is 74.2, which exceeds 70 and aligns with recent positive returns (e.g., +12.5% over 20 days). This may signal limited near-term upside unless momentum continues. Educational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 1,
+      "refusal_correct": 0,
+      "overall_pass": 0,
+      "justification": "Candidate omits key caveat that RSI>70 doesn't mean price will fall and trends can sustain it; adds unsupported 'limited near-term upside' claim.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 1, \"refusal_correct\": 0, \"overall_pass\": 0, \"justification\": \"Candidate omits key caveat that RSI>70 doesn't mean price will fall and trends can sustain it; adds unsupported 'limited near-term upside' claim.\"}"
+    },
+    "elapsed_s": 3.5569850419997238
+  },
+  {
+    "id": "grounded-E04",
+    "surface": "chatbot",
+    "prompt": "What if a position is up 40% — what does the chart add?",
+    "variant": null,
+    "reference": "The 40% gain is a portfolio-side fact (cost basis vs. current price). The chart adds the *technical condition* of that gain: is it in a healthy trend (above SMA20, RSI in 50–70 zone) or stretched (RSI > 75, long upper wicks)? Here RSI(14)=68.4 is constructive but not extreme; trend intact. The chart doesn't tell you whether to take profits — that's a sizing/plan decision, not a technical one. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "portfolio:{{TICKER}}",
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 2,
+    "generator_answer": "A 40% gain is reflected in both the portfolio and chart data. The chart adds context: the stock is above its 20-day SMA (9.38% premium), showing strong momentum (14% return over 20 days), and RSI at 68.4 suggests it may be approaching overbought levels.  \n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately reflects pinned context data and matches gold reference's key points on technical condition and educational disclaimer.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately reflects pinned context data and matches gold reference's key points on technical condition and educational disclaimer.\"}"
+    },
+    "elapsed_s": 5.533369624987245
+  },
+  {
+    "id": "grounded-E05",
+    "surface": "chatbot",
+    "prompt": "What's the difference between momentum and trend on this chart?",
+    "variant": null,
+    "reference": "**Momentum** here is the recent rate of change (1/5/20-bar returns: −0.4% / +1.2% / +3.0%). **Trend** is the direction of the moving average — price above SMA20 with a positive slope = uptrend. Momentum can be positive while trend is still turning (early uptrend), or negative while trend is intact (pullback within uptrend). They answer different questions. Educational only, not investment advice.",
+    "expected_compliance_min": null,
+    "pinned_labels": [
+      "stock_chart:{{TICKER}}"
+    ],
+    "context_card_count": 1,
+    "generator_answer": "Momentum refers to the rate of price change over specific lookback periods, such as 1, 5, or 20 bars (days), shown here as percentage returns. Trend refers to the directional movement of price relative to moving averages, such as the SMA(20), where the current price is 1.32% above the 20-day average, indicating a short-term uptrend. The chart does not define \"trend\" separately from these technical indicators.\n\nEducational only, not investment advice.",
+    "generator_self_confidence": 0.5,
+    "refusal_detected": false,
+    "judge": {
+      "faithfulness": 1,
+      "hallucination": 0,
+      "refusal_correct": 1,
+      "overall_pass": 1,
+      "justification": "Answer accurately describes momentum and trend using pinned context data, matches reference definition, no fabrications.",
+      "raw_judge_text": "{\"faithfulness\": 1, \"hallucination\": 0, \"refusal_correct\": 1, \"overall_pass\": 1, \"justification\": \"Answer accurately describes momentum and trend using pinned context data, matches reference definition, no fabrications.\"}"
+    },
+    "elapsed_s": 4.076962541992543
+  }
+]

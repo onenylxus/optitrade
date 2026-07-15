@@ -118,6 +118,22 @@ def run_cleanup(retention_days: int = SQLITE_RETENTION_DAYS) -> dict:
 # Hard blacklist: symbols where historical win-rate is too poor to keep
 # re-entering. MU has 1 win / 7 losses-or-flat across 8 attempts (12.5%).
 BLACKLIST_SYMBOLS = {"MU"}
+# Agents that have produced persistent garbage / crypto-only output; never
+# auto-add them to follow_list even if their leaderboard activity spikes.
+BLACKLIST_AGENTS: set[str] = set()
+# Cap follow_list size to prevent runaway expansion from polluting cache
+# with test agents or one-off noise sources.
+MAX_FOLLOW_LIST_SIZE = 10
+# Skip auto-include for agent names matching these patterns (test fixtures,
+# CI bots, temporary handles — anything that wouldn't be a real production
+# trader we want to follow long-term).
+TEST_AGENT_PATTERNS: tuple[str, ...] = (
+    "TestAgent_", "E2E_", "MockAgent", "test_", "Mock", "TEST_",
+    "FinalClean_", "AuditE2E_", "FinalE2E_",
+)
+def _is_test_agent(name: str) -> bool:
+    n = name or ""
+    return any(p in n for p in TEST_AGENT_PATTERNS)
 # Signal freshness — reject signals older than this many minutes. Was 6h
 # which let through stale entries (2026-07-09 03:33 OKLO/HST were hours old).
 SIGNAL_MAX_AGE_MINUTES = 15
@@ -175,7 +191,47 @@ def _save_follow_list_cache(names: list[str]) -> None:
         )
 
 
-def refresh_follow_list() -> list[str]:
+def reconcile_follow_list_cache() -> list[str]:
+    """Reconcile cached follow_list against current leaderboard + pinned.
+
+    Drops test-pattern agents from cache and refills from a fresh
+    leaderboard fetch. Run this on startup or on a daily cron to ensure
+    the cache doesn't carry stale entries from prior mock/test runs.
+
+    Returns the reconciled list (also persisted to cache).
+    """
+    try:
+        board = fetch_agent_leaderboard(limit=20, market="us-stock",
+                                          min_last_signal_hours=168)
+        eligible = [a for a in board if a.get("signal_count", 0) >= MIN_AGENT_SIGNAL_COUNT]
+        top = eligible[:DYNAMIC_FOLLOW_LIMIT]
+        top_names = [a["agent_name"] for a in top if a.get("agent_name")]
+        # Pinned + top dynamic, drop test agents, cap to MAX
+        healthy = sorted(set(PINNED_AGENTS) | set(top_names))
+        healthy = [n for n in healthy if not _is_test_agent(n)]
+        # Also drop any test-pattern names that accidentally got cached previously
+        if cached:
+            cached_names, _ = cached
+            test_leak = [n for n in cached_names if _is_test_agent(n)]
+            if test_leak:
+                log(f"Reconcile: dropping test-leak agents from cache: {test_leak}")
+        # Always include pinned first, then dynamic
+        pinned_first = [n for n in healthy if n in PINNED_AGENTS]
+        dynamic = [n for n in healthy if n not in PINNED_AGENTS]
+        cap = max(MAX_FOLLOW_LIST_SIZE - len(pinned_first), DYNAMIC_FOLLOW_LIMIT)
+        dynamic = dynamic[:cap]
+        result = sorted(pinned_first + dynamic)
+        _save_follow_list_cache(result)
+        log(f"Reconciled follow_list: {len(result)} agents")
+        return result
+    except Exception as e:
+        log(f"ERROR reconciling follow_list: {e}")
+        # Fall back to current cache as-is
+        cached = _load_follow_list_cache()
+        return cached[0] if cached else list(PINNED_AGENTS)
+
+
+def refresh_follow_list(force: bool = False) -> list[str]:
     """Return current dynamic follow list. Hit leaderboard every
     LEADERBOARD_REFRESH_HOURS hours; otherwise return cached list.
 
@@ -185,9 +241,14 @@ def refresh_follow_list() -> list[str]:
         2. Pull top DYNAMIC_FOLLOW_LIMIT active agents from the platform's
            /signals/grouped endpoint (sorted by signal_count).
         3. Dedupe, cache in SQLite, return.
+
+    Cache invalidation (force=True):
+        - Triggered by caller when we detect high-value agents outside the
+          current cache (e.g., fresh us-stock activity).
+        - Triggered manually via API.
     """
     cached = _load_follow_list_cache()
-    if cached:
+    if cached and not force:
         names, refreshed_at = cached
         try:
             dt = datetime.fromisoformat(refreshed_at)
@@ -285,12 +346,14 @@ def compute_diff(trades: list[dict], prev: dict) -> list[str]:
 
 
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
-def fetch_signals(limit: int = 15) -> list[dict]:
+def fetch_signals(limit: int = 15, market: str = "us-stock") -> list[dict]:
+    """Fetch raw signal feed filtered by market. Pre-filtering at the API
+    layer avoids wasting parse quota on signals we'll SKIP downstream."""
     try:
         resp = requests.get(
             f"{BASE_URL}/signals/feed",
             headers=HEADERS,
-            params={"limit": limit},
+            params={"limit": limit, "market": market},
             timeout=10,
         )
         resp.raise_for_status()
@@ -640,12 +703,14 @@ def log_signal(received_at: str, agent_name: str, symbol: str | None,
 
 
 # ── Signals / heartbeat ───────────────────────────────────────────────────────
-def fetch_signals(limit: int = 15) -> list[dict]:
+def fetch_signals(limit: int = 15, market: str = "us-stock") -> list[dict]:
+    """Fetch raw signal feed filtered by market. Pre-filtering at the API
+    layer avoids wasting parse quota on signals we'll SKIP downstream."""
     try:
         resp = requests.get(
             f"{BASE_URL}/signals/feed",
             headers=HEADERS,
-            params={"limit": limit},
+            params={"limit": limit, "market": market},
             timeout=10,
         )
         resp.raise_for_status()
@@ -1169,7 +1234,7 @@ def main() -> list[dict]:
     new_events.extend(pos_events)
 
     # 2. Parse strategy signals and evaluate recommendations
-    signals = fetch_signals(limit=15)
+    signals = fetch_signals(limit=15, market="us-stock")
     new_follows: list[dict] = []
     open_symbols = {t.get("symbol") for t in trades if t.get("status") == "open"}
     # Pass recent closed positions (within last 7 days) so cooldown logic has data
@@ -1180,8 +1245,56 @@ def main() -> list[dict]:
 
     # 2a. Refresh dynamic follow-list from /api/signals/grouped leaderboard.
     # Picks the most active US-stock traders + our pinned workhorse (raftapart).
-    follow_list = refresh_follow_list()
-    log(f"Follow list ({len(follow_list)} agents): {', '.join(follow_list)}")
+    # Force refresh on first run of the day (00:00–00:30 HKT) to catch any
+    # newly-active agents that emerged during overnight / pre-market.
+    force_refresh = hkt_now().hour == 0
+    if force_refresh:
+        # Daily reconciliation: drop test agents, refill from leaderboard
+        follow_list = reconcile_follow_list_cache()
+    else:
+        follow_list = refresh_follow_list(force=force_refresh)
+    log(f"Follow list ({len(follow_list)} agents, force={force_refresh}): {', '.join(follow_list)}")
+
+    # 2a-i. Detect active us-stock agents OUTSIDE current follow list.
+    # If any such agent has emitted ≥3 signals today, expand follow_list
+    # for the remainder of the day (auto-include). This catches the case
+    # where raftapart stops emitting us-stock but another agent picks up.
+    try:
+        all_board = fetch_agent_leaderboard(limit=20, market="us-stock",
+                                              min_last_signal_hours=24)
+        # Find recently active agents NOT in current follow list
+        outside = [a for a in all_board if a.get("agent_name") not in follow_list]
+        # Filter: must have emitted in the last 4 hours (i.e., market hours)
+        cutoff = (hkt_now() - timedelta(hours=4)).timestamp()
+        def recent_enough(a) -> bool:
+            try:
+                t = datetime.fromisoformat(a.get("last_signal_at", "").replace("Z", "+00:00"))
+                return t.timestamp() >= cutoff
+            except Exception:
+                return False
+        recently_active_outside = [a["agent_name"] for a in outside
+                                    if recent_enough(a)
+                                    and a.get("agent_name")
+                                    and a.get("agent_name") not in BLACKLIST_AGENTS
+                                    and not _is_test_agent(a.get("agent_name", ""))]
+        if recently_active_outside:
+            # Cap dynamic addition at 3 to avoid runaway expansion.
+            # Also enforce MAX_FOLLOW_LIST_SIZE so the cache can't grow unbounded.
+            to_add = recently_active_outside[:3]
+            new_list = sorted(set(follow_list) | set(to_add))
+            if len(new_list) > MAX_FOLLOW_LIST_SIZE:
+                # Trim: keep PINNED + recent dynamic additions (preserve order)
+                pinned = [n for n in new_list if n in PINNED_AGENTS]
+                dynamic = [n for n in new_list if n not in PINNED_AGENTS]
+                dynamic = dynamic[:MAX_FOLLOW_LIST_SIZE - len(pinned)]
+                new_list = pinned + dynamic
+            if new_list != follow_list:
+                log(f"Auto-expanding follow_list with active us-stock agents: {to_add}")
+                follow_list = new_list
+                # Persist expanded list for the day
+                _save_follow_list_cache(follow_list)
+    except Exception as e:
+        log(f"WARNING: follow-list auto-expand failed: {e}")
 
     for sig in signals:
         msg_type = sig.get("message_type", "")
@@ -1301,9 +1414,261 @@ def main() -> list[dict]:
     except Exception as e:
         log(f"Retention sweep failed: {e}")
 
+    # 9. Proactive scan — when no AI4Trade signals produced actionable trades,
+    # fall back to our own technical analysis on the watchlist universe.
+    if bool(diff_msgs) and len(open_symbols) < MAX_POSITIONS:
+        try:
+            proactive_notes = proactive_scan(open_symbols=open_symbols)
+            for note in proactive_notes:
+                diff_msgs.append(note)
+        except Exception as e:
+            log(f"Proactive scan failed: {e}")
+
     log("AI4Trade Poller END")
     log("-" * 55)
     return [{"type": "DIFF", "details": m} for m in diff_msgs]
+
+
+# ── Proactive Scan Engine ────────────────────────────────────────────────────
+# When AI4Trade signals are absent (e.g. raftapart switched to crypto),
+# the poller must still do trader work — scan our 30-stock universe with
+# technicals and emit ≤2 SUGGEST notifications per day. NEVER auto-execute.
+PROACTIVE_WATCHLIST: tuple[str, ...] = (
+    # AI / Semis
+    "NVDA", "AMD", "MU", "TSM", "AVGO", "QCOM", "INTC", "ARM", "SMCI",
+    "MRVL", "CRDO",
+    # Software / Cloud
+    "SNOW", "PLTR", "APP",
+    # Mega-caps
+    "META", "MSFT", "GOOGL", "AMZN", "AAPL", "TSLA", "NFLX",
+    # Financials
+    "JPM", "GS", "BAC",
+    # Energy / Industrial / Other
+    "XOM", "CVX", "BA", "CAT", "DIS", "IBM",
+)
+
+MAX_PROACTIVE_PER_DAY = 2
+SCAN_COOLDOWN_HOURS = 4    # min gap between suggestions per symbol
+RSI_OVERSOLD = 30.0
+RSI_OVERBOUGHT = 70.0
+
+
+def _compute_indicators(prices: list[float]) -> dict[str, float]:
+    """Compute SMA20/50/200, RSI(14), MACD line, ATR(14), BBands(20,2).
+    Returns dict of float; missing values surface as NaN-safe fallbacks."""
+    import math
+    out: dict[str, float] = {}
+    if not prices or len(prices) < 30:
+        return {"ready": False, "last": prices[-1] if prices else 0.0}
+
+    n = len(prices)
+    out["last"] = prices[-1]
+    out["sma20"] = sum(prices[-20:]) / min(20, n)
+    out["sma50"] = sum(prices[-50:]) / min(50, n)
+    if n >= 200:
+        out["sma200"] = sum(prices[-200:]) / 200
+    else:
+        out["sma200"] = sum(prices) / n
+
+    # RSI(14)
+    gains, losses = [], []
+    for i in range(1, min(15, n)):
+        d = prices[-i] - prices[-i - 1]
+        if d >= 0:
+            gains.append(d)
+        else:
+            losses.append(-d)
+    avg_g = sum(gains) / 14 if gains else 0.0
+    avg_l = sum(losses) / 14 if losses else 1e-9
+    rs = avg_g / max(avg_l, 1e-9)
+    out["rsi14"] = 100 - (100 / (1 + rs))
+
+    # ATR(14) — simple moving avg of true range over closes-as-range proxy
+    trs = [abs(prices[-i] - prices[-i - 1]) for i in range(1, min(15, n))]
+    out["atr14"] = sum(trs) / max(len(trs), 1)
+
+    # MACD(12,26,9) line — EMA difference
+    def ema(series: list[float], period: int) -> float:
+        if not series:
+            return 0.0
+        k = 2 / (period + 1)
+        e = series[0]
+        for v in series[1:]:
+            e = v * k + e * (1 - k)
+        return e
+    ema12 = ema(prices[-60:], 12)
+    ema26 = ema(prices[-100:], 26)
+    out["macd"] = ema12 - ema26
+
+    # Bollinger Bands(20,2)
+    if n >= 20:
+        window = prices[-20:]
+        mean = sum(window) / 20
+        var = sum((x - mean) ** 2 for x in window) / 20
+        sd = math.sqrt(var)
+        out["bb_mid"] = mean
+        out["bb_upper"] = mean + 2 * sd
+        out["bb_lower"] = mean - 2 * sd
+        out["bb_pct"] = (prices[-1] - out["bb_lower"]) / max(out["bb_upper"] - out["bb_lower"], 1e-9)
+    else:
+        out["bb_pct"] = 0.5
+
+    out["ready"] = True
+    return out
+
+
+def _fetch_prices(symbol: str, period_days: int = 220) -> list[float]:
+    """Fetch ~6 months of daily closes via yfinance. Empty list on failure."""
+    try:
+        import yfinance as yf
+        t = yf.Ticker(symbol)
+        hist = t.history(period="6mo", auto_adjust=True, raise_errors=False)
+        if hist is None or hist.empty:
+            return []
+        closes = hist["Close"].tolist()
+        return [float(x) for x in closes if x is not None]
+    except Exception as e:
+        log(f"  price fetch failed for {symbol}: {e}")
+        return []
+
+
+def proactive_scan(open_symbols: set[str]) -> list[dict]:
+    """Scan PROACTIVE_WATCHLIST for setups. Returns list of SUGGEST notifications.
+
+    Strategy (simple, transparent):
+        LONG setup:  RSI(14) ≤ 35 (oversold) AND price > SMA200 (uptrend)
+                    AND MACD > 0 OR turning up (momentum shift)
+        SHORT setup: RSI(14) ≥ 70 (overbought) AND price < SMA200 (downtrend)
+                    AND MACD < 0 OR turning down
+        Always: stop = ±2×ATR14; target = ±5% with ATR-based sizing.
+
+    Output ONE candidate per pass max, capped by MAX_PROACTIVE_PER_DAY via
+    SQLite counter (`proactive_suggestions` table).
+
+    This is SUGGEST-ONLY — never auto-executes. Timmy must approve.
+    """
+    today = hkt_now().strftime("%Y-%m-%d")
+
+    # Count today's proactive suggestions to enforce daily cap.
+    # Match via agent_name='proactive_scan' (most reliable).
+    conn = db.get_conn()
+    n_today = conn.execute(
+        "SELECT COUNT(*) FROM signal_log WHERE agent_name='proactive_scan' "
+        "AND received_at LIKE ?",
+        (today + "%",)
+    ).fetchone()[0]
+    if n_today >= MAX_PROACTIVE_PER_DAY:
+        log(f"Proactive: daily cap reached ({n_today}/{MAX_PROACTIVE_PER_DAY})")
+        return []
+
+    notes: list[dict] = []
+    for sym in PROACTIVE_WATCHLIST:
+        if sym in BLACKLIST_SYMBOLS or sym in open_symbols:
+            continue
+        # Cooldown: skip if we suggested this symbol recently
+        cooldown_cutoff = (hkt_now() - pd.Timedelta(hours=SCAN_COOLDOWN_HOURS)).isoformat() \
+            if False else (hkt_now() - timedelta(hours=SCAN_COOLDOWN_HOURS)).isoformat()
+        recent = conn.execute(
+            "SELECT COUNT(*) FROM signal_log WHERE symbol=? AND skip_reasons LIKE '%proactive%' "
+            "AND received_at >= ?",
+            (sym, cooldown_cutoff)
+        ).fetchone()[0]
+        if recent > 0:
+            continue
+
+        prices = _fetch_prices(sym)
+        if len(prices) < 60:
+            continue
+        ind = _compute_indicators(prices)
+        if not ind.get("ready"):
+            continue
+
+        last = ind["last"]
+        rsi = ind["rsi14"]
+        sma200 = ind["sma200"]
+        macd = ind["macd"]
+        atr = ind["atr14"]
+
+        side = None
+        rationale = None
+
+        # LONG: oversold + above 200d + positive MACD
+        if rsi <= 35 and last > sma200 and macd > 0:
+            side = "LONG"
+            rationale = (
+                f"RSI(14)={rsi:.1f} (oversold), price ${last:.2f} > SMA200 ${sma200:.2f} "
+                f"(uptrend), MACD={macd:+.3f} (positive momentum)"
+            )
+        # SHORT: overbought + below 200d + negative MACD
+        elif rsi >= 70 and last < sma200 and macd < 0:
+            side = "SHORT"
+            rationale = (
+                f"RSI(14)={rsi:.1f} (overbought), price ${last:.2f} < SMA200 ${sma200:.2f} "
+                f"(downtrend), MACD={macd:+.3f} (negative momentum)"
+            )
+        else:
+            continue
+
+        # Compute entry, stop, target
+        stop_distance = 2 * atr
+        target_distance = max(5.0 * last / 100, 3 * atr)  # 5% of last OR 3×ATR, whichever larger
+        if side == "LONG":
+            stop = round(last - stop_distance, 2)
+            target = round(last + target_distance, 2)
+            entry_zone = (round(last * 0.99, 2), round(last * 1.01, 2))
+        else:
+            stop = round(last + stop_distance, 2)
+            target = round(last - target_distance, 2)
+            entry_zone = (round(last * 0.99, 2), round(last * 1.01, 2))
+
+        # Sizing: paper_portfolio ~ $100K, 10% risk cap = $10K, position = 50 shares
+        shares = 50
+        risk_per_share = abs(last - stop)
+        risk_dollars = risk_per_share * shares
+        thesis = (
+            f"[PROACTIVE] {sym} {side}\n"
+            f"Setup: {rationale}\n"
+            f"ATR(14)={atr:.2f}, BB%={ind.get('bb_pct',0.5):.2f}\n"
+            f"Entry zone: ${entry_zone[0]:.2f}–${entry_zone[1]:.2f}\n"
+            f"Stop ${stop}, target ${target}\n"
+            f"Size: {shares} shares (risk ${risk_dollars:.0f}, "
+            f"{risk_dollars/100000*100:.1f}% of $100K)\n"
+            f"Source: proactive_scan (no external signal)"
+        )
+        risks = [
+            f"{sym} in BLACKLIST" if sym in BLACKLIST_SYMBOLS else None,
+            "Trend may reverse on macro news",
+            "Proactive is SUGGEST-ONLY — must approve manually",
+        ]
+        risks = [r for r in risks if r]
+
+        # Persist to signal_log (so proactive suggestions audit like external signals)
+        try:
+            log_signal(
+                received_at=hkt_now().isoformat(),
+                agent_name="proactive_scan",
+                symbol=sym, side=side,
+                agent_score=0.0, market="us-stock",
+                raw_content=f"proactive_scan: {sym} {side}",
+                parsed_action="FOLLOW",
+                score=4,
+                entry_price=last, live_price=last,
+                skip_reasons=[],  # empty means FOLLOW path
+                enrich_notes={"indicators": ind, "rationale": rationale},
+                thesis=thesis,
+            )
+            log(f"Proactive: SUGGESTED {sym} {side} @ ${last:.2f} (RSI={rsi:.1f}, stop=${stop})")
+            notes.append({"type": "PROACTIVE_SUGGEST", "symbol": sym,
+                          "side": side, "entry_zone": entry_zone,
+                          "stop": stop, "target": target,
+                          "thesis": thesis, "risks": risks})
+            if len(notes) >= MAX_PROACTIVE_PER_DAY:
+                break
+        except Exception as e:
+            log(f"  proactive log failed for {sym}: {e}")
+            continue
+
+    return notes
 
 
 if __name__ == "__main__":

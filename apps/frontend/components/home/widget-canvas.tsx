@@ -40,7 +40,9 @@ interface DragPreviewPlacement {
   rowSpan: number;
 }
 
+const MIN_EDIT_COLUMNS = 2;
 const MIN_EDIT_ROWS = 2;
+const MAX_SNAP_DISTANCE_CELLS = 1;
 
 const cellKey = (col: number, row: number) => `${col}:${row}`;
 
@@ -58,6 +60,16 @@ const getRemInPixels = () => {
     window.getComputedStyle(document.documentElement).fontSize,
   );
   return Number.isFinite(rootFontSize) ? rootFontSize : 16;
+};
+
+const getPlacementBounds = (placements: WidgetPlacement[]) => {
+  return placements.reduce(
+    (bounds, placement) => ({
+      maxCol: Math.max(bounds.maxCol, placement.col + placement.colSpan - 1),
+      maxRow: Math.max(bounds.maxRow, placement.row + placement.rowSpan - 1),
+    }),
+    { maxCol: -1, maxRow: -1 },
+  );
 };
 
 const buildOccupancy = (placements: WidgetPlacement[]) => {
@@ -158,6 +170,17 @@ const findClosestValidOrigin = (
   return bestPlacement;
 };
 
+const isSnapDistanceAllowed = (
+  requestedPlacement: Pick<WidgetPlacement, 'col' | 'row'>,
+  resolvedPlacement: Pick<WidgetPlacement, 'col' | 'row'>,
+) => {
+  const colDiff = resolvedPlacement.col - requestedPlacement.col;
+  const rowDiff = resolvedPlacement.row - requestedPlacement.row;
+  const distanceSquared = colDiff * colDiff + rowDiff * rowDiff;
+
+  return distanceSquared <= MAX_SNAP_DISTANCE_CELLS ** 2;
+};
+
 const findNextAvailableOrigin = (
   placement: WidgetPlacement,
   occupancy: Map<string, string>,
@@ -237,6 +260,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
   const getClosestGridOriginFromPointer = (
     event: DragEvent<HTMLElement>,
     pickupOffsetPx: { x: number; y: number } | null,
+    maxColumns: number,
   ) => {
     const gridElement = event.currentTarget;
 
@@ -261,7 +285,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     const roughRow = Number.isFinite(adjustedY) ? Math.round(adjustedY / rowPitch) : 0;
 
     return {
-      col: Math.max(0, Math.min(roughCol, gridColumns - 1)),
+      col: Math.max(0, Math.min(roughCol, maxColumns - 1)),
       row: Math.max(0, roughRow),
     };
   };
@@ -296,9 +320,24 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     return () => observer.disconnect();
   }, []);
 
+  const placementBounds = useMemo(() => getPlacementBounds(placements), [placements]);
+
+  const visibleColumnCount = useMemo(() => {
+    const maxPreviewCol = dragPreview ? dragPreview.col + dragPreview.colSpan - 1 : -1;
+    const maxVisibleCol = Math.max(placementBounds.maxCol, maxPreviewCol);
+
+    if (!isEditMode) {
+      return maxVisibleCol >= 0 ? maxVisibleCol + 1 : 0;
+    }
+
+    return Math.max(maxVisibleCol + 2, MIN_EDIT_COLUMNS);
+  }, [dragPreview, isEditMode, placementBounds.maxCol]);
+
+  const layoutColumns = Math.max(gridColumns, visibleColumnCount);
+
   const normalizedPlacements = useMemo(
-    () => normalizePlacements(placements, gridColumns),
-    [gridColumns, placements],
+    () => normalizePlacements(placements, layoutColumns),
+    [layoutColumns, placements],
   );
   const serializedLayout = useMemo(
     () => serializeWidgetLayout(normalizedPlacements),
@@ -417,12 +456,12 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
 
   const visibleCells = useMemo(
     () =>
-      Array.from({ length: visibleRowCount * gridColumns }, (_, index) => {
-        const col = index % gridColumns;
-        const row = Math.floor(index / gridColumns);
+      Array.from({ length: visibleRowCount * layoutColumns }, (_, index) => {
+        const col = index % layoutColumns;
+        const row = Math.floor(index / layoutColumns);
         return { col, row, key: cellKey(col, row) };
       }),
-    [gridColumns, visibleRowCount],
+    [layoutColumns, visibleRowCount],
   );
 
   const resolvePlacementForDrop = (
@@ -432,18 +471,28 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
     draggedWidgetType: WidgetType,
     sourceWidgetId: string | null,
   ) => {
-    const normalizedItems = normalizePlacements(placementItems, gridColumns);
+    const normalizedItems = normalizePlacements(placementItems, layoutColumns);
     const existingPlacement = sourceWidgetId
       ? normalizedItems.find((placement) => placement.id === sourceWidgetId)
       : null;
     const defaultSpan = widgetDefaultSpans[draggedWidgetType];
     const colSpan = Math.max(
       1,
-      Math.min(existingPlacement?.colSpan ?? defaultSpan.cols, gridColumns),
+      Math.min(existingPlacement?.colSpan ?? defaultSpan.cols, layoutColumns),
     );
     const rowSpan = existingPlacement?.rowSpan ?? defaultSpan.rows;
     const occupancy = buildOccupancy(normalizedItems);
     const requestedPlacement = { col: requestedCol, row: requestedRow, colSpan, rowSpan };
+
+    const maxOccupiedCol =
+      normalizedItems.length > 0
+        ? Math.max(...normalizedItems.map((placement) => placement.col + placement.colSpan - 1))
+        : 0;
+    const maxScanCol = Math.max(
+      maxOccupiedCol + colSpan + MIN_EDIT_COLUMNS + 2,
+      requestedCol + colSpan + 20,
+    );
+    const previewColumns = Math.max(layoutColumns, maxScanCol);
 
     const maxOccupiedRow =
       normalizedItems.length > 0
@@ -455,23 +504,27 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
       requestedPlacement,
       sourceWidgetId,
       occupancy,
-      gridColumns,
+      previewColumns,
     )
       ? requestedPlacement
       : findClosestValidOrigin(
           requestedPlacement,
           sourceWidgetId,
           occupancy,
-          gridColumns,
+          previewColumns,
           maxScanRow,
         );
+
+    const isPlacementAccepted =
+      resolvedPlacement !== null && isSnapDistanceAllowed(requestedPlacement, resolvedPlacement);
 
     return {
       normalizedItems,
       existingPlacement,
-      resolvedPlacement,
+      resolvedPlacement: isPlacementAccepted ? resolvedPlacement : null,
       colSpan,
       rowSpan,
+      isPlacementAccepted,
     };
   };
 
@@ -492,10 +545,10 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
       return;
     }
 
-    const pointerOrigin = getClosestGridOriginFromPointer(event, pickupOffsetPx);
+    const pointerOrigin = getClosestGridOriginFromPointer(event, pickupOffsetPx, layoutColumns);
     const requestedCol = pointerOrigin.col;
     const requestedRow = pointerOrigin.row;
-    const { resolvedPlacement } = resolvePlacementForDrop(
+    const { resolvedPlacement, isPlacementAccepted } = resolvePlacementForDrop(
       normalizedPlacements,
       requestedCol,
       requestedRow,
@@ -503,7 +556,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
       sourceWidgetId,
     );
 
-    if (!resolvedPlacement) {
+    if (!resolvedPlacement || !isPlacementAccepted) {
       setDragPreview(null);
       return;
     }
@@ -567,7 +620,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
       return;
     }
 
-    const pointerOrigin = getClosestGridOriginFromPointer(event, pickupOffsetPx);
+    const pointerOrigin = getClosestGridOriginFromPointer(event, pickupOffsetPx, layoutColumns);
     const requestedCol = pointerOrigin.col;
     const requestedRow = pointerOrigin.row;
 
@@ -598,7 +651,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
                 }
               : placement,
           ),
-          gridColumns,
+          layoutColumns,
         );
       }
 
@@ -611,7 +664,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
         rowSpan,
       };
 
-      return normalizePlacements([...normalizedItems, newPlacement], gridColumns);
+      return normalizePlacements([...normalizedItems, newPlacement], layoutColumns);
     });
 
     setDraggedWidget(null);
@@ -637,7 +690,7 @@ export function WidgetCanvas({ isEditMode, externalDraggedWidgetType = null }: W
               <div
                 className="relative z-0 grid"
                 style={{
-                  gridTemplateColumns: `repeat(${gridColumns}, ${GRID_CELL_WIDTH_REM}rem)`,
+                  gridTemplateColumns: `repeat(${layoutColumns}, ${GRID_CELL_WIDTH_REM}rem)`,
                   gridAutoRows: `${GRID_CELL_HEIGHT_REM}rem`,
                   gap: `${GRID_GAP_REM}rem`,
                 }}
