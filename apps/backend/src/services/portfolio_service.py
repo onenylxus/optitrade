@@ -111,15 +111,7 @@ class PortfolioService:
                 )
             except Exception as error:
                 self._write_broker_connection(
-                    self._broker_connection(
-                        id="ibkr",
-                        status="configured",
-                        broker="IBKR",
-                        settings=dict(connection["settings"]),
-                        account_id=connection.get("accountId"),
-                        synced_at=connection.get("syncedAt"),
-                        last_error=str(error),
-                    )
+                    self._live_broker_fallback_connection(connection, error)
                 )
                 connection = self._read_broker_connection()
         elif connection["id"] == "futu" and connection["status"] == "connected":
@@ -132,15 +124,7 @@ class PortfolioService:
                 )
             except Exception as error:
                 self._write_broker_connection(
-                    self._broker_connection(
-                        id="futu",
-                        status="configured",
-                        broker="Futu",
-                        settings=dict(connection["settings"]),
-                        account_id=connection.get("accountId"),
-                        synced_at=connection.get("syncedAt"),
-                        last_error=str(error),
-                    )
+                    self._live_broker_fallback_connection(connection, error)
                 )
                 connection = self._read_broker_connection()
         elif connection["id"] == "binance" and connection["status"] == "connected":
@@ -154,15 +138,7 @@ class PortfolioService:
                 )
             except Exception as error:
                 self._write_broker_connection(
-                    self._broker_connection(
-                        id="binance",
-                        status="configured",
-                        broker="Binance",
-                        settings=dict(connection["settings"]),
-                        account_id=connection.get("accountId"),
-                        synced_at=connection.get("syncedAt"),
-                        last_error=str(error),
-                    )
+                    self._live_broker_fallback_connection(connection, error)
                 )
                 connection = self._read_broker_connection()
 
@@ -405,6 +381,21 @@ class PortfolioService:
             "syncedAt": synced_at or datetime.now(UTC).isoformat(),
             "lastError": last_error,
         }
+
+    def _live_broker_fallback_connection(
+        self, connection: dict[str, Any], error: Exception
+    ) -> dict[str, Any]:
+        """Persist an unreachable live broker as disconnected so the app
+        immediately falls back to the editable paper portfolio."""
+        return self._broker_connection(
+            id=str(connection.get("id") or "mock"),
+            status="disconnected",
+            broker=str(connection.get("broker") or connection.get("name") or "Mock Data"),
+            settings=dict(connection.get("settings") or {}),
+            account_id=connection.get("accountId"),
+            synced_at=connection.get("syncedAt"),
+            last_error=str(error),
+        )
 
     def _broker_connection_payload(self, connection: dict[str, Any]) -> dict[str, Any]:
         payload = {
