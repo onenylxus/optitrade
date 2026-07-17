@@ -54,7 +54,7 @@ export function WidgetRenderer({ widgetType }: WidgetRendererProps) {
       <CandlestickWidget
         title="Stock chart"
         useStockApi
-        defaultSymbols={['IBM', 'SPY', 'AAPL']}
+        defaultSymbols={['SPY', 'AAPL']}
         defaultTimeframe="3M"
         defaultInterval="1d"
         variant="large"

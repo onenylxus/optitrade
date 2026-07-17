@@ -172,7 +172,7 @@ export const LiveBackendWithAi: Story = {
     title: 'Live (API + AI)',
     useStockApi: true,
     useAiAnalysis: true,
-    defaultSymbols: ['IBM'],
+    defaultSymbols: ['SPY'],
     defaultTimeframe: '1M',
     defaultInterval: '1d',
     variant: 'large',
